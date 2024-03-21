@@ -1,0 +1,137 @@
+{% extends 'base/base.html' %}
+{% block content %}
+{% load crm_tags %}
+
+    <div class="card">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/students"><i
+                        class="ri-home-4-line mr-1 float-left"></i>Students</a></li>
+                <li class="breadcrumb-item active"
+                    aria-current="page">{{ student.student.firstName }} {{ student.student.lastName }}</li>
+            </ol>
+        </nav>
+        <div class="card-body">
+            <ul class="nav nav-tabs" id="myTab-1" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" id="home-tab" data-toggle="tab" href="#details" role="tab"
+                       aria-controls="details"
+                       aria-selected="true">Details</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="lessons-tab" data-toggle="tab" href="#lessons" role="tab"
+                       aria-controls="lessons" aria-selected="false">Lessons</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="contact-tab" data-toggle="tab" href="#contact" role="tab"
+                       aria-controls="contact" aria-selected="false">Contact</a>
+                </li>
+            </ul>
+            <div class="tab-content" id="myTabContent-2">
+                <div class="tab-pane fade show active" id="details" role="tabpanel" aria-labelledby="details-tab">
+
+                    <form>
+                        <div class=" row align-items-center">
+                            <div class="form-group col-sm-6">
+                                <label for="fname">First Name:</label>
+                                <input type="text" class="form-control" readonly="" id="fname"
+                                       value="{{ student.student.firstName }}">
+                            </div>
+                            <div class="form-group col-sm-6">
+                                <label for="lname">Last Name:</label>
+                                <input type="text" class="form-control" readonly="" id="lname"
+                                       value="{{ student.student.lastName }}">
+                            </div>
+                            <div class="form-group col-sm-6">
+                                <label for="uemail">Email:</label>
+                                <input type="email" class="form-control" readonly="" id="uemail"
+                                       value="{{ student.student.email }}">
+                            </div>
+                            <div class="form-group col-sm-6">
+                                <label for="uphone">Phone:</label>
+                                <input type="text" class="form-control" readonly="" id="uphone"
+                                       value="{{ student.student.phone|default_if_none:"" }}">
+                            </div>
+                            <div class="form-group col-sm-6">
+                                <label for="dob">Date Of Birth:</label>
+                                <input class="form-control" readonly="" id="dob"
+                                       value="{{ student.student.birthdate|date:"d-m-Y" }}">
+                            </div>
+                        </div>
+                        <button type="reset" class="btn btn-outline-primary mr-2 mt-5">Cancel</button>
+                        <button type="submit" class="btn btn-primary mt-5">Submit</button>
+                    </form>
+                </div>
+
+                <div class="tab-pane fade" id="lessons" role="tabpanel" aria-labelledby="lessons-tab">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th scope="col" class="text-center">Month</th>
+                                <th scope="col" class="text-center">Pending</th>
+                                <th scope="col" class="text-center">Completed</th>
+                                <th scope="col" class="text-center">Canceled</th>
+                                <th scope="col" class="text-center">Summary</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for month_number, statutes in months_counter.items %}
+                                <tr>
+                                    <th scope="row" class="text-center">{{ month_number|get_month_name }}</th>
+                                    <td class="text-secondary text-center">{{ statutes.Pending }}</td>
+                                    <td class="text-success text-center">{{ statutes.Completed }}</td>
+                                    <td class="text-warning text-center">{{ statutes.Canceled }}</td>
+                                    <td class="text-center">{{ statutes.Summary }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                        {#                        <table id="datatable-1" class="table data-table table-striped table-bordered">#}
+                        {#                            <thead>#}
+                        {#                            <tr>#}
+                        {#                                <th>Weekday</th>#}
+                        {#                                <th>Time</th>#}
+                        {#                                <th>Teacher</th>#}
+                        {#                                <th>Start Date</th>#}
+                        {#                                <th>End Date</th>#}
+                        {#                            </tr>#}
+                        {#                            </thead>#}
+                        {#                            <tbody>#}
+                        {#                            {% for lesson in lessons %}#}
+                        {#                                <tr>#}
+                        {#                                    <td>#}
+                        {#                                        <a href="/students/{{ student.id }}/{{ lesson.id }}">{{ lesson.weekDay }}</a>#}
+                        {#                                    </td>#}
+                        {#                                    <td>{{ lesson.startTime|date:"H:i" }} - {{ lesson.endTime|date:"H:i" }}</td>#}
+                        {#                                    <td>{{ lesson.teacher.get_full_name }}</td>#}
+                        {#                                    <td>{{ lesson.startDate|date:"m-d-Y" }}</td>#}
+                        {#                                    <td>{{ lesson.endDate|date:"m-d-Y" }}</td>#}
+                        {##}
+                        {#                                </tr>#}
+                        {#                            {% endfor %}#}
+                        {##}
+                        {#                            </tbody>#}
+                        {#                            <tfoot>#}
+                        {#                            <tr>#}
+                        {#                                <th>Weekday</th>#}
+                        {#                                <th>Time</th>#}
+                        {#                                <th>Teacher</th>#}
+                        {#                                <th>Start Date</th>#}
+                        {#                                <th>End Date</th>#}
+                        {#                            </tr>#}
+                        {#                            </tfoot>#}
+                        {#                        </table>#}
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="contact" role="tabpanel" aria-labelledby="contact-tab">
+                    <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been
+                        the
+                        industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of
+                        type
+                        and scrambled it to make a type specimen book.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

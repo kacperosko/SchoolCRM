@@ -1,0 +1,96 @@
+{% extends 'base/base.html' %}
+{% load crm_tags %}
+
+{% block content %}
+    <div class="card">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/students"><i
+                        class="ri-home-4-line mr-1 float-left"></i>Students</a></li>
+                <li class="breadcrumb-item active"
+                    aria-current="page"><a
+                        href="/students/{{ lesson.student.id }}">{{ lesson.student.student.firstName }} {{ lesson.student.student.lastName }}</a>
+                </li>
+                <li class="breadcrumb-item active"
+                    aria-current="page">{{ lesson.weekDay }} {{ lesson.startTime|date:"H:i" }}</li>
+            </ol>
+        </nav>
+        <div class="card-body">
+            <div class="tab-pane fade show active" id="details" role="tabpanel" aria-labelledby="details-tab">
+
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class=" row align-items-center">
+                        <div class="form-group col-sm-6">
+                            <label>Weekday:</label>
+                            <select class="form-control" id="weekday" name="weekday"
+                                    {% if mode == "view" %}disabled="disabled"{% endif %} required>
+                                {% for weekday in tag|weekdays %}
+                                    {% if weekday == lesson.weekDay %}
+                                        <option selected>{{ weekday }}</option>
+                                    {% else %}
+                                        <option>{{ weekday }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group col-sm-6">
+                        </div>
+                        <div class="form-group col-sm-6">
+                            <label for="starTime">Start Time</label>
+                            <input type="time" class="form-control" id="starTime"
+                                   value="{{ lesson.startTime|date:"H:i" }}" style="line-height: 20px;"
+                                   {% if mode == "view" %}readonly=""{% endif %} required>
+                        </div>
+                        <div class="form-group col-sm-6">
+                            <label for="endTime">End Time</label>
+                            <input type="time" class="form-control" id="endTime" value="{{ lesson.endTime|date:"H:i" }}"
+                                   style="line-height: 20px;" {% if mode == "view" %}readonly=""{% endif %} required>
+                        </div>
+                        <div class="form-group col-sm-6">
+                            <label for="startDate">Start Date</label>
+                            <input type="date" class="form-control" id="startDate"
+                                   value="{{ lesson.startDate|date:"Y-m-d" }}"
+                                   style="line-height: 20px;" {% if mode == "view" %}readonly=""{% endif %} required>
+                        </div>
+                        <div class="form-group col-sm-6">
+                            <label for="endDate">End Date</label>
+                            <input type="date" class="form-control" id="endDate"
+                                   value="{{ lesson.endDate|date:"Y-m-d" }}"
+                                   style="line-height: 20px;" {% if mode == "view" %}readonly=""{% endif %}>
+                        </div>
+                        <div class="form-group mb-0 col-sm-6">
+                            <label for="student">Student</label>
+                            <select class="form-control choicesjs" id="student" disabled="" required>
+                                    <option value="{{ lesson.student }}">{{ lesson.student.student.get_full_name }}</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-0 col-sm-6">
+                            <label for="student">Teacher</label>
+                            <select class="form-control choicesjs" id="teacher" {% if mode == "view" %}disabled=""{% endif %} required>
+                                {% for u in users %}
+                                    {% if u.id == lesson.teacher %}
+                                        <option value="{{ u.id }}">{{ u.get_full_name }}</option>
+                                    {% else %}
+                                        <option value="{{ u.id }}">{{ u.get_full_name }}</option>
+                                    {% endif %}
+
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    {% if mode == 'view' %}
+                        <a href="/students/{{ lesson.student.id }}/{{ lesson.id }}?mode=edit"
+                           class="btn btn-outline-primary mt-5">Edit</a>
+                    {% else %}
+                        <a href="/students/{{ lesson.student.id }}/{{ lesson.id }}?mode=view"
+                           class="btn btn-outline-primary mr-2 mt-5">Cancel</a>
+                        <button type="submit" class="btn btn-primary mt-5">Save</button>
+                    {% endif %}
+                </form>
+            </div>
+
+        </div>
+    </div>
+{% endblock content %}

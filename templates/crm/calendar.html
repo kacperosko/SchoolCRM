@@ -1,0 +1,513 @@
+{% extends 'base/base.html' %}
+{% block title %}Calendar{% endblock title %}
+{% load crm_tags %}
+
+{% block style %}
+    <link rel="stylesheet" href="../../static/css/calendar.css">
+{% endblock style %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header justify-content-between">
+            <div class="header-title">
+                <h4 class="card-title">Calendar</h4>
+            </div>
+
+            <div class="my-3">
+                <button type="button" class="btn btn-primary rounded-pill mt-2" id="prevWeekBtn">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                         stroke="currentColor" class="w-6 h-6" width="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"/>
+                    </svg>
+                    Previous week
+                </button>
+                <button type="button" class="btn btn-primary rounded-pill mt-2 mx-1" id="todayBtn">Today</button>
+                <button type="button" class="btn btn-primary rounded-pill mt-2" id="nextWeekBtn">
+                    Next week
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                         stroke="currentColor" class="w-6 h-6" width="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/>
+
+
+                    </svg>
+
+                </button>
+            </div>
+            <div id="calendar-container" class="rm-weekly-schedule">
+                <div class="rmws-hour-labels">
+                    <div class="rmws-hour-label" style="height: 50px;"></div>
+                    <div class="rmws-hour-label" style="height: 40px;">0:00</div>
+                    <div class="rmws-hour-label" style="height: 40px;">1:00</div>
+                    <div class="rmws-hour-label" style="height: 40px;">2:00</div>
+                    <div class="rmws-hour-label" style="height: 40px;">3:00</div>
+                    <div class="rmws-hour-label" style="height: 40px;">4:00</div>
+                    <div class="rmws-hour-label" style="height: 40px;">5:00</div>
+                    <div class="rmws-hour-label" style="height: 40px;">6:00</div>
+                    <div class="rmws-hour-label" style="height: 40px;">7:00</div>
+                    <div class="rmws-hour-label" style="height: 40px;">8:00</div>
+                    <div class="rmws-hour-label" style="height: 40px;">9:00</div>
+                    <div class="rmws-hour-label" style="height: 40px;">10:00</div>
+                    <div class="rmws-hour-label" style="height: 40px;">11:00</div>
+                    <div class="rmws-hour-label" style="height: 40px;">12:00</div>
+                    <div class="rmws-hour-label" style="height: 40px;">13:00</div>
+                    <div class="rmws-hour-label" style="height: 40px;">14:00</div>
+                    <div class="rmws-hour-label" style="height: 40px;">15:00</div>
+                    <div class="rmws-hour-label" style="height: 40px;">16:00</div>
+                    <div class="rmws-hour-label" style="height: 40px;">17:00</div>
+                    <div class="rmws-hour-label" style="height: 40px;">18:00</div>
+                    <div class="rmws-hour-label" style="height: 40px;">19:00</div>
+                    <div class="rmws-hour-label" style="height: 40px;">20:00</div>
+                    <div class="rmws-hour-label" style="height: 40px;">21:00</div>
+                    <div class="rmws-hour-label" style="height: 40px;">22:00</div>
+                    <div class="rmws-hour-label" style="height: 40px;">23:00</div>
+                </div>
+                <div class="rmws-days">
+                    {% for day in tag|weekdays %}
+                        <div class="rmws-day">
+                            <div class="rmws-date-label">DATE</div>
+                            <div class="rmws-day-label">{{ day }}</div>
+                            <div class="rmws-slots">
+                                {% for foo in '123456789012345678921234'|make_list %} {# loop  24 times #}
+                                    <div class="rmws-slot" onclick="addOnCalendar(event)" type="button"
+                                         data-toggle="modal"
+                                         data-target="#exampleModal"></div>
+                                    <div class="rmws-slot"
+                                         onclick=""></div>
+                                    <div class="rmws-slot"></div>
+                                    <div class="rmws-slot"
+                                         style="border-bottom-width: 1px; border-bottom-style: solid; border-bottom-color: rgb(208, 208, 208);"></div>
+                                {% endfor %}
+
+                                <div class="rmws-event rmws-event-completed"
+                                     style="top: calc((12*60 + 20 )/15 * 10px); height: 69px; cursor: default;">
+                                    <div class="rmws-time">0:00—1:45</div>
+                                    Kamil pianino
+
+                                    <div style="top: 0; right: 0; margin-right: 5px; margin-top: -5px;font-size: 20px; cursor: pointer"
+                                         class="position-absolute event-menu">
+                                        {#                                         onclick="showHideMenu('menu_{{ day }}')">#}
+                                        ...
+                                        <div style="top: 0; right: 0; margin-right: 5px; margin-top: -5px; visibility: hidden"
+                                             class="position-absolute bg-white p-2 rounded-sm" id="menu_{{ day }}">
+                                            <a class="bg-red text-white p-1 rounded-sm">Cancel</a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Add New Event</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class=" row align-items-center">
+                            {#                        <div class="form-group col-sm-6">#}
+                            {#                            <label>Weekday:</label>#}
+                            {#                            <select class="form-control" id="weekday" name="weekday"#}
+                            {#                                    {% if mode == "view" %}disabled="disabled"{% endif %} required>#}
+                            {#                                {% for weekday in tag|weekdays %}#}
+                            {#                                    {% if weekday == lesson.weekDay %}#}
+                            {#                                        <option selected>{{ weekday }}</option>#}
+                            {#                                    {% else %}#}
+                            {#                                        <option>{{ weekday }}</option>#}
+                            {#                                    {% endif %}#}
+                            {#                                {% endfor %}#}
+                            {#                            </select>#}
+                            {#                        </div>#}
+                            {#                        <div class="form-group col-sm-6">#}
+                            {#                        </div>#}
+                            <div class="form-group col-sm-6">
+                                <label for="starTime">Start Time</label>
+                                <input type="time" class="form-control" id="starTime"
+                                       value="{{ lesson.startTime|date:"H:i" }}" style="line-height: 20px;"
+                                       required>
+                            </div>
+                            <div class="form-group col-sm-6">
+                                <label for="endTime">End Time</label>
+                                <input type="time" class="form-control" id="endTime"
+                                       value="{{ lesson.endTime|date:"H:i" }}"
+                                       style="line-height: 20px;" required>
+                            </div>
+                            <div class="form-group col-sm-6">
+                                <label for="startDate">Start Date</label>
+                                <input type="date" class="form-control" id="startDate"
+                                       value="{{ lesson.startDate|date:"Y-m-d" }}"
+                                       style="line-height: 20px;" required>
+                            </div>
+                            <div class="form-group col-sm-6">
+                                <label for="endDate">End Date</label>
+                                <input type="date" class="form-control" id="endDate"
+                                       value="{{ lesson.endDate|date:"Y-m-d" }}"
+                                       style="line-height: 20px;">
+                            </div>
+                            <div class="form-group mb-0 col-sm-6">
+                                <label for="student">Student</label>
+                                <select class="form-control choicesjs" id="student" required>
+                                    <option value="{{ lesson.student }}">dpa</option>
+                                </select>
+                            </div>
+                            <div class="form-group mb-0 col-sm-6">
+                                <label for="student">Teacher</label>
+                                <select class="form-control choicesjs" id="teacher" required>
+                                    {% for u in users %}
+                                        {% if u.id == lesson.teacher %}
+                                            <option value="{{ u.id }}">{{ u.get_full_name }}</option>
+                                        {% else %}
+                                            <option value="{{ u.id }}">{{ u.get_full_name }}</option>
+                                        {% endif %}
+
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <a href="/students/{{ lesson.student.id }}/{{ lesson.id }}?mode=view"
+                           class="btn btn-outline-primary mr-2 mt-5">Cancel</a>
+                        <button type="submit" class="btn btn-primary mt-5">Save</button>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog"
+         aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalCenterTitle">Do You want to cancel this lesson?</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="post">
+                    <div class="modal-body">
+                        <p class="mt-2">
+
+
+                        </p>
+
+                        {% csrf_token %}
+                        <div class=" row align-items-center">
+                            <div class="form-group col-sm-6">
+                                <label for="starTime_cancelForm">Start Time</label>
+                                <input name="startTime" type="time" class="form-control" id="starTime_cancelForm"
+                                       value="" style="line-height: 20px;"
+                                       required readonly="">
+                            </div>
+                            <div class="form-group col-sm-6">
+                                <label for="endTime_cancelForm">End Time</label>
+                                <input name="endTime" type="time" class="form-control" id="endTime_cancelForm"
+                                       value=""
+                                       style="line-height: 20px;" required readonly="">
+                            </div>
+                            <div class="form-group col-sm-6">
+                                <label for="lessonDate_cancelForm">Lesson Date</label>
+                                <input name="lessonDate" type="date" class="form-control" id="lessonDate_cancelForm"
+                                       value=""
+                                       style="line-height: 20px;" required readonly="">
+                            </div>
+                            <div class="form-group mb-0 col-sm-6">
+                                <label for="studentForm_cancelForm">Student</label>
+                                <input class="form-control" id="studentForm_cancelForm" required readonly="">
+                            </div>
+                            <div class="form-group col-sm-6" hidden="">
+                                <label for="originalDate_cancelForm">original_date</label>
+                                <input name="originalDate" type="date" class="form-control" id="originalDate_cancelForm"
+                                       value=""
+                                       style="line-height: 20px;" readonly="">
+                            </div>
+                            <div class="form-group col-sm-6" hidden="">
+                                <label for="lessonSchedule_cancelForm">lessonSchedule</label>
+                                <input name="lessonSchedule" type="text" class="form-control"
+                                       id="lessonSchedule_cancelForm"
+                                       value=""
+                                       style="line-height: 20px;" readonly="">
+                            </div>
+                            <div class="form-group col-sm-6" hidden="">
+                                <label for="status_cancelForm">lessonSchedule</label>
+                                <input name="status" type="text" class="form-control" id="status_cancelForm"
+                                       value=""
+                                       style="line-height: 20px;" readonly="">
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+                        <button type="submit" class="btn btn-danger">Yes, Cancel Lesson</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+{% block javascript %}
+
+    <script>
+        function addOnCalendar(event) {
+            var clickedElement = event.target;
+            var parentElement = clickedElement.parentElement;
+            var children = Array.from(parentElement.children);
+            var childIndex = children.indexOf(clickedElement);
+            console.log("Clicked on child #" + (childIndex + 1));
+        }
+
+        function cancelEvent(lesson_schedule_id, startTime, endTime, lessonDate, studentName) {
+            let startTime_form = document.getElementById('starTime_cancelForm');
+            let endTime_form = document.getElementById('endTime_cancelForm');
+            let lessonDate_form = document.getElementById('lessonDate_cancelForm');
+            let originalDate_form = document.getElementById('originalDate_cancelForm');
+            let lessonSchedule_form = document.getElementById('lessonSchedule_cancelForm');
+            let student_form = document.getElementById('studentForm_cancelForm');
+            let status_form = document.getElementById('status_cancelForm');
+
+            console.log(arguments);
+
+            startTime_form.value = startTime;
+            endTime_form.value = endTime;
+            lessonDate_form.value = lessonDate;
+            lessonSchedule_form.value = lesson_schedule_id;
+            student_form.value = studentName;
+            originalDate_form.value = lessonDate;
+            status_form.value = 'Canceled';
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // Function to update dates based on the current week
+            function updateToCurrentWeek() {
+                // Clear the calendar first
+                clearCalendar();
+
+                var today = new Date();
+
+                // Adjust to consider Monday as the first day of the week
+                var firstDayOfWeek = 1; // 0: Sunday, 1: Monday, ..., 6: Saturday
+                var todayDay = (today.getDay() + 7 - firstDayOfWeek) % 7;
+
+                // Calculate the starting date of the current week
+                startDate = new Date(today);
+                startDate.setDate(startDate.getDate() - todayDay); // Set to Monday of the current week
+
+                // Update date labels
+                updateDates(startDate);
+                // Add dynamic lessons
+                addDynamicLessons();
+            }
+
+            // Function to clear the calendar
+            function clearCalendar() {
+                let lessonElements = document.querySelectorAll('.rmws-event');
+                lessonElements.forEach(function (element) {
+                    console.log('removing -> ' + element.id)
+                    element.remove();
+                });
+            }
+
+            // Function to update the date labels
+            function updateDates(startDate) {
+                var dateLabels = document.querySelectorAll('.rmws-date-label');
+                dateLabels.forEach(function (label, index) {
+                    var date = new Date(startDate);
+                    date.setDate(startDate.getDate() + index);
+                    label.textContent = formatDate(date);
+                });
+            }
+
+            // Function to format the date as "YYYY-MM-DD"
+            function formatDate(date) {
+                var year = date.getFullYear();
+                var month = (date.getMonth() + 1).toString().padStart(2, '0');
+                var day = date.getDate().toString().padStart(2, '0');
+                return year + '-' + month + '-' + day;
+            }
+
+
+            function addDynamicLessons() {
+                var lessons = JSON.parse('{{lessons|jsonify}}');
+                var weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                var startDate = new Date(document.querySelector('.rmws-date-label').textContent);
+                var endDate = new Date(startDate);
+                endDate.setDate(endDate.getDate() + 6); // Set endDate to the end of the week
+                var today = new Date(); // Get today's date
+
+                console.log('Lessons:', lessons);
+                console.log('Start Date:', startDate);
+                console.log('End Date:', endDate);
+
+                lessons.forEach(function (lesson) {
+                    // Convert lesson start and end time to minutes
+                    var startTime = lesson.startTime.split(':');
+                    var endTime = lesson.endTime.split(':');
+                    var startMinutes = parseInt(startTime[0]) * 60 + parseInt(startTime[1]);
+                    var endMinutes = parseInt(endTime[0]) * 60 + parseInt(endTime[1]);
+
+                    // Calculate duration of lesson in minutes
+                    var durationMinutes = endMinutes - startMinutes;
+
+                    // Find the index of the lesson's week day in the weekDays array
+                    var lessonWeekDayIndex = weekDays.indexOf(lesson.weekDay);
+                    console.log('Processing lesson:', lesson);
+
+                    if (lessonWeekDayIndex !== -1) {
+                        // Calculate the date of the lesson in the current week
+                        var lessonDate = new Date(startDate);
+                        lessonDate.setDate(startDate.getDate() + lessonWeekDayIndex);
+
+                        // Check if the lesson is within the current selected week
+                        var isWithinWeek = (new Date(lesson.startDate) <= endDate) && (lesson.endDate === null || new Date(lesson.endDate) >= startDate);
+                        if (isWithinWeek) {
+                            // Create lesson element and set its position and duration
+                            var lessonElement = document.createElement('div');
+                            lessonElement.classList.add('rmws-event');
+                            lessonElement.id = 'lesson_' + lesson.id + '_' + formatDate(lessonDate); // Set ID using lesson ID and date from JSON
+                            lessonElement.style.top = 'calc(' + (startMinutes / 15) * 10 + 'px)';
+                            lessonElement.style.height = durationMinutes / 15 * 10 + 'px';
+                            lessonElement.innerHTML = '<div class="rmws-time">' + lesson.startTime + '—' + lesson.endTime + '</div>' +
+                                lesson.student +
+                                '<div style="top: 0; right: 0; margin-right: 5px; margin-top: -5px;font-size: 20px; cursor: pointer" class="position-absolute event-menu">' +
+                                '...' +
+                                '<div style="top: 0; right: 0; margin-top: 15px" class="position-absolute bg-white p-2 rounded-sm event-menu-expand">' +
+                                '<a class="bg-red text-white p-1 rounded-sm font-size-12 menu-button text-center"  type="button" data-toggle="modal" data-target="#exampleModalCenter"' +
+                                'onclick="cancelEvent(\'' + lesson.id + '\',\'' + lesson.startTime + '\',\'' + lesson.endTime + '\',\'' + lessonDate.toISOString().slice(0, 10) + '\',\'' + lesson.student + '\')">Cancel</a>' +
+                                '<a class="bg-blue text-white p-1 rounded-sm font-size-12 menu-button text-center">Edit</a>' +
+                                '</div>' +
+                                '</div>' +
+                                '</div>';
+
+                            // Add the appropriate class based on the date
+                            if (lessonDate > today) {
+                                lessonElement.classList.add('rmws-event-pending');
+                            } else {
+                                lessonElement.classList.add('rmws-event-completed');
+                            }
+
+                            // Add the lesson element to the correct weekday container
+                            var weekdayContainer = document.querySelectorAll('.rmws-day')[lessonWeekDayIndex];
+                            weekdayContainer.querySelector('.rmws-slots').appendChild(lessonElement);
+
+                            console.log('Added lesson:', lesson);
+                        }
+                    }
+                    if (lesson.adjustments && lesson.adjustments.length > 0) {
+                        lesson.adjustments.forEach(function (adjustment) {
+                            console.log('Processing adjustment:', adjustment);
+                            // Convert adjustment start and end time to minutes
+                            var adjStartTime = adjustment.startTime.split(':');
+                            var adjEndTime = adjustment.endTime.split(':');
+                            var adjStartMinutes = parseInt(adjStartTime[0]) * 60 + parseInt(adjStartTime[1]);
+                            var adjEndMinutes = parseInt(adjEndTime[0]) * 60 + parseInt(adjEndTime[1]);
+
+                            // Calculate duration of adjustment in minutes
+                            var adjDurationMinutes = adjEndMinutes - adjStartMinutes;
+
+                            // Calculate the date of the adjustment in the current week
+                            var adjustmentDate = new Date(adjustment.lessonDate);
+
+                            if (adjustmentDate >= startDate && adjustmentDate <= endDate) {
+                                console.log('withinWeek TRUE')
+                                // Create adjustment element and set its position and duration
+                                var adjustmentElement = document.createElement('div');
+                                adjustmentElement.classList.add('rmws-event');
+                                adjustmentElement.id = 'adjustment_' + adjustment.id + '_' + formatDate(adjustmentDate); // Set ID using adjustment ID and date from JSON
+                                adjustmentElement.style.top = 'calc(' + (adjStartMinutes / 15) * 10 + 'px)';
+                                adjustmentElement.style.height = adjDurationMinutes / 15 * 10 + 'px';
+                                adjustmentElement.innerHTML = '<div class="rmws-time">' + adjustment.startTime + '—' + adjustment.endTime + '</div>' +
+                                    lesson.student +
+                                    '<div style="top: 0; right: 0; margin-right: 5px; margin-top: -5px;font-size: 20px; cursor: pointer" class="position-absolute event-menu">' +
+                                    '...' +
+                                    '<div style="top: 0; right: 0; margin-top: 15px" class="position-absolute bg-white p-2 rounded-sm event-menu-expand">' +
+                                    '<a class="bg-green text-white p-1 rounded-sm font-size-12 menu-button text-center"'+
+                                    'onclick="" >Uncancel</a>' +
+                                    '<a class="bg-blue text-white p-1 rounded-sm font-size-12 menu-button text-center">Edit</a>' +
+                                    '</div>' +
+                                    '</div>' +
+                                    '</div>';
+
+                                // Add the appropriate class based on the date
+                                if (adjustment.status === 'Canceled') {
+                                    adjustmentElement.classList.add('rmws-event-canceled');
+                                } else {
+                                    if (adjustmentDate > today) {
+                                        adjustmentElement.classList.add('rmws-event-pending');
+                                    } else {
+                                        adjustmentElement.classList.add('rmws-event-completed');
+                                    }
+                                }
+
+
+                                // Add the adjustment element to the correct weekday container
+                                console.log('adjustmentDate.getDay() -> ' + adjustmentDate.getDay());
+                                let adjustmentWeekdayIndex = adjustmentDate.getDay()
+                                if (adjustmentWeekdayIndex === 0) {
+                                    adjustmentWeekdayIndex = 6
+                                } else {
+                                    adjustmentWeekdayIndex--;
+                                }
+                                console.log('adjustmentWeekdayIndex -> ' + adjustmentWeekdayIndex);
+                                var weekdayContainer = document.querySelectorAll('.rmws-day')[adjustmentWeekdayIndex]; // Get the weekday container using the adjustment date
+                                weekdayContainer.querySelector('.rmws-slots').appendChild(adjustmentElement);
+
+                                console.log('Added adjustment:', adjustment);
+
+                                // Remove old lesson schedule element
+                                var oldLessonElementId = 'lesson_' + adjustment.lessonScheduleId + '_' + adjustment.originalLessonDate;
+                                var oldLessonElement = document.getElementById(oldLessonElementId);
+                                if (oldLessonElement) {
+                                    oldLessonElement.remove();
+                                    console.log('Removed old lesson:', oldLessonElementId);
+                                }
+                            }
+                        });
+                    }
+                });
+            }
+
+
+            // Initialize to current week
+            var startDate;
+            updateToCurrentWeek();
+
+            // Today button click event
+            document.getElementById('todayBtn').addEventListener('click', function () {
+                updateToCurrentWeek();
+            });
+
+            // Previous week button click event
+            document.getElementById('prevWeekBtn').addEventListener('click', function () {
+                clearCalendar();
+                startDate.setDate(startDate.getDate() - 7);
+                updateDates(startDate);
+                addDynamicLessons();
+            });
+
+            // Next week button click event
+            document.getElementById('nextWeekBtn').addEventListener('click', function () {
+                clearCalendar();
+                startDate.setDate(startDate.getDate() + 7);
+                updateDates(startDate);
+                addDynamicLessons();
+            });
+
+        });
+    </script>
+
+{% endblock javascript %}
