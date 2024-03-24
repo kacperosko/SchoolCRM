@@ -27,5 +27,12 @@ class LessonForm(forms.Form):
     endTime = forms.TimeField()
     lessonDate = forms.DateField()
     originalDate = forms.DateField()
-    lessonSchedule = forms.CharField()
+    lessonId = forms.CharField()
     status = forms.CharField()
+    isAdjustment = forms.BooleanField(required=False)
+
+
+class LessonPlanForm(forms.Form):
+    lessonId = forms.CharField()
+    status = forms.CharField()
+    isAdjustment = forms.BooleanField(required=False)

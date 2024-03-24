@@ -1,46 +1,60 @@
 {% extends 'base/base.html' %}
+
+{% block style %}
+    <style>
+        .details {
+        {#display: none;#} max-height: 0px;
+            overflow: hidden;
+            transition: all 0.5s ease;
+        }
+    </style>
+{% endblock style %}
 {% block content %}
-{% load crm_tags %}
+    {% load crm_tags %}
 
     <div class="card">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="/students"><i
-                        class="ri-home-4-line mr-1 float-left"></i>Students</a></li>
+                        class="ri-home-4-line mr-1 float-left"></i>Studenci</a></li>
                 <li class="breadcrumb-item active"
-                    aria-current="page">{{ student.student.firstName }} {{ student.student.lastName }}</li>
+                    aria-current="page">{{ student.student.get_full_name }}
+                </li>
             </ol>
         </nav>
         <div class="card-body">
             <ul class="nav nav-tabs" id="myTab-1" role="tablist">
                 <li class="nav-item">
-                    <a class="nav-link active" id="home-tab" data-toggle="tab" href="#details" role="tab"
-                       aria-controls="details"
-                       aria-selected="true">Details</a>
+                    <a class="nav-link {% if request.GET.tab == 'Details' %}active{% endif %}" id="home-tab"
+                       data-toggle="tab" href="#details" role="tab"
+                       aria-controls="details" aria-selected="true" onclick="addParamToURL('Details')">Szczegóły</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" id="lessons-tab" data-toggle="tab" href="#lessons" role="tab"
-                       aria-controls="lessons" aria-selected="false">Lessons</a>
+                    <a class="nav-link {% if request.GET.tab == 'Lessons' %}active{% endif %}" id="lessons-tab"
+                       data-toggle="tab" href="#lessons" role="tab"
+                       aria-controls="lessons" aria-selected="false" onclick="addParamToURL('Lessons')">Lekcje</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" id="contact-tab" data-toggle="tab" href="#contact" role="tab"
-                       aria-controls="contact" aria-selected="false">Contact</a>
+                    <a class="nav-link {% if request.GET.tab == 'Contact' %}active{% endif %}" id="contact-tab"
+                       data-toggle="tab" href="#contact" role="tab"
+                       aria-controls="contact" aria-selected="false" onclick="addParamToURL('Contact')">Contact</a>
                 </li>
             </ul>
             <div class="tab-content" id="myTabContent-2">
-                <div class="tab-pane fade show active" id="details" role="tabpanel" aria-labelledby="details-tab">
+                <div class="tab-pane fade {% if request.GET.tab == 'Details' %}show active{% endif %}" id="details"
+                     role="tabpanel" aria-labelledby="details-tab">
 
                     <form>
                         <div class=" row align-items-center">
                             <div class="form-group col-sm-6">
-                                <label for="fname">First Name:</label>
+                                <label for="fname">Imię:</label>
                                 <input type="text" class="form-control" readonly="" id="fname"
-                                       value="{{ student.student.firstName }}">
+                                       value="{{ student.student.first_name }}">
                             </div>
                             <div class="form-group col-sm-6">
-                                <label for="lname">Last Name:</label>
+                                <label for="lname">Nazwisko:</label>
                                 <input type="text" class="form-control" readonly="" id="lname"
-                                       value="{{ student.student.lastName }}">
+                                       value="{{ student.student.last_name }}">
                             </div>
                             <div class="form-group col-sm-6">
                                 <label for="uemail">Email:</label>
@@ -48,83 +62,103 @@
                                        value="{{ student.student.email }}">
                             </div>
                             <div class="form-group col-sm-6">
-                                <label for="uphone">Phone:</label>
+                                <label for="uphone">Telefon:</label>
                                 <input type="text" class="form-control" readonly="" id="uphone"
                                        value="{{ student.student.phone|default_if_none:"" }}">
                             </div>
-                            <div class="form-group col-sm-6">
-                                <label for="dob">Date Of Birth:</label>
-                                <input class="form-control" readonly="" id="dob"
-                                       value="{{ student.student.birthdate|date:"d-m-Y" }}">
-                            </div>
+                            {#                            <div class="form-group col-sm-6">#}
+                            {#                                <label for="dob">Date Of Birth:</label>#}
+                            {#                                <input class="form-control" readonly="" id="dob"#}
+                            {#                                       value="{{ student.student.birthdate|date:"d-m-Y" }}">#}
+                            {#                            </div>#}
                         </div>
                         <button type="reset" class="btn btn-outline-primary mr-2 mt-5">Cancel</button>
                         <button type="submit" class="btn btn-primary mt-5">Submit</button>
                     </form>
                 </div>
 
-                <div class="tab-pane fade" id="lessons" role="tabpanel" aria-labelledby="lessons-tab">
+                <div class="tab-pane fade {% if request.GET.tab == 'Lessons' %}show active{% endif %}" id="lessons"
+                     role="tabpanel" aria-labelledby="lessons-tab">
                     <div class="table-responsive">
-                        <table class="table">
+                        <table class="table table-bordered table-striped">
                             <thead>
                             <tr>
-                                <th scope="col" class="text-center">Month</th>
-                                <th scope="col" class="text-center">Pending</th>
-                                <th scope="col" class="text-center">Completed</th>
-                                <th scope="col" class="text-center">Canceled</th>
-                                <th scope="col" class="text-center">Summary</th>
+                                <th scope="col" class="text-center">Miesiąc</th>
+                                <th scope="col" class="text-center">Zaplanowane</th>
+                                {#                                <th scope="col" class="text-center">Completed</th>#}
+                                <th scope="col" class="text-center">Odwołane</th>
+                                {#                                <th scope="col" class="text-center">Summary</th>#}
                             </tr>
                             </thead>
                             <tbody>
                             {% for month_number, statutes in months_counter.items %}
                                 <tr>
-                                    <th scope="row" class="text-center">{{ month_number|get_month_name }}</th>
-                                    <td class="text-secondary text-center">{{ statutes.Pending }}</td>
-                                    <td class="text-success text-center">{{ statutes.Completed }}</td>
+                                    <th scope="row" class="text-center"
+                                        onclick="toggleDetails(this)">
+                                        <a type="button" href="" class="" data-toggle="collapse"
+                                           onclick="addMonthToURL({{ month_number }})"
+                                           data-target="#collapseme{{ month_number }}">{{ month_number|get_month_name }}
+                                        </a>
+                                    </th>
+                                    <td class="text-center">{{ statutes.Planned }}</td>
+                                    {#                                    <td class="text-success text-center">{{ statutes.Completed }}</td>#}
                                     <td class="text-warning text-center">{{ statutes.Canceled }}</td>
-                                    <td class="text-center">{{ statutes.Summary }}</td>
+                                    {#                                    <td class="text-center">{{ statutes.Summary }}</td>#}
+                                </tr>
+                                <tr>
+                                    <td class="p-0" colspan="3">
+                                        <div class="collapse in {% if month_number|ifinlist:request.GET.opened_months %}show{% endif %} "
+                                             id="collapseme{{ month_number }}">
+                                            <table class="table">
+                                                <thead>
+                                                {#                                                <tr class="bg-white">#}
+                                                {#                                                    <th scope="col" class="text-center">start_date</th>#}
+                                                {#                                                    <th scope="col" class="text-center">start_time</th>#}
+                                                {#                                <th scope="col" class="text-center">Completed</th>#}
+                                                {#                                                    <th scope="col" class="text-center">end_time</th>#}
+                                                {#                                <th scope="col" class="text-center">Summary</th>#}
+                                                {#                                                </tr>#}
+                                                </thead>
+                                                <tbody>
+
+                                                {% for key, lesson in statutes.Lessons.items %}
+                                                    <tr class="{% if lesson.status == 'Planned' %} bg-primary-light {% else %}bg-danger-light{% endif %}">
+                                                        <td>{{ lesson.start_date }} ({{ lesson.weekday }})</td>
+                                                        <td>{{ lesson.start_time }} - {{ lesson.end_time }}</td>
+                                                        <td>
+                                                            <a class="bg-blue text-white p-1 rounded-sm font-size-12 menu-button text-center"
+                                                               type="button" data-toggle="modal"
+                                                               data-target="#editEventModalCenter"
+                                                               onclick="modifyEvent('{{ lesson.lesson_id }}', '{{ lesson.start_time }}', '{{ lesson.end_time }}', '{{ lesson.start_date }}', '{{ student.student.get_full_name }}', 'Planned', '{{ lesson.is_adjustment }}', true)"
+                                                            >Edytuj</a>
+                                                            {% if lesson.status != 'Canceled' %}
+                                                                <a class="bg-red text-white p-1 rounded-sm font-size-12 menu-button text-center"
+                                                                   type="button" data-toggle="modal"
+                                                                   data-target="#editEventModalCenter"
+                                                                   onclick="modifyEvent('{{ lesson.lesson_id }}', '{{ lesson.start_time }}', '{{ lesson.end_time }}', '{{ lesson.start_date }}', '{{ student.student.get_full_name }}', 'Canceled', '{{ lesson.is_adjustment }}')"
+                                                                >Odwołaj</a>
+                                                            {% else %}
+                                                                <a class="bg-green text-white p-1 rounded-sm font-size-12 menu-button text-center"
+                                                                   type="button" data-toggle="modal"
+                                                                   data-target="#editEventModalCenter"
+                                                                   onclick="modifyEvent('{{ lesson.lesson_id }}', '{{ lesson.start_time }}', '{{ lesson.end_time }}', '{{ lesson.start_date }}', '{{ student.student.get_full_name }}', 'Planned', '{{ lesson.is_adjustment }}')"
+                                                                >Zaplanuj</a>
+                                                            {% endif %}
+
+                                                        </td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </table>
+                                        </div>
+                                    </td>
                                 </tr>
                             {% endfor %}
                             </tbody>
                         </table>
-                        {#                        <table id="datatable-1" class="table data-table table-striped table-bordered">#}
-                        {#                            <thead>#}
-                        {#                            <tr>#}
-                        {#                                <th>Weekday</th>#}
-                        {#                                <th>Time</th>#}
-                        {#                                <th>Teacher</th>#}
-                        {#                                <th>Start Date</th>#}
-                        {#                                <th>End Date</th>#}
-                        {#                            </tr>#}
-                        {#                            </thead>#}
-                        {#                            <tbody>#}
-                        {#                            {% for lesson in lessons %}#}
-                        {#                                <tr>#}
-                        {#                                    <td>#}
-                        {#                                        <a href="/students/{{ student.id }}/{{ lesson.id }}">{{ lesson.weekDay }}</a>#}
-                        {#                                    </td>#}
-                        {#                                    <td>{{ lesson.startTime|date:"H:i" }} - {{ lesson.endTime|date:"H:i" }}</td>#}
-                        {#                                    <td>{{ lesson.teacher.get_full_name }}</td>#}
-                        {#                                    <td>{{ lesson.startDate|date:"m-d-Y" }}</td>#}
-                        {#                                    <td>{{ lesson.endDate|date:"m-d-Y" }}</td>#}
-                        {##}
-                        {#                                </tr>#}
-                        {#                            {% endfor %}#}
-                        {##}
-                        {#                            </tbody>#}
-                        {#                            <tfoot>#}
-                        {#                            <tr>#}
-                        {#                                <th>Weekday</th>#}
-                        {#                                <th>Time</th>#}
-                        {#                                <th>Teacher</th>#}
-                        {#                                <th>Start Date</th>#}
-                        {#                                <th>End Date</th>#}
-                        {#                            </tr>#}
-                        {#                            </tfoot>#}
-                        {#                        </table>#}
                     </div>
                 </div>
-                <div class="tab-pane fade" id="contact" role="tabpanel" aria-labelledby="contact-tab">
+                <div class="tab-pane fade {% if request.GET.tab == 'Contact' %}show active{% endif %}" id="contact"
+                     role="tabpanel" aria-labelledby="contact-tab">
                     <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been
                         the
                         industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of
@@ -134,4 +168,207 @@
             </div>
         </div>
     </div>
+    <div class="modal fade" id="editEventModalCenter" tabindex="-1" role="dialog"
+         aria-labelledby="cancelModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cancelModalCenterTitle">Chcesz odwołać tę lekcję?</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="post" name="cancel_form" id="cancel_plan_form">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        {% csrf_token %}
+                        <div class=" row align-items-center">
+                            <div class="form-group col-sm-6">
+                                <label for="starTime_cancelForm">Godzina Rozpoczęcia</label>
+                                <input name="startTime" type="time" class="form-control" id="starTime_cancelForm"
+                                       value="" style="line-height: 20px;"
+                                       required readonly="">
+                            </div>
+                            <div class="form-group col-sm-6">
+                                <label for="endTime_cancelForm">Godzina Zakończenia</label>
+                                <input name="endTime" type="time" class="form-control" id="endTime_cancelForm"
+                                       value=""
+                                       style="line-height: 20px;" required readonly="">
+                            </div>
+                            <div class="form-group col-sm-6">
+                                <label for="lessonDate_cancelForm">Data Lekcji</label>
+                                <input name="lessonDate" type="date" class="form-control" id="lessonDate_cancelForm"
+                                       value=""
+                                       style="line-height: 20px;" required readonly="">
+                            </div>
+                            <div class="form-group mb-0 col-sm-6">
+                                <label for="studentForm_cancelForm">Student</label>
+                                <input class="form-control" id="studentForm_cancelForm" required readonly="">
+                            </div>
+                            <div class="form-group col-sm-6" hidden="">
+                                <label for="originalDate_cancelForm">original_date</label>
+                                <input name="originalDate" type="date" class="form-control" id="originalDate_cancelForm"
+                                       value=""
+                                       style="line-height: 20px;" readonly="">
+                            </div>
+                            <div class="form-group col-sm-6" hidden="">
+                                <label for="lessonSchedule_cancelForm">lessonSchedule</label>
+                                <input name="lessonId" type="text" class="form-control"
+                                       id="lessonId_cancelForm"
+                                       value=""
+                                       style="line-height: 20px;" readonly="">
+                            </div>
+                            <div class="form-group col-sm-6" hidden="">
+                                <label for="status_cancelForm">lessonSchedule</label>
+                                <input name="status" type="text" class="form-control" id="status_cancelForm"
+                                       value=""
+                                       style="line-height: 20px;" readonly="">
+                            </div>
+                            <div class="form-group col-sm-6" hidden="">
+                                <label for="status_cancelForm">isAdjustment</label>
+                                <input name="isAdjustment" type="checkbox" class="form-control"
+                                       id="isAdjustment_cancelForm"
+                                       style="line-height: 20px;" readonly="">
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Anuluj</button>
+                        <button name="plan_form_submit" id="cancel_form_btn_plan" type="submit" class="btn btn-success">
+                            Tak, Zaplanuj Lekcje
+                        </button>
+                        <button name="cancel_form_submit" id="cancel_form_btn_cancel" type="submit"
+                                class="btn btn-danger">Tak, Odwołaj Lekcje
+                        </button>
+                        <button name="edit_form_submit" id="cancel_form_btn_edit" type="submit"
+                                class="btn btn-primary">Zapisz Zmiany
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 {% endblock content %}
+
+{% block javascript %}
+    <script>
+        function modifyEvent(lesson_schedule_id, startTime, endTime, lessonDate, studentName, status, isAdjustment, is_edit = false) {
+            let startTime_form = document.getElementById('starTime_cancelForm');
+            let endTime_form = document.getElementById('endTime_cancelForm');
+            let lessonDate_form = document.getElementById('lessonDate_cancelForm');
+            let originalDate_form = document.getElementById('originalDate_cancelForm');
+            let lessonId_form = document.getElementById('lessonId_cancelForm');
+            let student_form = document.getElementById('studentForm_cancelForm');
+            let status_form = document.getElementById('status_cancelForm');
+            let btn_plan = document.getElementById('cancel_form_btn_plan');
+            let btn_cancel = document.getElementById('cancel_form_btn_cancel');
+            let btn_edit = document.getElementById('cancel_form_btn_edit');
+            let cancelModalCenterTitle = document.getElementById('cancelModalCenterTitle');
+            let isAdjustment_form = document.getElementById('isAdjustment_cancelForm');
+            const cancel_title = 'Chcesz odwołać tę lekcję?';
+            const plan_title = 'Chcesz zaplanować tę lekcję?';
+            const edit_title = 'Czy chcesz zedytować tę lekcje?';
+
+
+            console.log(arguments);
+            if (is_edit) {
+                btn_plan.style.display = 'none';
+                btn_cancel.style.display = 'none';
+                btn_edit.style.display = 'block';
+                cancelModalCenterTitle.innerHTML = edit_title;
+                startTime_form.readOnly = false;
+                endTime_form.readOnly = false;
+                lessonDate_form.readOnly = false;
+            } else {
+                btn_edit.style.display = 'none';
+                startTime_form.readOnly = true;
+                endTime_form.readOnly = true;
+                lessonDate_form.readOnly = true;
+                if (status === 'Canceled') {
+                    console.log('Status Canceled')
+                    btn_plan.style.display = 'none';
+                    btn_cancel.style.display = 'block';
+                    cancelModalCenterTitle.innerHTML = cancel_title;
+                } else {
+                    btn_plan.style.display = 'block';
+                    btn_cancel.style.display = 'none';
+                    cancelModalCenterTitle.innerHTML = plan_title;
+                }
+            }
+            let parts = lessonDate.split('-');
+            let day = parts[0];
+            let month = parts[1];
+            let year = parts[2];
+
+            // Utwórz obiekt Date z rozdzielonej daty
+            let dateObject = new Date(year, month - 1, day + 1);
+
+            // Uzyskaj wartość w formacie rok-miesiąc-dzień
+            let formattedDate = dateObject.toISOString().slice(0, 10);
+
+
+            startTime_form.value = startTime;
+            endTime_form.value = endTime;
+            lessonDate_form.value = year + '-' + month + '-' + day;
+            lessonId_form.value = lesson_schedule_id;
+            student_form.value = studentName;
+            originalDate_form.value = year + '-' + month + '-' + day;
+            status_form.value = status;
+            isAdjustment_form.checked = isAdjustment === 'True';
+        }
+
+        let opened_months = {{ request.GET.opened_months }};
+
+        function addMonthToURL(month_no) {
+            console.log(opened_months);
+            if (opened_months.includes(month_no)) {
+                const index = opened_months.indexOf(month_no);
+                opened_months = opened_months.splice(index, 1);
+            } else {
+                opened_months.push(month_no)
+            }
+
+            let currentURL = window.location.href;
+
+            // Utwórz nowy obiekt URLSearchParams z obecnego URL
+            let searchParams = new URLSearchParams(window.location.search);
+
+            // Dodaj parametr opened_months
+            searchParams.set('opened_months', opened_months);
+
+            // Utwórz nowy URL z dodanym parametrem
+            let newURL = currentURL.split('?')[0] + '?' + searchParams.toString();
+
+            // Zastąp obecny URL nowym URL z dodanym parametrem
+            window.history.replaceState({path: newURL}, '', newURL);
+        }
+
+        function addParamToURL(tab_name) {
+            const currentURL = window.location.href;
+            const searchParams = new URLSearchParams(window.location.search);
+
+            // Dodaj parametr tab_name
+            searchParams.set('tab', tab_name);
+
+            // Utwórz nowy URL z dodanym parametrem
+            const newURL = currentURL.split('?')[0] + '?' + searchParams.toString();
+
+            // Zastąp obecny URL nowym URL z dodanym parametrem
+            window.history.replaceState({path: newURL}, '', newURL);
+        }
+
+        function toggleDetails(element) {
+            let detailsRow = element.parentElement.nextElementSibling;
+            if (detailsRow.classList.contains('details')) {
+                if (detailsRow.style.maxHeight === 0) {
+                    {#detailsRow.style.display = 'table-row';#}
+                    detailsRow.style.maxHeight = 1000 + 'px';
+                } else {
+                    detailsRow.style.maxHeight = '0px';
+
+                }
+            }
+        }
+    </script>
+{% endblock javascript %}

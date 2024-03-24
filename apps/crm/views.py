@@ -1,15 +1,20 @@
+import time
+
 from django.shortcuts import render, redirect
 from django.views.generic import View, TemplateView
-from .models import Student, LessonSchedule, LessonAdjustment, Person
+from .models import Student, Lesson, LessonAdjustment, Person
 from django.core.serializers import serialize
 import json
 from django.contrib.auth import authenticate, login, logout
-from .forms import UserCreationForm, LoginForm, StudentForm, LessonForm
+from .forms import UserCreationForm, LoginForm, StudentForm, LessonForm, LessonPlanForm
 from .middleware.crm_middleware import login_exempt
 from django.contrib.auth.models import User
-import datetime
-from django.db.models import Q
+from datetime import datetime, timedelta, date, time
+from django.db.models import Q, Count
 from calendar import monthrange
+from collections import defaultdict
+from django.utils import timezone as dj_timezone
+from .lesson_handler import count_lessons_for_student_in_months, create_lesson_adjustment
 
 MODES = ['view', 'edit']
 
@@ -17,6 +22,7 @@ MODES = ['view', 'edit']
 # login page
 @login_exempt
 def user_login(request):
+    message = ''
     if request.method == 'POST':
         form = LoginForm(request.POST)
         if form.is_valid():
@@ -26,9 +32,13 @@ def user_login(request):
             if user:
                 login(request, user)
                 return redirect('/students')
+            else:
+                message = 'Username or password is incorrect'
+                print(message)
+                time.sleep(4)
     else:
         form = LoginForm()
-    return render(request, 'auth/auth-sign-in.html', {'form': form})
+    return render(request, 'auth/auth-sign-in.html', {'form': form, 'message': message})
 
 
 class CRMHomePage(View):
@@ -67,9 +77,10 @@ def calendar(request):
         form = LessonForm(request.POST)
         if form.is_valid():
             print(form)
-            lessonDate = datetime.datetime.strptime(str(form.cleaned_data['lessonDate']), "%Y-%m-%d").date()
+            lessonDate = datetime.strptime(str(form.cleaned_data['lessonDate']), "%Y-%m-%d").date()
             lesson = LessonAdjustment.objects.create(lessonSchedule_id=form.cleaned_data['lessonSchedule'],
-                                                     startTime=form.cleaned_data['startTime'], endTime=form.cleaned_data['endTime'],
+                                                     startTime=form.cleaned_data['startTime'],
+                                                     endTime=form.cleaned_data['endTime'],
                                                      lessonDate=lessonDate,
                                                      originalLessonDate=lessonDate, status=form.cleaned_data['status'])
             print('lesson created ->', lesson.id)
@@ -77,7 +88,7 @@ def calendar(request):
         else:
             print('ERROR FORM', form.errors)
 
-    lessons = LessonSchedule.objects.filter(teacher=request.user)
+    lessons = Lesson.objects.filter(teacher=request.user)
 
     # Fetch lesson adjustments associated with fetched lessons
     lesson_adjustments = LessonAdjustment.objects.filter(lessonSchedule__in=lessons)
@@ -128,10 +139,10 @@ def calendar(request):
 def generate_series(lesson_schedule, lesson_adjustments: LessonAdjustment, year, return_type):
     generated_lessons = {}
     months_counter = {month: {'Pending': 0, 'Completed': 0, 'Canceled': 0, 'Summary': 0} for month in range(1, 13)}
-    today = datetime.datetime.now()
+    today = datetime.now()
 
     start_year = lesson_schedule.startDate.year
-    end_year = lesson_schedule.endDate.year if lesson_schedule.endDate else datetime.date.today().year
+    end_year = lesson_schedule.endDate.year if lesson_schedule.endDate else date.today().year
     for target_year in range(start_year, end_year + 1):
         if target_year == int(year):
             start_month = lesson_schedule.startDate.month if target_year == start_year else 1
@@ -142,13 +153,13 @@ def generate_series(lesson_schedule, lesson_adjustments: LessonAdjustment, year,
                 # months_counter[month] = {}
 
                 for day in range(1, num_days + 1):
-                    current_date = datetime.date(target_year, month, day)
+                    current_date = date(target_year, month, day)
                     if lesson_schedule.startDate <= current_date <= (lesson_schedule.endDate or current_date):
                         weekday = current_date.strftime('%A')
                         if lesson_schedule.weekDay == weekday:
-                            current_datetime = datetime.datetime.combine(current_date,
-                                                                         datetime.time(lesson_schedule.startTime.hour,
-                                                                                       lesson_schedule.startTime.minute))
+                            current_datetime = datetime.combine(current_date,
+                                                                time(lesson_schedule.startTime.hour,
+                                                                     lesson_schedule.startTime.minute))
                             if current_datetime <= today:
                                 status = 'Completed'
                             else:
@@ -169,9 +180,9 @@ def generate_series(lesson_schedule, lesson_adjustments: LessonAdjustment, year,
 
     for lesson_adjustment in lesson_adjustments:
         if lesson_adjustment.originalLessonDate.strftime('%d-%m-%Y') in generated_lessons:
-            current_datetime = datetime.datetime.combine(lesson_adjustment.originalLessonDate,
-                                                         datetime.time(lesson_adjustment.lessonSchedule.startTime.hour,
-                                                                       lesson_adjustment.lessonSchedule.startTime.minute))
+            current_datetime = datetime.combine(lesson_adjustment.originalLessonDate,
+                                                time(lesson_adjustment.lessonSchedule.startTime.hour,
+                                                     lesson_adjustment.lessonSchedule.startTime.minute))
             if current_datetime <= today:
                 status = 'Completed'
             else:
@@ -183,9 +194,9 @@ def generate_series(lesson_schedule, lesson_adjustments: LessonAdjustment, year,
             if lesson_adjustment.status == 'Canceled':
                 status = lesson_adjustment.status
             else:
-                current_datetime = datetime.datetime.combine(lesson_adjustment.lessonDate,
-                                                             datetime.time(lesson_adjustment.startTime.hour,
-                                                                           lesson_adjustment.startTime.minute))
+                current_datetime = datetime.combine(lesson_adjustment.lessonDate,
+                                                    time(lesson_adjustment.startTime.hour,
+                                                         lesson_adjustment.startTime.minute))
                 if current_datetime <= today:
                     status = 'Completed'
                 else:
@@ -214,27 +225,77 @@ def generate_series(lesson_schedule, lesson_adjustments: LessonAdjustment, year,
 
 def student_page(request, student_id):
     context = {}
-    today = datetime.datetime.now()
+    today = datetime.now()
+    tab_name = request.GET.get("tab", "Details")
+    opened_months = request.GET.get("opened_months", "")
+
+    if not request.GET._mutable:
+        request.GET._mutable = True
+
+    request.GET['tab'] = tab_name
+    request.GET['opened_months'] = opened_months
+    if request.method == 'POST':
+        if 'cancel_form_submit' in request.POST:
+            print('cancel_form')
+            form = LessonForm(request.POST)
+            print(form)
+            if form.is_valid():
+                if form.cleaned_data['isAdjustment']:
+                    print('isAdjustment')
+                    leson_adjustment = LessonAdjustment.objects.get(id=form.cleaned_data['lessonId'])
+                    leson_adjustment.status = form.cleaned_data['status']
+
+                    leson_adjustment.save()
+                    print('lesson adjustment canceled')
+                else:
+                    print('NOT isAdjustment ')
+                    create_lesson_adjustment(form)
+                    # print('lesson created ->', lesson_adjustment.id)
+                return redirect(f'/students/{student_id}?tab={tab_name}&opened_months={opened_months}')
+            else:
+                print('ERROR FORM', form.errors)
+        elif 'edit_form_submit' in request.POST:
+            form = LessonForm(request.POST)
+            if form.is_valid():
+                if form.cleaned_data['isAdjustment']:
+                    create_lesson_adjustment(form, is_edit=True)
+                else:
+                    create_lesson_adjustment(form)
+
+                return redirect(f'/students/{student_id}?tab={tab_name}&opened_months={opened_months}')
+        else:
+            form = LessonPlanForm(request.POST)
+            if form.is_valid():
+                leson_adjustment = LessonAdjustment.objects.get(id=form.cleaned_data['lessonId'])
+                leson_adjustment.status = form.cleaned_data['status']
+
+                leson_adjustment.save()
+                print('lesson adjustment updated')
+                return redirect(f'/students/{student_id}?tab={tab_name}&opened_months={opened_months}')
 
     student = Student.objects.get(student_id=student_id)
     context['student'] = student
     #
     # Get lessons for the current year
-    lessons = LessonSchedule.objects.filter(student_id=student_id, startDate__year=today.year)
-    lesson_adjustments = LessonAdjustment.objects.filter(lessonSchedule__in=lessons)
+    lessons = Lesson.objects.filter(student_id=student_id, start_time__year=today.year)
+    lesson_adjustments = LessonAdjustment.objects.filter(lesson__in=lessons)
     months_counter = {month: {'Pending': 0, 'Completed': 0, 'Canceled': 0, 'Summary': 0} for month in range(1, 13)}
+    print(months_counter)
 
-    for lesson in lessons:
-        temp_dict = generate_series(lesson, lesson_adjustments.filter(lessonSchedule=lesson), 2024, 'counter')
-        for key in temp_dict:
-            if key in months_counter:
-                months_counter[key] = {k: months_counter[key][k] + temp_dict[key].get(k, 0) for k in
-                                       months_counter[key]}
-            else:
-                months_counter[key] = temp_dict[key]
+    lessons_count_in_2024 = count_lessons_for_student_in_months(student_id, 2024)
+    print('lessons_count_in_2024')
+    print(lessons_count_in_2024)
+    # for lesson in lessons:
+    #     temp_dict = generate_series(lesson, lesson_adjustments.filter(lessonSchedule=lesson), 2024, 'counter')
+    #     for key in temp_dict:
+    #         if key in months_counter:
+    #             months_counter[key] = {k: months_counter[key][k] + temp_dict[key].get(k, 0) for k in
+    #                                    months_counter[key]}
+    #         else:
+    #             months_counter[key] = temp_dict[key]
 
-    print('final', months_counter)
-    context['months_counter'] = months_counter
+    # print('final', months_counter)
+    context['months_counter'] = lessons_count_in_2024
 
     return render(request, "crm/student-page.html", context)
 
@@ -245,7 +306,7 @@ def create_student(request):
     if request.method == 'POST':
         form = StudentForm(request.POST)
         if form.is_valid():
-            first_name = form.cleaned_data['first_name']
+            first_name = form.cleaned_data['sfirst_name']
             last_name = form.cleaned_data['last_name']
             email = form.cleaned_data['email']
             if 'phone' in form.cleaned_data:
@@ -271,7 +332,7 @@ def lesson_page(request, student_id, lesson_id):
     if mode not in MODES:
         return redirect(f'/students/{student_id}/{lesson_id}?mode=view')
     context = {}
-    context['lesson'] = LessonSchedule.objects.get(id=lesson_id)
+    context['lesson'] = Lesson.objects.get(id=lesson_id)
     context['students'] = Student.objects.all()
     context['users'] = User.objects.all()
     context['mode'] = mode

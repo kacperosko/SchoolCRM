@@ -33,6 +33,7 @@
                         </div>
                         <h2 class="mb-2 text-center">Sign In</h2>
                         <p class="text-center">To Keep connected with us please login with your personal info.</p>
+                        <p class="text-center text-danger py-3">{{ message }}</p>
                         <form method="POST">
                             {% csrf_token %}
                            <div class="row">

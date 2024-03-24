@@ -78,6 +78,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        'TIME_ZONE': 'Europe/Warsaw',
     }
 }
 
@@ -107,19 +108,19 @@ LOGIN_URL = '/login'
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'pl'
 
 TIME_ZONE = 'Europe/Warsaw'
-TIME_INPUT_FORMATS = [
-    # '%I:%M:%S',  # 6:22:44 PM
-    # '%I:%M %p',  # 6:22 PM
-    # '%I %p',  # 6 PM
-    '%H:%M:%S',     # '14:30:59'
-    # '%H:%M:%S.%f',  # '14:30:59.000200'
-    '%H:%M',        # '14:30'
-]
+# TIME_INPUT_FORMATS = [
+#     # '%I:%M:%S',  # 6:22:44 PM
+#     # '%I:%M %p',  # 6:22 PM
+#     # '%I %p',  # 6 PM
+#     '%H:%M:%S',     # '14:30:59'
+#     # '%H:%M:%S.%f',  # '14:30:59.000200'
+#     '%H:%M',        # '14:30'
+# ]
 
-USE_I18N = True
+# USE_I18N = True
 
 USE_TZ = True
 

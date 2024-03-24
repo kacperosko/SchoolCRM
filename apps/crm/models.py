@@ -8,17 +8,16 @@ from rest_framework import serializers
 # Create your models here.
 
 class Person(models.Model):
-    firstName = models.CharField(max_length=255)
-    lastName = models.CharField(max_length=255)
+    first_name = models.CharField(max_length=255)
+    last_name = models.CharField(max_length=255)
     email = models.EmailField()
     phone = models.IntegerField(blank=True, null=True)
-    birthdate = models.DateField()
 
     def __str__(self):
-        return self.firstName + " " + self.lastName
+        return self.first_name + " " + self.last_name
 
     def get_full_name(self):
-        return self.firstName + " " + self.lastName
+        return self.first_name + " " + self.last_name
 
 
 class Student(models.Model):
@@ -28,7 +27,7 @@ class Student(models.Model):
                                related_name='student_parent_person_relationship')
 
     def __str__(self):
-        return self.student.firstName + " " + self.student.lastName
+        return self.student.first_name + " " + self.student.last_name
 
     def clean(self):
         if self.student == self.parent:
@@ -46,13 +45,11 @@ WEEK_DAYS = (
 )
 
 
-class LessonSchedule(models.Model):
-    weekDay = models.CharField(choices=WEEK_DAYS, max_length=10)
-    startTime = models.TimeField()
-    endTime = models.TimeField()
-    startDate = models.DateField(default=now)
-    endDate = models.DateField(blank=True, null=True)
-
+class Lesson(models.Model):
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+    is_series = models.BooleanField(default=False)
+    series_end_date = models.DateField(blank=True, null=True)
     student = models.ForeignKey(Student, on_delete=models.CASCADE, blank=False, null=False,
                                 related_name='lessonSchedule_student_student_relationship')
     teacher = models.ForeignKey(User, on_delete=models.CASCADE, blank=False, null=False,
@@ -60,18 +57,17 @@ class LessonSchedule(models.Model):
 
 
 LESSON_STATUTES = (
-    ('Completed', 'Completed'),
+    ('Planned', 'Planned'),
     ('Canceled', 'Canceled')
 )
 
 
 class LessonAdjustment(models.Model):
-    lessonDate = models.DateField()
-    originalLessonDate = models.DateField(default=now)
-    startTime = models.TimeField()
-    endTime = models.TimeField()
-    lessonSchedule = models.ForeignKey(LessonSchedule, on_delete=models.CASCADE, blank=False, null=False,
-                                       related_name='lessonSchedule_lessonSchedule_relationship')
+    original_lesson_date = models.DateTimeField(default=now)
+    modified_start_time = models.DateTimeField()
+    modified_end_time = models.DateTimeField()
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, blank=False, null=False,
+                               related_name='lesson_lesson_relationship')
     status = models.CharField(max_length=64, choices=LESSON_STATUTES, null=True, blank=True)
     comments = models.CharField(max_length=255, blank=True, null=True)
 

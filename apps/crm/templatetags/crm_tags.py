@@ -11,9 +11,16 @@ def weekdays(value):
     return ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
 
+MONTH_NAMES = [
+    "Styczeń", "Luty", "Marzec", "Kwiecień",
+    "Maj", "Czerwiec", "Lipiec", "Sierpień",
+    "Wrzesień", "Październik", "Listopad", "Grudzień"
+]
+
+
 @register.filter
 def get_month_name(month_number):
-    return calendar.month_name[month_number]
+    return MONTH_NAMES[month_number - 1]
 
 
 @register.filter(is_safe=True)
@@ -47,3 +54,8 @@ def get_dict_value(dictionary, key):
         return dictionary.get(key, '')
     else:
         return ''
+
+
+@register.filter(name='ifinlist')
+def ifinlist(value, temp_list):
+    return str(value) in temp_list

@@ -1,0 +1,178 @@
+from datetime import datetime, timedelta, date, time
+from .models import Student, Lesson, LessonAdjustment, Person
+from django.utils import timezone as dj_timezone
+from collections import defaultdict
+
+
+class LessonHandler():
+    week_days_pl = {
+        0: "Poniedziałek",
+        1: "Wtorek",
+        2: "Środa",
+        3: "Czwartek",
+        4: "Piątek",
+        5: "Sobota",
+        6: "Niedziela"
+    }
+
+    def __init__(self, start_date: date, end_date: date, start_time: datetime, end_time: datetime, lesson_id,
+                 status='Planned', is_adjustment=False):
+        self.start_date = start_date.strftime('%d-%m-%Y')
+        self.end_date = end_date.strftime('%d-%m-%Y')
+        self.start_time = start_time.strftime('%H:%M')
+        self.end_time = end_time.strftime('%H:%M')
+        self.lesson_id = lesson_id
+        self.status = status
+        self.weekday = self.week_days_pl[start_date.weekday()]
+        self.is_adjustment = is_adjustment
+
+    def __str__(self):
+        return f"{self.start_date} {self.end_date} {self.start_time} {self.end_time} {self.status} {self.status}"
+
+
+def generate_lesson_dict_key(start_time: datetime, lesson_id):
+    return start_time.strftime("%d_%m_%Y-%H:%M") + "_" + str(lesson_id)
+
+
+def count_lessons_for_student_in_months(student_id, year):
+    # Pobieramy bieżącą strefę czasową serwera
+    current_timezone = dj_timezone.get_current_timezone()
+
+    # Pobieramy bieżącą datę i normalizujemy ją do bieżącej strefy czasowej serwera
+    current_datetime = datetime.now().astimezone(current_timezone)
+    print('current_timezone', current_timezone)
+    print('current_datetime', current_datetime)
+    # Pobieramy lekcje serii dla danego studenta i roku
+    lessons = Lesson.objects.filter(
+        student_id=student_id,
+        start_time__year=year,
+        is_series=True
+    )
+
+    # Pobieramy dostosowania lekcji dla danego studenta i roku
+    adjustments = LessonAdjustment.objects.filter(
+        lesson__student_id=student_id,
+        original_lesson_date__year=year
+    )
+
+    # Tworzymy słownik, aby przechowywać liczbę lekcji w każdym miesiącu
+    lessons_count_in_months = defaultdict(lambda: {'Planned': 0, 'Canceled': 0, 'Lessons': {}})
+
+    # Tworzymy listę wszystkich miesięcy w roku
+    all_months = range(1, 13)
+    for month in all_months:
+        lessons_count_in_months[month]
+
+    # Uwzględniamy lekcje serii
+    for lesson in lessons:
+        current_date = lesson.start_time.date()
+        current_date_time = lesson.start_time
+        start_time = lesson.start_time.time()
+        end_time = lesson.start_time.time()
+        if lesson.series_end_date:
+            end_date = min(lesson.series_end_date, datetime(year, 12, 31).date())
+        else:
+            end_date = datetime(year, 12, 31).date()
+
+        # Iterujemy po dniach od początku serii do końca roku
+        while current_date <= end_date:
+            # Sprawdzamy, czy obecny dzień odpowiada dniu tygodnia lekcji
+            if current_date.weekday() == lesson.start_time.weekday():
+                month = current_date.month
+                status = 'Planned'
+                lessons_count_in_months[month][status] += 1
+                lessons_count_in_months[month]['Lessons'][
+                    generate_lesson_dict_key(current_date_time, lesson.id)] = LessonHandler(
+                    start_date=current_date,
+                    end_date=current_date,
+                    start_time=lesson.start_time.time(),
+                    end_time=lesson.end_time.time(),
+                    lesson_id=lesson.id
+                )
+
+            # Przechodzimy do następnego tygodnia
+            current_date += timedelta(days=7)
+            current_date_time += timedelta(days=7)
+
+    for adjustment in adjustments:
+        month_original_lesson = adjustment.original_lesson_date.month
+        month_modified_lesson = adjustment.modified_start_time.month
+
+        original_lesson_datetime = datetime.combine(adjustment.original_lesson_date.date(),
+                                                    adjustment.lesson.start_time.time())
+
+        lessons_count_in_months[month_original_lesson]['Planned'] -= 1
+        origan_lesson_key_dict = generate_lesson_dict_key(original_lesson_datetime, adjustment.lesson.id)
+        if origan_lesson_key_dict in lessons_count_in_months[month_original_lesson]['Lessons']:
+            print("key", origan_lesson_key_dict, "in Lesson")
+            del lessons_count_in_months[month_original_lesson]['Lessons'][
+                generate_lesson_dict_key(original_lesson_datetime, adjustment.lesson.id)]
+        else:
+            print("key", origan_lesson_key_dict, "NOT IN in Lesson ----")
+        status = 'Planned'
+        if adjustment.status == 'Canceled':
+            lessons_count_in_months[month_modified_lesson]['Canceled'] += 1
+            status = 'Canceled'
+        else:
+            lessons_count_in_months[month_modified_lesson]['Planned'] += 1
+
+        lessons_count_in_months[month_modified_lesson]['Lessons'][
+            generate_lesson_dict_key(adjustment.modified_start_time, 'adj' + str(adjustment.id))] = LessonHandler(
+            start_date=adjustment.modified_start_time.date(),
+            end_date=adjustment.modified_end_time.date(),
+            start_time=adjustment.modified_start_time.time(),
+            end_time=adjustment.modified_end_time.time(),
+            lesson_id=adjustment.id,
+            status=status,
+            is_adjustment=True
+        )
+
+    lessons_count_in_months = dict(sorted(lessons_count_in_months.items()))
+
+    for month, data in lessons_count_in_months.items():
+        sorted_lessons = dict(sorted(data['Lessons'].items()))
+        lessons_count_in_months[month]['Lessons'] = sorted_lessons
+
+    return lessons_count_in_months
+
+
+def create_lesson_adjustment(lesson_form, is_edit=False):
+    start_time = lesson_form.cleaned_data['startTime']
+    end_time = lesson_form.cleaned_data['endTime']
+    lesson_date = lesson_form.cleaned_data['lessonDate']
+    original_lesson_date = lesson_form.cleaned_data['originalDate']
+
+    # Pobranie obiektu Lesson
+
+    # Tworzenie świadomej daty i czasu dla start_datetime
+    start_datetime = dj_timezone.make_aware(
+        datetime.combine(lesson_date, time(start_time.hour, start_time.minute, start_time.second)),
+        dj_timezone.get_current_timezone())
+
+    # Tworzenie świadomej daty i czasu dla end_datetime
+    end_datetime = dj_timezone.make_aware(
+        datetime.combine(lesson_date, time(end_time.hour, end_time.minute, end_time.second)),
+        dj_timezone.get_current_timezone())
+
+    if not is_edit:
+        lesson = Lesson.objects.get(id=lesson_form.cleaned_data['lessonId'])
+
+        original_datetime = dj_timezone.make_aware(
+            datetime.combine(original_lesson_date, lesson.start_time.time()),
+            dj_timezone.get_current_timezone()
+        )
+
+        lesson_adjustment = LessonAdjustment.objects.create(
+            lesson_id=lesson_form.cleaned_data['lessonId'],
+            modified_start_time=start_datetime,
+            modified_end_time=end_datetime,
+            original_lesson_date=original_datetime,
+            status=lesson_form.cleaned_data['status']
+        )
+    else:
+        lesson_adjustment_id = lesson_form.cleaned_data['lessonId']
+        lesson_adjustment = LessonAdjustment.objects.get(id=lesson_adjustment_id)
+        lesson_adjustment.modified_start_time = start_datetime
+        lesson_adjustment.modified_end_time = end_datetime
+
+        lesson_adjustment.save()
