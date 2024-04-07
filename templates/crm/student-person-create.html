@@ -1,0 +1,112 @@
+{% extends 'base/base.html' %}
+{% load crm_tags %}
+
+{% block content %}
+    <div class="card">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/students"><i
+                        class="ri-home-4-line mr-1 float-left"></i>Students</a></li>
+                <li class="breadcrumb-item active"
+                    aria-current="page"><a
+                        href="/students/{{ student.id }}">{{ student.get_full_name }}</a>
+                </li>
+                <li class="breadcrumb-item active"
+                    aria-current="page">Dodawanie nowej relacji
+                </li>
+            </ol>
+        </nav>
+        <div class="card-body">
+            <div class="tab-pane fade show active" id="details" role="tabpanel" aria-labelledby="details-tab">
+
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class=" row align-items-center">
+                        <div class="form-group mb-0 col-sm-6">
+                            <div class="text-danger">{{ form.person.errors|striptags }}</div>
+                            <label for="person_select">Osoba <span class="text-danger">*</span></label>
+                            <select name="person" class="form-control choicesjs" id="person_select" required>
+                                <option disabled selected value></option>
+                                <option value="new">+ Dodaj nową osobę</option>
+                                <option>test3</option>
+                                {% for p in persons %}
+                                    <option value="{{ p.id }}">{{ p.get_full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group col-sm-6 person-input d-none">
+                            <div class="text-danger">{{ form.first_name.errors|striptags }}</div>
+                            <label for="fname">Imię:</label>
+                            <input name="first_name" type="text" class="form-control person-input-form" id="fname"
+                                   value="{{ form.first_name.value }}">
+                        </div>
+                        <div class="form-group col-sm-6 person-input d-none">
+                            <div class="text-danger">{{ form.last_name.errors|striptags }}</div>
+                            <label for="lname">Nazwisko:</label>
+                            <input name="last_name" type="text" class="form-control person-input-form" id="lname"
+                                   value="{{ form.last_name.value }}">
+                        </div>
+                        <div class="form-group col-sm-6 person-input d-none">
+                            <div class="text-danger">{{ form.email.errors|striptags }}</div>
+                            <label for="uemail">Email:</label>
+                            <input name="email" type="email" class="form-control person-input-form" id="uemail"
+                                   value="{{ form.email.value }}">
+                        </div>
+                        <div class="form-group col-sm-6 person-input d-none">
+                            <div class="text-danger">{{ form.phone_number.errors|striptags }}</div>
+                            <label for="uphone">Telefon:</label>
+                            <input name="phone" type="text" value="{{ form.phone.value }}"
+                                   class="form-control person-input-form" id="uphone">
+                        </div>
+                        <div class="person-input col-sm-6 d-none"></div>
+                        <div class="form-group col-sm-6">
+                            <label for="student">Student:</label>
+                            <input type="text" class="form-control" id="student"
+                                   value="{{ student.get_full_name }}" style="line-height: 20px;"
+                                   readonly="" required>
+                        </div>
+                        <div class="form-group col-sm-6 ">
+                            <div class="text-danger">{{ form.relationship_type.errors|striptags }}</div>
+                            <label for="relationship">Relacja <span class="text-danger">*</span></label>
+                            <select name="relationship_type" class="form-control choicesjs" id="relationship" required>
+                                <option>Mama</option>
+                                <option>Ojciec</option>
+                                <option>Inna</option>
+                            </select>
+                        </div>
+                    </div>
+
+
+                    <a href="/students/{{ student.id }}?mode=view"
+                       class="btn btn-outline-primary mr-2 mt-5">Anuluj</a>
+                    <button type="submit" class="btn btn-primary mt-5">Dodaj</button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+{% endblock content %}
+
+{% block javascript %}
+    <script>
+
+        person_select = document.getElementById('person_select');
+
+        person_select.addEventListener("change", function () {
+            let div_persons = document.querySelectorAll('.person-input');
+            let input_persons = document.querySelectorAll('.person-input-form');
+            for (let i = 0; i < div_persons.length; i++) {
+                if (person_select.value === 'new') {
+                    div_persons[i].classList.remove('d-none');
+                } else {
+                    div_persons[i].classList.add('d-none');
+                }
+            }
+            for (let i = 0; i < input_persons.length; i++) {
+                if (input_persons[i].name !== 'phone')
+                    input_persons[i].required = person_select.value === 'new';
+            }
+        })
+
+    </script>
+{% endblock javascript %}

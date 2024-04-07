@@ -1,0 +1,39 @@
+{% extends 'auth/auth-base.html' %}
+{% load static %}
+
+{% block content %}
+    <section class="login-content">
+        <div class="container h-100">
+            <div class="row align-items-center justify-content-center h-100">
+                <div class="col-md-5">
+                    <div class="card p-5">
+                        <div class="card-body">
+                            <div class="auth-logo">
+                                <img src="../../static/images/warsztat-logo.jpeg"
+                                     class="img-fluid rounded-normal w-25 h-25" alt="logo">
+                            </div>
+                            <h3 class="mb-3 text-center">Resetowanie Hasła</h3>
+                            <p class="text-center small text-secondary mb-3">Wprowadź email aby zresetować hasło</p>
+                            <form method="post">
+                                {% csrf_token %}
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="form-group">
+                                            <label for="id_email" class="text-secondary">Email</label>
+                                            <input name="email" id="id_email" class="form-control"
+                                                   type="email" placeholder="" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <a href="/login" class="btn btn-outline-primary">Anuluj</a>
+                                    <input type="submit" class="btn btn-primary" value="Zresetuj Hasło">
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock content %}

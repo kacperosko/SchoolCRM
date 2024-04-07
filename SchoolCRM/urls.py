@@ -15,8 +15,25 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+# from apps.crm.forms import MySetPasswordForm
+from django.urls import path
+
+from django.contrib.auth.views import (
+    PasswordResetView,
+    PasswordResetDoneView,
+    PasswordResetConfirmView,
+    PasswordResetCompleteView
+)
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('password-reset/', PasswordResetView.as_view(template_name='auth/auth-recover-pwd.html'), name='password-reset'),
+    path('password-reset/done/', PasswordResetDoneView.as_view(template_name='auth/auth-confirm-reset-password.html'), name='password_reset_done'),
+    path('password-reset-confirm/<uidb64>/<token>/', PasswordResetConfirmView.as_view(template_name='auth/auth-recover-reset-pwd.html'), name='password_reset_confirm'),
+    path('password-reset-complete/', PasswordResetCompleteView.as_view(template_name='auth/auth-success-reset-password.html'), name='password_reset_complete'),
+
+    path('warsztatownia/', admin.site.urls),
     path("", include("apps.crm.urls")),
 ]
+
+handler404 = 'apps.crm.views.custom_404'
+handler500 = 'apps.crm.views.custom_500'

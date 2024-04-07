@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Person, Student, Lesson, LessonAdjustment
+from .models import Person, Student, Lesson, LessonAdjustment, StudentPerson
 
 
 @admin.register(Person)
@@ -10,8 +10,8 @@ class PersonAdmin(admin.ModelAdmin):
 
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
-    list_display = ('id', 'student', 'parent')
-    search_fields = ('student__first_name', 'student__last_name', 'parent__first_name', 'parent__last_name')
+    list_display = ('id', 'first_name', 'last_name')
+    search_fields = ('first_name', 'last_name')
 
 
 class LessonAdjustment_ItemInline(admin.TabularInline):
@@ -24,7 +24,7 @@ class LessonAdjustment_ItemInline(admin.TabularInline):
 
 @admin.register(Lesson)
 class LessonAdmin(admin.ModelAdmin):
-    list_display = ('id', 'start_time', 'end_time', 'series_end_date', 'student', 'teacher')
+    list_display = ('id', 'start_time', 'end_time', 'series_end_date', 'student', 'is_series', 'teacher')
     list_filter = ('start_time', 'end_time')
     search_fields = ('student__firstName', 'student__lastName', 'teacher__username')
 
@@ -36,6 +36,10 @@ class LessonAdmin(admin.ModelAdmin):
 @admin.register(LessonAdjustment)
 class LessonAdjustmentAdmin(admin.ModelAdmin):
     list_display = ('id', 'original_lesson_date', 'modified_start_time', 'modified_end_time', 'lesson', 'status')
+
+@admin.register(StudentPerson)
+class StudentPersonAdmin(admin.ModelAdmin):
+    list_display = ('id', 'student', 'person')
 
 # Uncomment the following lines if you decide to use LessonException model
 # from .models import LessonException

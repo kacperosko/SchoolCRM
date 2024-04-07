@@ -1,47 +1,42 @@
 {% extends 'base/base.html' %}
-{% block title %} Students {% endblock title %}
+{% block title %} Studenci {% endblock title %}
 {% load static %}
 
 {% block content %}
     <div class="card">
         <div class="card-header d-flex justify-content-between">
             <div class="header-title">
-                <h4 class="card-title">Students</h4>
+                <h4 class="card-title">Studenci</h4>
             </div>
+            <a href="/students/new" class="btn btn-primary rounded-pill">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                         stroke="currentColor" class="w-6 h-6" width="24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z"/>
+                    </svg>
+                    Dodaj Studenta
+                </a>
 
         </div>
 
         <div class="card-body">
-        <div class="mr-auto mb-2">
-                <a href="/students/new" class="btn btn-primary">Add New Student</a>
-            </div>
             <div class="table-responsive">
-                <table id="datatable-1" class="table data-table table-striped table-bordered">
+                <table id="datatable-students" class="table data-table table-striped table-bordered">
                     <thead>
                     <tr>
-                        <th>Name</th>
+                        <th>Imię Nazwisko</th>
                         <th>Email</th>
-                        <th>Phone</th>
-{#                        <th>Birthdate</th>#}
+                        <th>Telefon</th>
                     </tr>
                     </thead>
                     <tbody>
-                    {#                              <tr>#}
-                    {#                                 <td>Tiger Nixon</td>#}
-                    {#                                 <td>System Architect</td>#}
-                    {#                                 <td>Edinburgh</td>#}
-                    {#                                 <td>61</td>#}
-                    {#                                 <td>2011/04/25</td>#}
-                    {#                                 <td class="text-right">$320,800</td>#}
-                    {#                              </tr>#}
                     {% for student in students %}
                         <tr>
                             <td>
-                                <a href="/students/{{ student.id }}">{{ student.student.first_name }} {{ student.student.last_name }}</a>
+                                <a href="/students/{{ student.id }}">{{ student.get_full_name }}</a>
                             </td>
-                            <td>{{ student.student.email }}</td>
-                            <td>{{ student.student.phone|default_if_none:"" }}</td>
-{#                            <td>{{ student.student.birthdate }}</td>#}
+                            <td>{{ student.email }}</td>
+                            <td>{{ student.phone|default_if_none:"" }}</td>
 
                         </tr>
                     {% endfor %}
@@ -49,12 +44,9 @@
                     </tbody>
                     <tfoot>
                     <tr>
-                        <th>Name</th>
+                        <th>Imię Nazwisko</th>
                         <th>Email</th>
-                        <th>Phone</th>
-{#                        <th>Birthdate</th>#}
-                        {#                                 <th>Start date</th>#}
-                        {#                                 <th class="text-right">Salary</th>#}
+                        <th>Telefon</th>
                     </tr>
                     </tfoot>
                 </table>

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+{% load static %}
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Warsztat CRM | {% block title %}{% endblock title %}</title>
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="{% static '/images/warsztat-logo.jpeg' %}"/>
+
+    <link rel="stylesheet" href="{% static '/css/backend-plugin.min.css' %}">
+    <link rel="stylesheet" href="{% static '/css/backend.css' %}">
+</head>
+<body class=" ">
+<!-- loader Start -->
+<div id="loading">
+    <div id="loading-center">
+    </div>
+</div>
+<!-- loader END -->
+
+<div class="wrapper">
+    {% block content %}
+    {% endblock content %}
+</div>
+
+<script src="{% static '/js/backend-bundle.min.js' %}"></script>
+<script src="{% static '/js/app.js' %}"></script>
+</body>
+</html>

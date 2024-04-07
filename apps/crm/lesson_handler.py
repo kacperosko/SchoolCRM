@@ -2,9 +2,10 @@ from datetime import datetime, timedelta, date, time
 from .models import Student, Lesson, LessonAdjustment, Person
 from django.utils import timezone as dj_timezone
 from collections import defaultdict
+from django.db.models import Q
 
 
-class LessonHandler():
+class LessonHandler:
     week_days_pl = {
         0: "Poniedziałek",
         1: "Wtorek",
@@ -16,7 +17,7 @@ class LessonHandler():
     }
 
     def __init__(self, start_date: date, end_date: date, start_time: datetime, end_time: datetime, lesson_id,
-                 status='Planned', is_adjustment=False):
+                 description, teacher, original_date=None, status='Planned', is_adjustment=False):
         self.start_date = start_date.strftime('%d-%m-%Y')
         self.end_date = end_date.strftime('%d-%m-%Y')
         self.start_time = start_time.strftime('%H:%M')
@@ -25,6 +26,11 @@ class LessonHandler():
         self.status = status
         self.weekday = self.week_days_pl[start_date.weekday()]
         self.is_adjustment = is_adjustment
+        self.description = description
+        self.teacher = teacher
+        if original_date:
+            if original_date != start_date:
+                self.original_date = original_date.strftime('%d-%m-%Y')
 
     def __str__(self):
         return f"{self.start_date} {self.end_date} {self.start_time} {self.end_time} {self.status} {self.status}"
@@ -44,16 +50,23 @@ def count_lessons_for_student_in_months(student_id, year):
     print('current_datetime', current_datetime)
     # Pobieramy lekcje serii dla danego studenta i roku
     lessons = Lesson.objects.filter(
-        student_id=student_id,
-        start_time__year=year,
-        is_series=True
+        Q(student_id=student_id) &
+        Q(start_time__year__lte=year) &
+        (
+            (Q(series_end_date__year__gte=year) |
+             Q(series_end_date=None))
+        )
     )
 
     # Pobieramy dostosowania lekcji dla danego studenta i roku
     adjustments = LessonAdjustment.objects.filter(
-        lesson__student_id=student_id,
-        original_lesson_date__year=year
+        Q(lesson__student_id=student_id) &
+        (
+                Q(original_lesson_date__year=year) |
+                Q(modified_start_time__year=year)
+        )
     )
+    print('lessons', lessons)
 
     # Tworzymy słownik, aby przechowywać liczbę lekcji w każdym miesiącu
     lessons_count_in_months = defaultdict(lambda: {'Planned': 0, 'Canceled': 0, 'Lessons': {}})
@@ -65,34 +78,61 @@ def count_lessons_for_student_in_months(student_id, year):
 
     # Uwzględniamy lekcje serii
     for lesson in lessons:
-        current_date = lesson.start_time.date()
-        current_date_time = lesson.start_time
-        start_time = lesson.start_time.time()
-        end_time = lesson.start_time.time()
-        if lesson.series_end_date:
-            end_date = min(lesson.series_end_date, datetime(year, 12, 31).date())
-        else:
-            end_date = datetime(year, 12, 31).date()
+        if lesson.is_series:
+            current_date = lesson.start_time.date()
+            current_date_time = lesson.start_time
+            if year != lesson.start_time.year:
+                current_date_time = datetime.combine(date(year, 1, 1), lesson.start_time.time())
+                if current_date_time.weekday() != lesson.start_time.weekday():
+                    print('weekdays not equal')
+                    weekday_difference = lesson.start_time.weekday() - current_date_time.weekday()
+                    print('weekday_difference ->', weekday_difference)
+                    current_date_time += timedelta(days=weekday_difference)
+                current_date = current_date_time.date()
 
-        # Iterujemy po dniach od początku serii do końca roku
-        while current_date <= end_date:
-            # Sprawdzamy, czy obecny dzień odpowiada dniu tygodnia lekcji
-            if current_date.weekday() == lesson.start_time.weekday():
-                month = current_date.month
-                status = 'Planned'
-                lessons_count_in_months[month][status] += 1
-                lessons_count_in_months[month]['Lessons'][
-                    generate_lesson_dict_key(current_date_time, lesson.id)] = LessonHandler(
-                    start_date=current_date,
-                    end_date=current_date,
-                    start_time=lesson.start_time.time(),
-                    end_time=lesson.end_time.time(),
-                    lesson_id=lesson.id
-                )
+            if lesson.series_end_date:
+                end_date = min(lesson.series_end_date, datetime(year, 12, 31).date())
+            else:
+                end_date = datetime(year, 12, 31).date()
 
-            # Przechodzimy do następnego tygodnia
-            current_date += timedelta(days=7)
-            current_date_time += timedelta(days=7)
+            print('current_date', current_date)
+            print('current_date_time', current_date_time)
+            print('end_date', end_date)
+            # Iterujemy po dniach od początku serii do końca roku
+            while current_date <= end_date:
+                # Sprawdzamy, czy obecny dzień odpowiada dniu tygodnia lekcji
+                if current_date.weekday() == lesson.start_time.weekday():
+                    month = current_date.month
+                    status = 'Planned'
+                    lessons_count_in_months[month][status] += 1
+                    lessons_count_in_months[month]['Lessons'][
+                        generate_lesson_dict_key(current_date_time, lesson.id)] = LessonHandler(
+                        start_date=current_date,
+                        end_date=current_date,
+                        start_time=lesson.start_time.time(),
+                        end_time=lesson.end_time.time(),
+                        lesson_id=lesson.id,
+                        description=lesson.description,
+                        teacher=lesson.teacher.get_full_name()
+                    )
+
+                # Przechodzimy do następnego tygodnia
+                current_date += timedelta(days=7)
+                current_date_time += timedelta(days=7)
+        elif lesson.start_time.year == year:
+            month = lesson.start_time.month
+            status = 'Planned'
+            lessons_count_in_months[month][status] += 1
+            lessons_count_in_months[month]['Lessons'][
+                generate_lesson_dict_key(lesson.start_time, lesson.id)] = LessonHandler(
+                start_date=lesson.start_time.date(),
+                end_date=lesson.end_time.date(),
+                start_time=lesson.start_time.time(),
+                end_time=lesson.end_time.time(),
+                lesson_id=lesson.id,
+                description=lesson.description,
+                teacher=lesson.teacher.get_full_name()
+            )
 
     for adjustment in adjustments:
         month_original_lesson = adjustment.original_lesson_date.month
@@ -101,7 +141,8 @@ def count_lessons_for_student_in_months(student_id, year):
         original_lesson_datetime = datetime.combine(adjustment.original_lesson_date.date(),
                                                     adjustment.lesson.start_time.time())
 
-        lessons_count_in_months[month_original_lesson]['Planned'] -= 1
+        if adjustment.original_lesson_date.year == year:
+            lessons_count_in_months[month_original_lesson]['Planned'] -= 1
         origan_lesson_key_dict = generate_lesson_dict_key(original_lesson_datetime, adjustment.lesson.id)
         if origan_lesson_key_dict in lessons_count_in_months[month_original_lesson]['Lessons']:
             print("key", origan_lesson_key_dict, "in Lesson")
@@ -110,22 +151,27 @@ def count_lessons_for_student_in_months(student_id, year):
         else:
             print("key", origan_lesson_key_dict, "NOT IN in Lesson ----")
         status = 'Planned'
-        if adjustment.status == 'Canceled':
-            lessons_count_in_months[month_modified_lesson]['Canceled'] += 1
-            status = 'Canceled'
-        else:
-            lessons_count_in_months[month_modified_lesson]['Planned'] += 1
 
-        lessons_count_in_months[month_modified_lesson]['Lessons'][
-            generate_lesson_dict_key(adjustment.modified_start_time, 'adj' + str(adjustment.id))] = LessonHandler(
-            start_date=adjustment.modified_start_time.date(),
-            end_date=adjustment.modified_end_time.date(),
-            start_time=adjustment.modified_start_time.time(),
-            end_time=adjustment.modified_end_time.time(),
-            lesson_id=adjustment.id,
-            status=status,
-            is_adjustment=True
-        )
+        if adjustment.modified_start_time.year == year:
+            if adjustment.status == 'Canceled':
+                lessons_count_in_months[month_modified_lesson]['Canceled'] += 1
+                status = 'Canceled'
+            else:
+                lessons_count_in_months[month_modified_lesson]['Planned'] += 1
+
+            lessons_count_in_months[month_modified_lesson]['Lessons'][
+                generate_lesson_dict_key(adjustment.modified_start_time, 'adj' + str(adjustment.id))] = LessonHandler(
+                start_date=adjustment.modified_start_time.date(),
+                end_date=adjustment.modified_end_time.date(),
+                start_time=adjustment.modified_start_time.time(),
+                end_time=adjustment.modified_end_time.time(),
+                lesson_id=adjustment.id,
+                status=status,
+                is_adjustment=True,
+                original_date=adjustment.original_lesson_date.date(),
+                description=adjustment.lesson.description,
+                teacher=adjustment.lesson.teacher.get_full_name()
+            )
 
     lessons_count_in_months = dict(sorted(lessons_count_in_months.items()))
 

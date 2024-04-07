@@ -13,7 +13,7 @@
         {#        </nav>#}
         <div class="card-header d-flex justify-content-between">
             <div class="header-title">
-                <h4 class="card-title">Creating new student</h4>
+                <h4 class="card-title">Dodawanie nowego studenta</h4>
             </div>
 
         </div>
@@ -23,35 +23,34 @@
 
                     <form method="post">
                         {% csrf_token %}
-                        <div class="text-warning">{{ message }}</div>
+{#                        <div class="text-danger">{{ message }}</div>#}
                         <div class=" row align-items-center">
                             <div class="form-group col-sm-6">
-                                <label for="fname">First Name:</label>
+                                <div class="text-danger">{{ form.first_name.errors|striptags }}</div>
+                                <label for="fname">Imię:</label>
                                 <input name="first_name" type="text" class="form-control" id="fname"
-                                       value="" required>
+                                       value="{{ form.first_name.value }}" required>
                             </div>
                             <div class="form-group col-sm-6">
-                                <label for="lname">Last Name:</label>
+                                <div class="text-danger">{{ form.last_name.errors|striptags }}</div>
+                                <label for="lname">Nazwisko:</label>
                                 <input name="last_name" type="text" class="form-control" id="lname"
-                                       value="" required>
+                                       value="{{ form.last_name.value }}" required>
                             </div>
                             <div class="form-group col-sm-6">
+                                <div class="text-danger">{{ form.email.errors|striptags }}</div>
                                 <label for="uemail">Email:</label>
                                 <input name="email" type="email" class="form-control" id="uemail"
-                                       value="" required>
+                                       value="{{ form.email.value }}" required>
                             </div>
                             <div class="form-group col-sm-6">
-                                <label for="uphone">Phone:</label>
-                                <input name="phone" type="number" class="form-control" id="uphone">
-                            </div>
-                            <div class="form-group col-sm-6">
-                                <label for="startDate">Date Of Birth:</label>
-                                <input name="birth_date" type="date" class="form-control" id="startDate"
-                                       value="" style="line-height: 20px;">
+                                <div class="text-danger">{{ form.phone_number.errors|striptags }}</div>
+                                <label for="uphone">Telefon:</label>
+                                <input name="phone_number" type="text" value="{{ form.phone_number.value }}" class="form-control" id="uphone">
                             </div>
                         </div>
-                        <a href="/students" class="btn btn-outline-primary mr-2 mt-5">Cancel</a>
-                        <button type="submit" class="btn btn-primary mt-5">Submit</button>
+                        <a href="/students" class="btn btn-outline-primary mr-2 mt-5">Anuluj</a>
+                        <button type="submit" class="btn btn-primary mt-5">Dodaj studenta</button>
                     </form>
                 </div>
             </div>

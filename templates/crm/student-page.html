@@ -1,12 +1,7 @@
 {% extends 'base/base.html' %}
-
+{% block title %}{{ student.get_full_name }}{% endblock title %}
 {% block style %}
     <style>
-        .details {
-        {#display: none;#} max-height: 0px;
-            overflow: hidden;
-            transition: all 0.5s ease;
-        }
     </style>
 {% endblock style %}
 {% block content %}
@@ -18,7 +13,7 @@
                 <li class="breadcrumb-item"><a href="/students"><i
                         class="ri-home-4-line mr-1 float-left"></i>Studenci</a></li>
                 <li class="breadcrumb-item active"
-                    aria-current="page">{{ student.student.get_full_name }}
+                    aria-current="page">{{ student.get_full_name }}
                 </li>
             </ol>
         </nav>
@@ -27,67 +22,165 @@
                 <li class="nav-item">
                     <a class="nav-link {% if request.GET.tab == 'Details' %}active{% endif %}" id="home-tab"
                        data-toggle="tab" href="#details" role="tab"
-                       aria-controls="details" aria-selected="true" onclick="addParamToURL('Details')">Szczegóły</a>
+                       aria-controls="details" aria-selected="true"
+                       onclick="addParamToURL('tab', 'Details')">Szczegóły</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link {% if request.GET.tab == 'Lessons' %}active{% endif %}" id="lessons-tab"
                        data-toggle="tab" href="#lessons" role="tab"
-                       aria-controls="lessons" aria-selected="false" onclick="addParamToURL('Lessons')">Lekcje</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if request.GET.tab == 'Contact' %}active{% endif %}" id="contact-tab"
-                       data-toggle="tab" href="#contact" role="tab"
-                       aria-controls="contact" aria-selected="false" onclick="addParamToURL('Contact')">Contact</a>
+                       aria-controls="lessons" aria-selected="false"
+                       onclick="addParamToURL('tab', 'Lessons')">Lekcje</a>
                 </li>
             </ul>
-            <div class="tab-content" id="myTabContent-2">
+            <div class="tab-content" id="tab-student">
                 <div class="tab-pane fade {% if request.GET.tab == 'Details' %}show active{% endif %}" id="details"
                      role="tabpanel" aria-labelledby="details-tab">
 
                     <form>
+                        {% csrf_token %}
                         <div class=" row align-items-center">
                             <div class="form-group col-sm-6">
-                                <label for="fname">Imię:</label>
-                                <input type="text" class="form-control" readonly="" id="fname"
-                                       value="{{ student.student.first_name }}">
+                                <label for="student_first_name">Imię:</label>
+                                <input name="first_name" type="text" class="form-control" readonly=""
+                                       id="student_first_name"
+                                       value="{{ student.first_name }}">
                             </div>
                             <div class="form-group col-sm-6">
-                                <label for="lname">Nazwisko:</label>
-                                <input type="text" class="form-control" readonly="" id="lname"
-                                       value="{{ student.student.last_name }}">
+                                <label for="student_last_name">Nazwisko:</label>
+                                <input name="last_name" type="text" class="form-control" readonly=""
+                                       id="student_last_name"
+                                       value="{{ student.last_name }}">
                             </div>
                             <div class="form-group col-sm-6">
-                                <label for="uemail">Email:</label>
-                                <input type="email" class="form-control" readonly="" id="uemail"
-                                       value="{{ student.student.email }}">
+                                <label for="student_email">Email:</label>
+                                <input name="email" type="email" class="form-control" readonly="" id="student_email"
+                                       value="{{ student.email }}">
                             </div>
                             <div class="form-group col-sm-6">
-                                <label for="uphone">Telefon:</label>
-                                <input type="text" class="form-control" readonly="" id="uphone"
-                                       value="{{ student.student.phone|default_if_none:"" }}">
+                                <label for="student_phone">Telefon:</label>
+                                <input name="phone" type="text" class="form-control" readonly id="student_phone"
+                                       value="{{ student.phone|default_if_none:"" }}">
                             </div>
-                            {#                            <div class="form-group col-sm-6">#}
-                            {#                                <label for="dob">Date Of Birth:</label>#}
-                            {#                                <input class="form-control" readonly="" id="dob"#}
-                            {#                                       value="{{ student.student.birthdate|date:"d-m-Y" }}">#}
-                            {#                            </div>#}
                         </div>
-                        <button type="reset" class="btn btn-outline-primary mr-2 mt-5">Cancel</button>
-                        <button type="submit" class="btn btn-primary mt-5">Submit</button>
+                        <button id="student_btn_edit" type="button"
+                                class="btn btn-outline-primary mt-5"
+                                style="{% if request.GET.mode == 'edit' %} display: none{% endif %}"
+                                onclick="editStudent()">
+                            Edytuj
+                        </button>
+                        <button id="student_btn_cancel" type="button"
+                                class="btn btn-outline-primary mr-2 mt-5"
+                                style=" {% if request.GET.mode == 'view' %} display: none{% endif %}"
+                                onclick="viewStudent()">
+                            Anuluj
+                        </button>
+                        <button id="student_btn_submit" type="submit"
+                                class="btn btn-primary mt-5"
+                                style="{% if request.GET.mode == 'view' %} display: none{% endif %}">
+                            Zapisz
+                        </button>
                     </form>
+                    <div class="mb-4"></div>
+                    <div class="d-flex" style="gap: 10px">
+                        {% for student_person in student_persons %}
+                            <div class="panel-group col-sm-6 shadow-lg rounded-sm bg-light">
+                                <div class="panel panel-default">
+                                    <div class="panel-heading d-flex justify-content-between">
+                                        <a class="nav-link"
+                                           data-toggle="collapse"
+                                           href="#collapse">{{ student_person.person.get_full_name }}
+                                            - {{ student_person.relationship_type }}</a>
+                                    </div>
+                                    <div id="collapse" class="panel-collapse collapse">
+                                        <div class=" row align-items-center">
+                                            <div class="form-group col-sm-6">
+                                                <label for="student_first_name">Imię:</label>
+                                                <input name="first_name" type="text" class="form-control" readonly=""
+                                                       id="student_first_name"
+                                                       value="{{ student_person.person.first_name }}">
+                                            </div>
+                                            <div class="form-group col-sm-6">
+                                                <label for="student_last_name">Nazwisko:</label>
+                                                <input name="last_name" type="text" class="form-control" readonly=""
+                                                       id="student_last_name"
+                                                       value="{{ student_person.person.last_name }}">
+                                            </div>
+                                            <div class="form-group col-sm-6">
+                                                <label for="student_email">Email:</label>
+                                                <input name="email" type="email" class="form-control" readonly=""
+                                                       id="student_email"
+                                                       value="{{ student_person.person.email }}">
+                                            </div>
+                                            <div class="form-group col-sm-6">
+                                                <label for="student_phone">Telefon:</label>
+                                                <input name="phone" type="text" class="form-control" readonly
+                                                       id="student_phone"
+                                                       value="{{ student_person.person.phone|default_if_none:"" }}">
+                                            </div>
+                                            <div class="align-content-center form-group col-sm-6">
+                                                <a class="bg-blue text-white p-1 rounded-sm font-size-12 text-center"
+                                                   type="button">Edytuj</a>
+                                                <a class="bg-danger text-white p-1 rounded-sm font-size-12 text-center"
+                                                   type="button"
+                                                   href="/students/{{ student.id }}/{{ student_person.id }}/delete">Rozłącz</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="mt-3">
+                        <a class="bg-primary p-2 rounded-sm menu-button text-center"
+                           href="/students/{{ student.id }}/student-person/add">Dodaj nową relacje</a>
+                    </div>
                 </div>
 
                 <div class="tab-pane fade {% if request.GET.tab == 'Lessons' %}show active{% endif %}" id="lessons"
                      role="tabpanel" aria-labelledby="lessons-tab">
+                    <div class="d-flex justify-content-between">
+
+                        <div class="d-flex align-items-center">
+                            <button type="button" class="btn btn-outline-primary rounded-pill" id="prevYearBtn"
+                                    onclick="setQueryYear(-1)">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                     stroke-width="1.5"
+                                     stroke="currentColor" class="w-6 h-6" width="24">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                          d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"/>
+                                </svg>
+                            </button>
+                            <div id="selected-year" class="mx-2 font-weight-500"></div>
+                            <button type="button" class="btn btn-outline-primary rounded-pill" id="nextYearBTn"
+                                    onclick="setQueryYear(1)">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                     stroke-width="1.5"
+                                     stroke="currentColor" class="w-6 h-6" width="24">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                          d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/>
+                                </svg>
+
+                            </button>
+                        </div>
+
+                        <button type="button" class="btn btn-primary rounded-pill mt-2 mb-3 align-content-center"
+                                id="addLessonBtn" data-toggle="modal"
+                                data-target="#createEventModalCenter">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                 stroke="currentColor" class="w-6 h-6" width="24">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                      d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5m-9-6h.008v.008H12v-.008ZM12 15h.008v.008H12V15Zm0 2.25h.008v.008H12v-.008ZM9.75 15h.008v.008H9.75V15Zm0 2.25h.008v.008H9.75v-.008ZM7.5 15h.008v.008H7.5V15Zm0 2.25h.008v.008H7.5v-.008Zm6.75-4.5h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V15Zm0 2.25h.008v.008h-.008v-.008Zm2.25-4.5h.008v.008H16.5v-.008Zm0 2.25h.008v.008H16.5V15Z"/>
+                            </svg>
+                            Dodaj lekcje
+                        </button>
+                    </div>
                     <div class="table-responsive">
                         <table class="table table-bordered table-striped">
                             <thead>
                             <tr>
                                 <th scope="col" class="text-center">Miesiąc</th>
                                 <th scope="col" class="text-center">Zaplanowane</th>
-                                {#                                <th scope="col" class="text-center">Completed</th>#}
                                 <th scope="col" class="text-center">Odwołane</th>
-                                {#                                <th scope="col" class="text-center">Summary</th>#}
                             </tr>
                             </thead>
                             <tbody>
@@ -96,58 +189,68 @@
                                     <th scope="row" class="text-center"
                                         onclick="toggleDetails(this)">
                                         <a type="button" href="" class="" data-toggle="collapse"
-                                           onclick="addMonthToURL({{ month_number }})"
-                                           data-target="#collapseme{{ month_number }}">{{ month_number|get_month_name }}
+                                           onclick="refreshOpenedMonths()" id="collapser_{{ month_number }}"
+                                           data-target="#collaps_{{ month_number }}">{{ month_number|get_month_name }}
                                         </a>
                                     </th>
                                     <td class="text-center">{{ statutes.Planned }}</td>
-                                    {#                                    <td class="text-success text-center">{{ statutes.Completed }}</td>#}
                                     <td class="text-warning text-center">{{ statutes.Canceled }}</td>
-                                    {#                                    <td class="text-center">{{ statutes.Summary }}</td>#}
                                 </tr>
                                 <tr>
                                     <td class="p-0" colspan="3">
-                                        <div class="collapse in {% if month_number|ifinlist:request.GET.opened_months %}show{% endif %} "
-                                             id="collapseme{{ month_number }}">
+                                        <div class="collapse in" id="collaps_{{ month_number }}">
                                             <table class="table">
                                                 <thead>
-                                                {#                                                <tr class="bg-white">#}
-                                                {#                                                    <th scope="col" class="text-center">start_date</th>#}
-                                                {#                                                    <th scope="col" class="text-center">start_time</th>#}
-                                                {#                                <th scope="col" class="text-center">Completed</th>#}
-                                                {#                                                    <th scope="col" class="text-center">end_time</th>#}
-                                                {#                                <th scope="col" class="text-center">Summary</th>#}
-                                                {#                                                </tr>#}
                                                 </thead>
                                                 <tbody>
+                                                {% if statutes.Lessons %}
+                                                    {% for key, lesson in statutes.Lessons.items %}
+                                                        <tr class="{% if lesson.status == 'Planned' %} bg-primary-light {% else %}bg-danger-light{% endif %}">
+                                                            <td>{{ lesson.start_date }} ({{ lesson.weekday }})
+                                                                {% if lesson.original_date %}(przeniesione z
+                                                                    {{ lesson.original_date }}){% endif %}</td>
+                                                            <td>{{ lesson.start_time }} - {{ lesson.end_time }}</td>
+                                                            <td>{{ lesson.description }}</td>
+                                                            <td class="d-flex">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                                     viewBox="0 0 24 24" stroke-width="1.5"
+                                                                     stroke="currentColor" class="mr-1" width="18px">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                                          d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+                                                                </svg>
 
-                                                {% for key, lesson in statutes.Lessons.items %}
-                                                    <tr class="{% if lesson.status == 'Planned' %} bg-primary-light {% else %}bg-danger-light{% endif %}">
-                                                        <td>{{ lesson.start_date }} ({{ lesson.weekday }})</td>
-                                                        <td>{{ lesson.start_time }} - {{ lesson.end_time }}</td>
-                                                        <td>
-                                                            <a class="bg-blue text-white p-1 rounded-sm font-size-12 menu-button text-center"
-                                                               type="button" data-toggle="modal"
-                                                               data-target="#editEventModalCenter"
-                                                               onclick="modifyEvent('{{ lesson.lesson_id }}', '{{ lesson.start_time }}', '{{ lesson.end_time }}', '{{ lesson.start_date }}', '{{ student.student.get_full_name }}', 'Planned', '{{ lesson.is_adjustment }}', true)"
-                                                            >Edytuj</a>
-                                                            {% if lesson.status != 'Canceled' %}
-                                                                <a class="bg-red text-white p-1 rounded-sm font-size-12 menu-button text-center"
+                                                                {{ lesson.teacher }}
+                                                            </td>
+                                                            <td>
+                                                                <a class="bg-blue text-white p-1 rounded-sm font-size-12 menu-button text-center"
                                                                    type="button" data-toggle="modal"
                                                                    data-target="#editEventModalCenter"
-                                                                   onclick="modifyEvent('{{ lesson.lesson_id }}', '{{ lesson.start_time }}', '{{ lesson.end_time }}', '{{ lesson.start_date }}', '{{ student.student.get_full_name }}', 'Canceled', '{{ lesson.is_adjustment }}')"
-                                                                >Odwołaj</a>
-                                                            {% else %}
-                                                                <a class="bg-green text-white p-1 rounded-sm font-size-12 menu-button text-center"
-                                                                   type="button" data-toggle="modal"
-                                                                   data-target="#editEventModalCenter"
-                                                                   onclick="modifyEvent('{{ lesson.lesson_id }}', '{{ lesson.start_time }}', '{{ lesson.end_time }}', '{{ lesson.start_date }}', '{{ student.student.get_full_name }}', 'Planned', '{{ lesson.is_adjustment }}')"
-                                                                >Zaplanuj</a>
-                                                            {% endif %}
+                                                                   onclick="modifyEvent('{{ lesson.lesson_id }}', '{{ lesson.start_time }}', '{{ lesson.end_time }}', '{{ lesson.start_date }}', '{{ student.get_full_name }}', 'Planned', '{{ lesson.is_adjustment }}', true)"
+                                                                >Edytuj</a>
+                                                                {% if lesson.status != 'Canceled' %}
+                                                                    <a class="bg-red text-white p-1 rounded-sm font-size-12 menu-button text-center"
+                                                                       type="button" data-toggle="modal"
+                                                                       data-target="#editEventModalCenter"
+                                                                       onclick="modifyEvent('{{ lesson.lesson_id }}', '{{ lesson.start_time }}', '{{ lesson.end_time }}', '{{ lesson.start_date }}', '{{ student.get_full_name }}', 'Canceled', '{{ lesson.is_adjustment }}')"
+                                                                    >Odwołaj</a>
+                                                                {% else %}
+                                                                    <a class="bg-green text-white p-1 rounded-sm font-size-12 menu-button text-center"
+                                                                       type="button" data-toggle="modal"
+                                                                       data-target="#editEventModalCenter"
+                                                                       onclick="modifyEvent('{{ lesson.lesson_id }}', '{{ lesson.start_time }}', '{{ lesson.end_time }}', '{{ lesson.start_date }}', '{{ student.get_full_name }}', 'Planned', '{{ lesson.is_adjustment }}')"
+                                                                    >Zaplanuj</a>
+                                                                {% endif %}
 
-                                                        </td>
+                                                            </td>
+                                                        </tr>
+                                                    {% endfor %}
+
+                                                {% else %}
+                                                    <tr class="bg-light text-center">
+                                                        <td colspan="3">Brak lekcji</td>
                                                     </tr>
-                                                {% endfor %}
+
+                                                {% endif %}
                                             </table>
                                         </div>
                                     </td>
@@ -156,14 +259,6 @@
                             </tbody>
                         </table>
                     </div>
-                </div>
-                <div class="tab-pane fade {% if request.GET.tab == 'Contact' %}show active{% endif %}" id="contact"
-                     role="tabpanel" aria-labelledby="contact-tab">
-                    <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been
-                        the
-                        industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of
-                        type
-                        and scrambled it to make a type specimen book.</p>
                 </div>
             </div>
         </div>
@@ -249,10 +344,130 @@
             </div>
         </div>
     </div>
+    <div class="modal fade" id="createEventModalCenter" tabindex="-1" role="dialog"
+         aria-labelledby="createEventModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createEventModalCenterTitle">Dodawanie nowej lekcji</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="post" name="create_form" id="create_lesson_form">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        {% csrf_token %}
+                        <div class=" row align-items-center">
+                            <div class="form-group col-sm-6">
+                                <label for="starTime_createLesson">Godzina Rozpoczęcia</label>
+                                <input name="startTime" type="time" class="form-control" id="starTime_createLesson"
+                                       value="" style="line-height: 20px;"
+                                       required>
+                            </div>
+                            <div class="form-group col-sm-6">
+                                <label for="endTime_createLesson">Godzina Zakończenia</label>
+                                <input name="endTime" type="time" class="form-control" id="endTime_createLesson"
+                                       value=""
+                                       style="line-height: 20px;" required>
+                            </div>
+                            <div class="form-group col-sm-6">
+                                <label for="lessonDate_createLesson">Data Lekcji</label>
+                                <input name="lessonDate" type="date" class="form-control" id="lessonDate_createLesson"
+                                       value=""
+                                       style="line-height: 20px;" required>
+                            </div>
+                            <div class="form-group mb-0 col-sm-6">
+                                <label for="repeating_createLesson">Powtarzanie</label>
+                                <select class="form-control" id="repeating_createLesson" name="repeat">
+                                    <option value="never" selected>Nigdy</option>
+                                    <option value="weekly">Co tydzień</option>
+                                </select>
+                            </div>
+                            <div class="form-group mb-0 col-sm-6">
+                                <label for="repeating_createLesson">Opis:</label>
+                                <input name="description" type="text" class="form-control" id="description_createLesson"
+                                       value=""
+                                       style="line-height: 20px;">
+                            </div>
+                            <div class="form-group mb-0 col-sm-6">
+                                <label for="studentForm_cancelForm">Student</label>
+                                <input class="form-control" id="studentForm_cancelForm"
+                                       value="{{ student.get_full_name }}" required readonly="">
+                            </div>
+                            <div class="form-group col-sm-6 d-none" id="lessonDate_endSeries_div">
+                                <label for="lessonDate_endSeries">Koniec Serii</label>
+                                <input name="end_series" type="date" class="form-control" id="lessonDate_endSeries"
+                                       value=""
+                                       style="line-height: 20px;" data-toggle="tooltip" data-placement="right"
+                                       title="Podaj datę ostatniej lekcji z serii. Może być puste">
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Anuluj</button>
+                        <button name="create_form_submit" id="createLesson_form_btn" type="submit"
+                                class="btn btn-primary">
+                            Dodaj lekcje
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 {% endblock content %}
 
 {% block javascript %}
     <script>
+        let student_first_name = document.getElementById("student_first_name");
+        let student_last_name = document.getElementById("student_last_name");
+        let student_email = document.getElementById("student_email");
+        let student_phone = document.getElementById("student_phone");
+        let student_edit = document.getElementById("student_btn_edit");
+        let student_cancel = document.getElementById("student_btn_cancel");
+        let student_submit = document.getElementById("student_btn_submit");
+
+        let selected_year_div = document.getElementById("selected-year");
+        let nextYearBTn = document.getElementById("nextYearBTn");
+        let prevYearBtn = document.getElementById("prevYearBtn");
+
+        function editStudent() {
+            student_first_name.readOnly = false;
+            student_last_name.readOnly = false;
+            student_email.readOnly = false;
+            student_phone.readOnly = false;
+
+            student_edit.style.display = 'none'
+            student_cancel.style.display = 'inline-block'
+            student_submit.style.display = 'inline-block'
+
+            let urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('mode', 'edit');
+            window.history.replaceState({}, '', window.location.pathname + '?' + urlParams.toString());
+
+        }
+
+        function viewStudent() {
+            student_first_name.readOnly = true;
+            student_last_name.readOnly = true;
+            student_email.readOnly = true;
+            student_phone.readOnly = true;
+
+            student_edit.style.display = 'inline-block'
+            student_cancel.style.display = 'none'
+            student_submit.style.display = 'none'
+
+            let urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('mode', 'view');
+            window.history.replaceState({}, '', window.location.pathname + '?' + urlParams.toString());
+
+        }
+
+        const delay = (delayInms) => {
+            return new Promise(resolve => setTimeout(resolve, delayInms));
+        };
+
         function modifyEvent(lesson_schedule_id, startTime, endTime, lessonDate, studentName, status, isAdjustment, is_edit = false) {
             let startTime_form = document.getElementById('starTime_cancelForm');
             let endTime_form = document.getElementById('endTime_cancelForm');
@@ -271,7 +486,6 @@
             const edit_title = 'Czy chcesz zedytować tę lekcje?';
 
 
-            console.log(arguments);
             if (is_edit) {
                 btn_plan.style.display = 'none';
                 btn_cancel.style.display = 'none';
@@ -286,7 +500,6 @@
                 endTime_form.readOnly = true;
                 lessonDate_form.readOnly = true;
                 if (status === 'Canceled') {
-                    console.log('Status Canceled')
                     btn_plan.style.display = 'none';
                     btn_cancel.style.display = 'block';
                     cancelModalCenterTitle.innerHTML = cancel_title;
@@ -318,38 +531,73 @@
             isAdjustment_form.checked = isAdjustment === 'True';
         }
 
-        let opened_months = {{ request.GET.opened_months }};
+        let openedMonths = [];
 
-        function addMonthToURL(month_no) {
-            console.log(opened_months);
-            if (opened_months.includes(month_no)) {
-                const index = opened_months.indexOf(month_no);
-                opened_months = opened_months.splice(index, 1);
+        document.addEventListener("DOMContentLoaded", function () {
+            let urlParams = new URLSearchParams(window.location.search);
+            openedMonths = urlParams.get('opened_months');
+            if (openedMonths) {
+                openedMonths = openedMonths.split(',');
+                openedMonths.forEach(function (monthNumber) {
+                    let collapsibleDiv = document.getElementById('collaps_' + monthNumber);
+                    if (collapsibleDiv) {
+                        collapsibleDiv.classList.add('show');
+                    }
+                });
             } else {
-                opened_months.push(month_no)
+                openedMonths = [];
             }
 
-            let currentURL = window.location.href;
+            let mode = urlParams.get('mode');
 
-            // Utwórz nowy obiekt URLSearchParams z obecnego URL
-            let searchParams = new URLSearchParams(window.location.search);
+            if (mode === "edit") {
+                editStudent()
+            } else {
+                viewStudent()
+            }
 
-            // Dodaj parametr opened_months
-            searchParams.set('opened_months', opened_months);
+            let selected_year = urlParams.get('selected_year');
+            if (!selected_year) {
+                const current_year = new Date().getFullYear();
+                selected_year = current_year;
+                addParamToURL('selected_year', current_year)
+            }
+            selected_year_div.innerHTML = selected_year
 
-            // Utwórz nowy URL z dodanym parametrem
-            let newURL = currentURL.split('?')[0] + '?' + searchParams.toString();
+        });
 
-            // Zastąp obecny URL nowym URL z dodanym parametrem
-            window.history.replaceState({path: newURL}, '', newURL);
+        function setQueryYear(value) {
+            selected_year_div.innerHTML = parseInt(selected_year_div.innerHTML) + value;
+
+            const currentURL = window.location.href;
+            let urlSearchParams = new URLSearchParams(window.location.search);
+            urlSearchParams.set('selected_year', selected_year_div.innerHTML);
+
+            window.location.href = currentURL.split('?')[0] + '?' + urlSearchParams.toString();
         }
 
-        function addParamToURL(tab_name) {
+        async function refreshOpenedMonths() {
+            let delayres = await delay(1000);
+            let divElements = document.querySelectorAll('[id^="collaps_"]');
+            openedMonths = [];
+            divElements.forEach(function (div) {
+                if (div.classList.contains('show')) {
+                    let monthNumber = div.id.split('_')[1];
+                    openedMonths.push(monthNumber);
+                }
+            });
+
+            let urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('opened_months', openedMonths.join(','));
+            window.history.replaceState({}, '', window.location.pathname + '?' + urlParams.toString());
+        }
+
+
+        function addParamToURL(key, value) {
             const currentURL = window.location.href;
             const searchParams = new URLSearchParams(window.location.search);
-
             // Dodaj parametr tab_name
-            searchParams.set('tab', tab_name);
+            searchParams.set(key, value);
 
             // Utwórz nowy URL z dodanym parametrem
             const newURL = currentURL.split('?')[0] + '?' + searchParams.toString();
@@ -370,5 +618,19 @@
                 }
             }
         }
+
+        repeating_createLesson = document.getElementById('repeating_createLesson');
+        endSeries_input = document.getElementById('lessonDate_endSeries');
+        endSeries_div = document.getElementById('lessonDate_endSeries_div');
+
+        repeating_createLesson.addEventListener("change", function () {
+            if (repeating_createLesson.value === 'never') {
+                endSeries_div.classList.add('d-none');
+                endSeries_input.value = null;
+            } else {
+                endSeries_div.classList.remove('d-none');
+            }
+
+        })
     </script>
 {% endblock javascript %}

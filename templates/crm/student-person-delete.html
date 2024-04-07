@@ -1,0 +1,35 @@
+{% extends 'base/base.html' %}
+{% load crm_tags %}
+
+{% block content %}
+    <div class="card">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/students"><i
+                        class="ri-home-4-line mr-1 float-left"></i>Students</a></li>
+                <li class="breadcrumb-item active"
+                    aria-current="page"><a
+                        href="/students/{{ student_person.student.id }}">{{ student_person.student.get_full_name }}</a>
+                </li>
+                <li class="breadcrumb-item active"
+                    aria-current="page">Relacja {{ student_person.relationship_type }} - {{ student_person.parent.get_full_name }}</li>
+            </ol>
+        </nav>
+        <div class="card-body">
+            <div class="tab-pane fade show active" id="details" role="tabpanel" aria-labelledby="details-tab">
+
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="text-danger">{{ message }}</div>
+                    <div class=" row align-items-center p-3">
+                        <h4>Czy na pewno chcesz usunąć {{ student_person.person.get_full_name }} jako {{ student_person.relationship_type}} studenta {{ student_person.student.get_full_name }}?</h4>
+                    </div>
+                        <a href="/students/{{ student_person.student.id }}"
+                           class="btn btn-outline-primary mr-2 mt-5">Anuluj</a>
+                        <button name="delete_student_person" type="submit" class="btn btn-danger mt-5">Tak, usuń relacje</button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+{% endblock content %}

@@ -13,15 +13,21 @@ CORE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'django-insecure-uta=i!_i25%tc1y*h!!w1r$o+s7tj354vg30hlf8!w42d0mz+%'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
-
+SITE_URL = 'wasrztatm.pl'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 SESSION_COOKIE_AGE = 60 * 60  # (60 * 60 seconds = 60 minutes)
 SESSION_SAVE_EVERY_REQUEST = True
 
-# Application definition
+SESSION_COOKIE_HTTPONLY = False
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
+
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = False
+
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -46,9 +52,17 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'apps.crm.middleware.crm_middleware.LoginRequiredMiddleware'
 ]
-
+MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
 ROOT_URLCONF = 'SchoolCRM.urls'
 
+# Email sending configuration
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_PORT = 25
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'warsztatm948@gmail.com'
+EMAIL_HOST_PASSWORD = 'zubseh-wewwy5-Hipxih'
 
 TEMPLATE_DIR = os.path.join(CORE_DIR, "templates")  # ROOT dir for _templates
 

@@ -18,8 +18,8 @@ class StudentForm(forms.Form):
     first_name = forms.CharField()
     last_name = forms.CharField()
     email = forms.EmailField()
-    phone = forms.NumberInput()
-    birth_date = forms.DateField(required=False)
+    phone_number = forms.CharField(required=False)
+    # birth_date = forms.DateField(required=False)
 
 
 class LessonForm(forms.Form):
@@ -31,8 +31,25 @@ class LessonForm(forms.Form):
     status = forms.CharField()
     isAdjustment = forms.BooleanField(required=False)
 
+class LessonCreateForm(forms.Form):
+    startTime = forms.TimeField()
+    endTime = forms.TimeField()
+    lessonDate = forms.DateField()
+    repeat = forms.CharField()
+    description = forms.CharField()
+    end_series = forms.DateField()
+
 
 class LessonPlanForm(forms.Form):
     lessonId = forms.CharField()
     status = forms.CharField()
     isAdjustment = forms.BooleanField(required=False)
+
+
+class StudentPersonForm(forms.Form):
+    person = forms.CharField()
+    relationship_type = forms.CharField()
+    first_name = forms.CharField(required=False)
+    last_name = forms.CharField(required=False)
+    email = forms.EmailField(required=False)
+    phone_number = forms.CharField(required=False)

@@ -1,8 +1,16 @@
+from smtplib import SMTPException
+
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.timezone import now
 from django.core.exceptions import ValidationError
-from rest_framework import serializers
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
+from django.core.mail import send_mail
+from SchoolCRM.settings import EMAIL_HOST_USER, SITE_URL
+
+
+# from rest_framework import serializers
 
 
 # Create your models here.
@@ -21,34 +29,36 @@ class Person(models.Model):
 
 
 class Student(models.Model):
-    student = models.OneToOneField(Person, on_delete=models.CASCADE, blank=False, null=False,
-                                   related_name='student_student_person_relationship')
-    parent = models.ForeignKey(Person, on_delete=models.CASCADE, blank=True, null=True,
-                               related_name='student_parent_person_relationship')
+    first_name = models.CharField(max_length=255)
+    last_name = models.CharField(max_length=255)
+    email = models.EmailField()
+    phone = models.IntegerField(blank=True, null=True)
+    # student = models.OneToOneField(Person, on_delete=models.CASCADE, blank=False, null=False,
+    #                                related_name='student_student_person_relationship')
+
+    def get_full_name(self):
+        return self.first_name + " " + self.last_name
 
     def __str__(self):
-        return self.student.first_name + " " + self.student.last_name
+        return self.first_name + " " + self.last_name
+
+class StudentPerson(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, blank=False, null=False,
+                                   related_name='student_student_relationship')
+    person = models.ForeignKey(Person, on_delete=models.CASCADE, blank=False, null=False,
+                               related_name='student_person_relationship')
+    relationship_type = models.CharField(max_length=100)
 
     def clean(self):
         if self.student == self.parent:
             raise ValidationError("Student and parent cannot be the same person.")
 
 
-WEEK_DAYS = (
-    ('Monday', 'Monday'),
-    ('Tuesday', 'Tuesday'),
-    ('Wednesday', 'Wednesday'),
-    ('Thursday', 'Thursday'),
-    ('Friday', 'Friday'),
-    ('Saturday', 'Saturday'),
-    ('Sunday', 'Sunday'),
-)
-
-
 class Lesson(models.Model):
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
     is_series = models.BooleanField(default=False)
+    description = models.CharField(max_length=120, blank=True, null=True)
     series_end_date = models.DateField(blank=True, null=True)
     student = models.ForeignKey(Student, on_delete=models.CASCADE, blank=False, null=False,
                                 related_name='lessonSchedule_student_student_relationship')
@@ -71,18 +81,32 @@ class LessonAdjustment(models.Model):
     status = models.CharField(max_length=64, choices=LESSON_STATUTES, null=True, blank=True)
     comments = models.CharField(max_length=255, blank=True, null=True)
 
-# class LessonScheduleSerializer(serializers.ModelSerializer):
-#     student_obj = serializers.SerializerMethodField()
-#
-#     def get_student_obj(self, obj):
-#         return {'id': obj.student.student.id, 'name': obj.student.student.firstName + " " + obj.student.student.lastName}
-#
-#     class Meta:
-#         model = LessonSchedule
-#         fields = '__all__'
-# class LessonException(models.Model):
-#     date = models.DateTimeField()
-#     student = models.ForeignKey(Person, on_delete=models.CASCADE, blank=True, null=True,
-#                                 related_name='lessonException_student_student_relationship')
-#     teacher = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True,
-#                                 related_name='lessonException_teacher_user_relationship')
+
+class Absense(models.Model):
+    teacher = models.ForeignKey(User, on_delete=models.CASCADE, blank=False, null=False,
+                                related_name='Absense_teacher_user_relationship')
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+
+
+@receiver(pre_save, sender=User)
+def record_password_change(sender, **kwargs):
+    user = kwargs.get('instance', None)
+    if user:
+        new_password = user.password
+        try:
+            old_password = User.objects.get(pk=user.pk).password
+        except User.DoesNotExist:
+            old_password = None
+
+        if new_password != old_password:
+            try:
+                send_mail(
+                    subject="Twoje hasło zostało zmienione",
+                    message=f"Hej {user.first_name}, dostajesz tego maila ponieważ Twoje hasło na {SITE_URL} zostało zmienione.\nJeśli nie zmieniałeś/aś hasła niezwłocznie skontaktuj się z administratorem strony",
+                    from_email=EMAIL_HOST_USER,
+                    recipient_list=[user.email],
+                    fail_silently=False,
+                )
+            except Exception as e:
+                print(e)
