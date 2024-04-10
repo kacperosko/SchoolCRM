@@ -14,7 +14,7 @@ class LoginForm(forms.Form):
     password = forms.CharField(widget=forms.PasswordInput)
 
 
-class StudentForm(forms.Form):
+class PersonForm(forms.Form):
     first_name = forms.CharField()
     last_name = forms.CharField()
     email = forms.EmailField()
@@ -37,7 +37,8 @@ class LessonCreateForm(forms.Form):
     lessonDate = forms.DateField()
     repeat = forms.CharField()
     description = forms.CharField()
-    end_series = forms.DateField()
+    end_series = forms.DateField(required=False)
+    teacher = forms.CharField()
 
 
 class LessonPlanForm(forms.Form):

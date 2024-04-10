@@ -7,7 +7,7 @@ from .models import Student, Lesson, LessonAdjustment, Person, StudentPerson
 from django.core.serializers import serialize
 import json
 from django.contrib.auth import authenticate, login, logout
-from .forms import UserCreationForm, LoginForm, StudentForm, LessonForm, LessonPlanForm, LessonCreateForm, StudentPersonForm
+from .forms import UserCreationForm, LoginForm, PersonForm, LessonForm, LessonPlanForm, LessonCreateForm, StudentPersonForm
 from .middleware.crm_middleware import login_exempt
 from django.contrib.auth.models import User
 from datetime import datetime, timedelta, date, time
@@ -74,6 +74,22 @@ def students(request):
     print(request.user.get_session_auth_hash())
     return render(request, "crm/students.html", context)
 
+def contacts(request):
+    persons_list = Person.objects.all()
+    related_students = StudentPerson.objects.filter(person__in=persons_list)
+    print(related_students)
+    for person in persons_list:
+        print(person.get_full_name())
+        students_persons = related_students.filter(person=person)
+        print(students)
+        temp_arr = []
+        for student_person in students_persons:
+            temp_arr.append(student_person.student.get_full_name())
+        person.students = ", ".join(temp_arr)
+    context = {'persons': persons_list}
+    print(request.user.get_session_auth_hash())
+    return render(request, "crm/persons.html", context)
+
 
 def calendar(request):
     # Fetch lessons associated with the current teacher
@@ -112,7 +128,7 @@ def calendar(request):
             'startTime': l_adjustment.modified_start_time.strftime('%H:%M'),
             'endTime': l_adjustment.modified_end_time.strftime('%H:%M'),
             'status': l_adjustment.status,
-            'student': l_adjustment.lesson.student.student.get_full_name()
+            'student': l_adjustment.lesson.student.get_full_name()
         })
     print(lesson_adjustments_data)
     # Construct a list of dictionaries with lesson data
@@ -120,7 +136,6 @@ def calendar(request):
     for lesson in lessons:
         lesson_adjustments_for_lesson = lesson_adjustments_data.get(lesson.id, [])
         print(lesson_adjustments_for_lesson)
-        student_name = f"{lesson.student.student.first_name} {lesson.student.student.last_name}"
         lesson_data.append({
             'id': lesson.id,
             'weekDay': WEEKDAYS[lesson.start_time.weekday()],
@@ -128,7 +143,7 @@ def calendar(request):
             'endTime': lesson.end_time.strftime('%H:%M'),
             'startDate': str(lesson.start_time.date()),
             'endDate': str(lesson.series_end_date) if lesson.series_end_date else None,
-            'student': student_name,
+            'student': lesson.student.get_full_name(),
             'adjustments': lesson_adjustments_for_lesson
         })
 
@@ -269,11 +284,11 @@ class StudentPage(View):
                     lesson_date = dj_timezone.make_aware(
                         datetime.combine(form.cleaned_data['lessonDate'], datetime.min.time()))
 
-                    opened_months_list = [int(month) for month in opened_months.split(',') if month]
-
-                    if lesson_date.month not in opened_months_list:
-                        opened_months_list.append(lesson_date.month)
-                        opened_months = ','.join(map(str, opened_months_list))
+                    # opened_months_list = [int(month) for month in opened_months.split(',') if month]
+                    #
+                    # if lesson_date.month not in opened_months_list:
+                    #     opened_months_list.append(lesson_date.month)
+                    #     opened_months = ','.join(map(str, opened_months_list))
 
                     messages.success(request, 'Zaktualizowano lekcje pomyślnie!')
 
@@ -331,6 +346,7 @@ class StudentPage(View):
         opened_months = request.GET.get("opened_months", "")
         mode = request.GET.get("mode", "view")
         selected_year = int(request.GET.get("selected_year", datetime.now().year))
+        print('selected_year', selected_year)
 
         if not request.GET._mutable:
             request.GET._mutable = True
@@ -346,6 +362,9 @@ class StudentPage(View):
             student_persons = StudentPerson.objects.filter(student_id=student_id)
             context['student'] = student
             context['student_persons'] = student_persons
+
+            users = User.objects.all()
+            context['users'] = users
         except Exception as e:
             print('StudentPage exception', e)
             return HttpResponse(status=404, msg=e)
@@ -358,10 +377,9 @@ class StudentPage(View):
 
 
 def create_student(request):
-    context = {}
-
+    context = {'title': "Studenta"}
     if request.method == 'POST':
-        form = StudentForm(request.POST)
+        form = PersonForm(request.POST)
         if form.is_valid():
             first_name = form.cleaned_data['first_name']
             last_name = form.cleaned_data['last_name']
@@ -383,7 +401,7 @@ def create_student(request):
             context['message'] = form.errors
             context['form'] = form
 
-    return render(request, "crm/student-create.html", context)
+    return render(request, "crm/person-create.html", context)
 
 
 class StudentPersonDelete(View):
@@ -509,3 +527,88 @@ def lesson_page(request, student_id, lesson_id):
         return render(request, "crm/lesson-page.html", context)
 
     return render(request, "crm/lesson-page.html", context)
+
+
+class CreateContact(View):
+    @staticmethod
+    def post(request, *args, **kwargs):
+        form = PersonForm(request.POST)
+        if form.is_valid():
+            first_name = form.cleaned_data['first_name']
+            last_name = form.cleaned_data['last_name']
+            email = form.cleaned_data['email']
+            phone = None
+            print(form.cleaned_data)
+            if 'phone_number' in form.cleaned_data and form.cleaned_data['phone_number']:
+                phone = form.cleaned_data['phone_number']
+            person = None
+            try:
+                person = Person.objects.create(first_name=first_name, last_name=last_name, email=email, phone=phone)
+            except Exception as e:
+                print(e)
+            messages.success(request, f'Dodano kontakt {person.get_full_name()} pomyslnie!')
+
+            return redirect(f"/contacts/{person.id}")
+        else:
+            print("contact_form error", form.errors)
+            context['message'] = form.errors
+            context['form'] = form
+
+    @staticmethod
+    def get(request, *args, **kwargs):
+        context = {'title': "Kontaktu", 'btn_title': "Kontakt"}
+
+        return render(request, 'crm/person-create.html', context)
+
+
+class ContactPage(View):
+    @staticmethod
+    def post(request, *args, **kwargs):
+        form = PersonForm(request.POST)
+        if form.is_valid():
+            first_name = form.cleaned_data['first_name']
+            last_name = form.cleaned_data['last_name']
+            email = form.cleaned_data['email']
+            phone = None
+            print(form.cleaned_data)
+            if 'phone_number' in form.cleaned_data and form.cleaned_data['phone_number']:
+                phone = form.cleaned_data['phone_number']
+            person = None
+            try:
+                person = Person.objects.create(first_name=first_name, last_name=last_name, email=email, phone=phone)
+            except Exception as e:
+                print(e)
+            messages.success(request, f'Dodano kontakt {person.get_full_name()} pomyslnie!')
+
+            return redirect(f"/contacts/{person.id}")
+        else:
+            print("contact_form error", form.errors)
+            context['message'] = form.errors
+            context['form'] = form
+
+    @staticmethod
+    def get(request, *args, **kwargs):
+        context = {}
+        contact_id = kwargs['contact_id']
+        tab_name = request.GET.get("tab", "Details")
+        if not request.GET._mutable:
+            request.GET._mutable = True
+
+        request.GET['tab'] = tab_name
+        try:
+            person = Person.objects.get(id=contact_id)
+            context['contact'] = person
+        except Exception as e:
+            print(e)
+
+        return render(request, 'crm/contact-page.html', context)
+
+
+class UserPage(View):
+    @staticmethod
+    def get(request, *args, **kwargs):
+        return render(request, 'app/user-profile.html')
+
+    @staticmethod
+    def post(request, *args, **kwargs):
+        pass

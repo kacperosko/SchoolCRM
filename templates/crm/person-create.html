@@ -3,17 +3,9 @@
     {% load crm_tags %}
 
     <div class="card">
-        {#        <nav aria-label="breadcrumb">#}
-        {#            <ol class="breadcrumb">#}
-        {#                <li class="breadcrumb-item"><a href="/students"><i#}
-        {#                        class="ri-home-4-line mr-1 float-left"></i>Students</a></li>#}
-        {#                <li class="breadcrumb-item active"#}
-        {#                    aria-current="page">{{ student.student.firstName }} {{ student.student.lastName }}</li>#}
-        {#            </ol>#}
-        {#        </nav>#}
         <div class="card-header d-flex justify-content-between">
             <div class="header-title">
-                <h4 class="card-title">Dodawanie nowego studenta</h4>
+                <h4 class="card-title">Dodawanie nowego {{ title }}</h4>
             </div>
 
         </div>
@@ -23,7 +15,6 @@
 
                     <form method="post">
                         {% csrf_token %}
-{#                        <div class="text-danger">{{ message }}</div>#}
                         <div class=" row align-items-center">
                             <div class="form-group col-sm-6">
                                 <div class="text-danger">{{ form.first_name.errors|striptags }}</div>
@@ -50,7 +41,7 @@
                             </div>
                         </div>
                         <a href="/students" class="btn btn-outline-primary mr-2 mt-5">Anuluj</a>
-                        <button type="submit" class="btn btn-primary mt-5">Dodaj studenta</button>
+                        <button type="submit" class="btn btn-primary mt-5">Dodaj {% if btn_title %}{{ btn_title }}{% else %}{{ title }}{% endif %}</button>
                     </form>
                 </div>
             </div>

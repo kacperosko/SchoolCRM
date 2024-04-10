@@ -385,10 +385,10 @@
                                 lesson.student +
                                 '<div style="top: 0; right: 0; margin-right: 5px; margin-top: -5px;font-size: 20px; cursor: pointer" class="position-absolute event-menu">' +
                                 '...' +
-                                '<div style="top: 0; right: 0; margin-top: 15px" class="position-absolute bg-white p-2 rounded-sm event-menu-expand">' +
+                                '<div style="top: 0; right: 0; margin-top: 15px; z-index: 400" class="position-absolute bg-white p-2 rounded-sm event-menu-expand">' +
                                 '<a class="bg-red text-white p-1 rounded-sm font-size-12 menu-button text-center"  type="button" data-toggle="modal" data-target="#exampleModalCenter"' +
-                                'onclick="cancelEvent(\'' + lesson.id + '\',\'' + lesson.startTime + '\',\'' + lesson.endTime + '\',\'' + lessonDate.toISOString().slice(0, 10) + '\',\'' + lesson.student + '\')">Cancel</a>' +
-                                '<a class="bg-blue text-white p-1 rounded-sm font-size-12 menu-button text-center">Edit</a>' +
+                                'onclick="cancelEvent(\'' + lesson.id + '\',\'' + lesson.startTime + '\',\'' + lesson.endTime + '\',\'' + lessonDate.toISOString().slice(0, 10) + '\',\'' + lesson.student + '\')">Odwołaj</a>' +
+                                '<a class="bg-blue text-white p-1 rounded-sm font-size-12 menu-button text-center">Edytuj</a>' +
                                 '</div>' +
                                 '</div>' +
                                 '</div>';
@@ -432,12 +432,12 @@
                                 adjustmentElement.style.height = adjDurationMinutes / 15 * 10 + 'px';
                                 adjustmentElement.innerHTML = '<div class="rmws-time">' + adjustment.startTime + '—' + adjustment.endTime + '</div>' +
                                     lesson.student +
-                                    '<div style="top: 0; right: 0; margin-right: 5px; margin-top: -5px;font-size: 20px; cursor: pointer" class="position-absolute event-menu">' +
+                                    '<div style="top: 0; right: 0; margin-right: 5px; margin-top: -5px;font-size: 20px; cursor: pointer; z-index: 50" class="position-absolute event-menu">' +
                                     '...' +
-                                    '<div style="top: 0; right: 0; margin-top: 15px" class="position-absolute bg-white p-2 rounded-sm event-menu-expand">' +
+                                    '<div style="top: 0; right: 0; margin-top: 15px; z-index: 400" class="position-absolute bg-white p-2 rounded-sm event-menu-expand">' +
                                     '<a class="bg-green text-white p-1 rounded-sm font-size-12 menu-button text-center"'+
-                                    'onclick="" >Uncancel</a>' +
-                                    '<a class="bg-blue text-white p-1 rounded-sm font-size-12 menu-button text-center">Edit</a>' +
+                                    'onclick="">Zaplanuj</a>' +
+                                    '<a class="bg-blue text-white p-1 rounded-sm font-size-12 menu-button text-center">Edytuj</a>' +
                                     '</div>' +
                                     '</div>' +
                                     '</div>';

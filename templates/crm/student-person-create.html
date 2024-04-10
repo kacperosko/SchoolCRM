@@ -24,10 +24,10 @@
                     <div class=" row align-items-center">
                         <div class="form-group mb-0 col-sm-6">
                             <div class="text-danger">{{ form.person.errors|striptags }}</div>
-                            <label for="person_select">Osoba <span class="text-danger">*</span></label>
+                            <label for="person_select">Kontakt <span class="text-danger">*</span></label>
                             <select name="person" class="form-control choicesjs" id="person_select" required>
                                 <option disabled selected value></option>
-                                <option value="new">+ Dodaj nową osobę</option>
+                                <option value="new">+ Dodaj nowy kontakt</option>
                                 <option>test3</option>
                                 {% for p in persons %}
                                     <option value="{{ p.id }}">{{ p.get_full_name }}</option>

@@ -14,7 +14,12 @@ urlpatterns = [
     path("students/<str:student_id>/<str:student_person_id>/delete", crm_views.StudentPersonDelete.as_view(), name="crm-student-person-delete"),
     path("students/<str:student_id>/student-person/add", crm_views.StudentPersonCreate.as_view(), name="crm-student-person-delete"),
     path("students/<str:student_id>/<str:lesson_id>", crm_views.lesson_page, name="crm-lesson-page"),
+    path("contacts", crm_views.contacts, name="crm-contacts"),
+    path("contacts/new", crm_views.CreateContact.as_view(), name="crm-contact-create"),
+    path("contacts/<str:contact_id>", crm_views.ContactPage.as_view(), name="crm-contacts-page"),
     path("calendar", crm_views.calendar, name="crm-calendar"),
+
+    path("user", crm_views.UserPage.as_view(), name="crm-user-page")
     # path("<path:path>", crm_views.DynamicHTMLView.as_view(), name="dynamic-html"),
     # defaults.page_not_found(request, exception, template_name='404.html')
 ]

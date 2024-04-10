@@ -17,12 +17,18 @@ class LoginRequiredMiddleware:
         return self.get_response(request)
 
     def process_view(self, request, view_func, view_args, view_kwargs):
-        if getattr(view_func, 'login_exempt', False) and not request.user.is_authenticated:
+        print(request.path)
+
+        if request.path in self.password_reset_urls or request.path.startswith('/password-reset-confirm/'):
+            print("path in password urls")
             return
 
-        if request.user.is_authenticated or request.path in self.password_reset_urls or request.path.startswith(
-                '/password-reset-confirm/MQ/'):
-            print("middleware authenticated")
+        if getattr(view_func, 'login_exempt', False) and not request.user.is_authenticated:
+            print("not authenticated")
+            return
+
+        if request.user.is_authenticated:
+            print(request.path)
             if request.path == '/login/':
                 return redirect("/students")
             return
