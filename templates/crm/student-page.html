@@ -163,7 +163,7 @@
                                 </svg>
                             </button>
                             <button type="button" class="btn btn-outline-primary rounded-pill mx-1" id="currentYearBtn"
-                                    onclick="">
+                                    onclick="setQueryYearNow()">
                                 Teraz
                             </button>
 
@@ -178,8 +178,8 @@
 
                             </button>
                         </div>
-                        <div id="selected-year" class="mx-2 font-weight-500 d-flex align-items-center">
-                            <h5>{{ request.GET.selected_year }}</h5>
+                        <div class="mx-2 font-weight-500 d-flex align-items-center">
+                            <h5 id="selected-year" >{{ request.GET.selected_year }}</h5>
                         </div>
 
 
@@ -453,7 +453,7 @@
         let student_last_name = document.getElementById("student_last_name");
         let student_email = document.getElementById("student_email");
         let student_phone = document.getElementById("student_phone");
-        let student_edit = document.getElementById("student_btn_edit");
+        {#let student_edit = document.getElementById("student_btn_edit");#}
         let student_cancel = document.getElementById("student_btn_cancel");
         let student_submit = document.getElementById("student_btn_submit");
 
@@ -467,7 +467,7 @@
             student_email.readOnly = false;
             student_phone.readOnly = false;
 
-            student_edit.style.display = 'none'
+            {#student_edit.style.display = 'none'#}
             student_cancel.style.display = 'inline-block'
             student_submit.style.display = 'inline-block'
 
@@ -483,7 +483,7 @@
             student_email.readOnly = true;
             student_phone.readOnly = true;
 
-            student_edit.style.display = 'inline-block'
+            {#student_edit.style.display = 'inline-block'#}
             student_cancel.style.display = 'none'
             student_submit.style.display = 'none'
 
@@ -597,6 +597,15 @@
 
         function setQueryYear(value) {
             selected_year_div.innerHTML = parseInt(selected_year_div.innerHTML) + value;
+
+            const currentURL = window.location.href;
+            let urlSearchParams = new URLSearchParams(window.location.search);
+            urlSearchParams.set('selected_year', selected_year_div.innerHTML);
+
+            window.location.href = currentURL.split('?')[0] + '?' + urlSearchParams.toString();
+        }
+        function setQueryYearNow() {
+            selected_year_div.innerHTML = new Date().getFullYear();
 
             const currentURL = window.location.href;
             let urlSearchParams = new URLSearchParams(window.location.search);
