@@ -1,7 +1,7 @@
 from smtplib import SMTPException
 
 from django.db import models
-from django.contrib.auth.models import User
+from apps.authentication.models import User
 from django.utils.timezone import now
 from django.core.exceptions import ValidationError
 from django.db.models.signals import pre_save

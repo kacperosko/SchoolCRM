@@ -39,8 +39,12 @@ INSTALLED_APPS = [
 
     # apps
     'apps.crm',
+    'apps.authentication',
     # 'rest_framework',
 ]
+
+AUTH_USER_MODEL = 'authentication.User'
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

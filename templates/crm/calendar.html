@@ -1,9 +1,10 @@
 {% extends 'base/base.html' %}
 {% block title %}Calendar{% endblock title %}
 {% load crm_tags %}
+{% load static %}
 
 {% block style %}
-    <link rel="stylesheet" href="../../static/css/calendar.css">
+    <link rel="stylesheet" href="{% static 'css/calendar.css' %}">
 {% endblock style %}
 
 {% block content %}
@@ -17,20 +18,17 @@
                 <button type="button" class="btn btn-primary rounded-pill mt-2" id="prevWeekBtn">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                          stroke="currentColor" class="w-6 h-6" width="24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"></path>
                     </svg>
-                    Previous week
+                    Poprzedni tydzień
                 </button>
-                <button type="button" class="btn btn-primary rounded-pill mt-2 mx-1" id="todayBtn">Today</button>
+                <button type="button" class="btn btn-primary rounded-pill mt-2 mx-1" id="todayBtn">Teraz</button>
                 <button type="button" class="btn btn-primary rounded-pill mt-2" id="nextWeekBtn">
-                    Next week
+                    Następny tydzień
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                          stroke="currentColor" class="w-6 h-6" width="24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/>
-
-
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"></path>
                     </svg>
-
                 </button>
             </div>
             <div id="calendar-container" class="rm-weekly-schedule">

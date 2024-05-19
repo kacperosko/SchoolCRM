@@ -1,9 +1,3 @@
-body {
-    color: #666;
-    font-family: Helvetica Neue;
-    font-weight: 200;
-}
-
 @keyframes slideFromRight {
     from {
         transform: translateX(100%);

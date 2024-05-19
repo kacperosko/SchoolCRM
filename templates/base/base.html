@@ -14,8 +14,6 @@
     <link rel="stylesheet" href="{% static 'css/backend.css' %}">
     {#    <link rel="stylesheet" href="../../static/css/backend-plugin.min.css">#}
     {#    <link rel="stylesheet" href="../../static/css/backend.css?v=1.0.0">#}
-    {% block style %}
-    {% endblock style %}
     <style>
         [data-letters]:before {
             content: attr(data-letters);
@@ -26,12 +24,22 @@
             line-height: 2em;
             text-align: center;
             border-radius: 50%;
-            background: plum;
+            background: {{ request.user.avatar_color }};
             vertical-align: middle;
             margin-right: 0.5em;
             color: white;
         }
+
+        [data-letters].initialsbig:before {
+            width: 2em;
+            height: 2em;
+            line-height: 2em;
+            font-size: 5em;
+            margin: auto;
+        }
     </style>
+    {% block style %}
+    {% endblock style %}
 </head>
 <body class=" color-light ">
 <!-- loader Start -->

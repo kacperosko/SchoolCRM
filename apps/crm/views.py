@@ -10,7 +10,7 @@ from django.contrib.auth import authenticate, login, logout
 from .forms import UserCreationForm, LoginForm, PersonForm, LessonForm, LessonPlanForm, LessonCreateForm, \
     StudentPersonForm
 from .middleware.crm_middleware import login_exempt
-from django.contrib.auth.models import User
+from apps.authentication.models import User
 from datetime import datetime, timedelta, date, time
 from time import sleep
 from django.db.models import Q, Count
@@ -40,29 +40,6 @@ def custom_500(request):
     print("custom 505", request.path)
     # return render(request, '404.html', status=404)
     return render(request, 'auth/404.html', status=505)
-
-
-# login page
-@login_exempt
-def user_login(request):
-    message = ''
-    if request.method == 'POST':
-        form = LoginForm(request.POST)
-        if form.is_valid():
-            username = form.cleaned_data['username']
-            password = form.cleaned_data['password']
-            user = authenticate(request, username=username, password=password)
-            if user:
-                login(request, user)
-                next_url = request.GET.get("next", "/student")
-                return redirect(next_url)
-            else:
-                message = 'Nazwa użytkownika lub hasło są niepoprawne'
-                print(message)
-                sleep(4)
-    else:
-        form = LoginForm()
-    return render(request, 'auth/auth-sign-in.html', {'form': form, 'message': message})
 
 
 class CRMHomePage(View):
@@ -664,14 +641,7 @@ def create_note(request):
     return JsonResponse({'status': status, 'message': message, 'note': note_data})
 
 
-class UserPage(View):
-    @staticmethod
-    def get(request, *args, **kwargs):
-        return render(request, 'app/user-profile.html')
 
-    @staticmethod
-    def post(request, *args, **kwargs):
-        pass
 
 
 def format_timesince(created_at):
@@ -740,13 +710,13 @@ def watch_record(request, mode, model_name, record_id):
 
 
 def locations(request):
-    locations = None
+    locations_records = None
     try:
-        locations = Location.objects.all()
+        locations_records = Location.objects.all()
     except Exception as e:
         print(e)
 
-    return render(request, 'crm/locations.html', {'locations': locations})
+    return render(request, 'crm/locations.html', {'locations': locations_records})
 
 
 class LocationPage(View):
@@ -806,3 +776,5 @@ class LocationPage(View):
             return HttpResponse(status=404, msg=e)
 
         return render(request, 'crm/location-page.html', context)
+
+
