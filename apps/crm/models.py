@@ -29,6 +29,18 @@ class Note(models.Model):
         return self.content
 
 
+class WatchRecord(models.Model):
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+
+    def __str__(self):
+        return f"{self.user} is watching {self.content_object}"
+
+
 class Notification(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     message = models.CharField(max_length=255)
@@ -81,6 +93,7 @@ class StudentPerson(models.Model):
     def clean(self):
         if self.student == self.parent:
             raise ValidationError("Student and parent cannot be the same person.")
+
 
 
 class Lesson(models.Model):

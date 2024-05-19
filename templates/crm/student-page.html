@@ -17,10 +17,18 @@
                             class="ri-home-4-line mr-1 float-left"></i>Studenci</a></li>
                     <li class="breadcrumb-item active"
                         aria-current="page">{{ student.get_full_name }}
-                    </li>
                 </ol>
             </nav>
             <div>
+                <button id="watch-button" class="btn rounded-pill" data-trigger="hover" data-toggle="popover" data-content="{% if watch_record %}Obserwujesz ten rekord{% else %}Chcesz obserwować ten rekord?{% endif %}" data-placement="bottom"
+                    onclick="watchRecord('{{ student.id }}', '{{ student|verbose_name }}')" watching-record="{% if watch_record %}following{% else %}notFollowing{% endif %}">
+                    <svg id="watch_icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="{% if watch_record %}2.5{% else %}1.5{% endif %}"
+                         stroke="currentColor" class="w-6 h-6 {% if watch_record %}text-primary{% endif %}" width="25">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"></path>
+                    </svg>
+                </button>
                 <a href="" class="btn btn-primary rounded-pill font-size-12">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1"
                          stroke="currentColor" class="w-6 h-6" width="18">
@@ -343,7 +351,8 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="noteModalCenterTitle">Dodawanie Notatki</h5>
-                    <button id="addNoteModal_closeWindow" type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <button id="addNoteModal_closeWindow" type="button" class="close" data-dismiss="modal"
+                            aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
@@ -355,16 +364,19 @@
                             <div class="form-group col-sm-12">
                                 <label for="content_addNoteForm">Treść</label>
                                 <p class="text-danger" id="addNoteModal_textAreaError"></p>
-                                <textarea class="form-control" name="content" id="content_addNoteForm" style="line-height: 1"
-                                       rows="4" required maxlength="200"></textarea>
+                                <textarea class="form-control" name="content" id="content_addNoteForm"
+                                          style="line-height: 1"
+                                          rows="4" required maxlength="200"></textarea>
                             </div>
                             <div class="form-group col-sm-6">
                                 <label for="studentForm_cancelForm">Student</label>
-                                <input class="form-control" id="student_addNoteForm" required readonly="" value="{{ student.get_full_name }}">
+                                <input class="form-control" id="student_addNoteForm" required readonly=""
+                                       value="{{ student.get_full_name }}">
                             </div>
                             <div class="form-group col-sm-6" hidden="">
                                 <label for="studentForm_cancelForm">Student Id</label>
-                                <input class="form-control" id="studentId_addNoteForm" required readonly="" value="{{ student.id }}">
+                                <input class="form-control" id="studentId_addNoteForm" required readonly=""
+                                       value="{{ student.id }}">
                             </div>
                         </div>
 
@@ -545,8 +557,9 @@
 
 {% block javascript %}
     <script src="{% static '/js/notes.js' %}"></script>
+    <script src="{% static '/js/watchRecord.js' %}"></script>
     <script>
-        const csrf_token = '{% csrf_token %}';
+        {#const csrf_token = '{% csrf_token %}';#}
         let student_first_name = document.getElementById("student_first_name");
         let student_last_name = document.getElementById("student_last_name");
         let student_email = document.getElementById("student_email");

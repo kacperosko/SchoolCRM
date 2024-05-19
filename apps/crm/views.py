@@ -3,7 +3,7 @@ import time
 from django.http import Http404
 from django.shortcuts import render, redirect
 from django.views.generic import View, TemplateView
-from .models import Student, Lesson, LessonAdjustment, Person, StudentPerson, Note, Notification
+from .models import Student, Lesson, LessonAdjustment, Person, StudentPerson, Note, Notification, WatchRecord
 from django.core.serializers import serialize
 import json
 from django.contrib.auth import authenticate, login, logout
@@ -24,7 +24,7 @@ from django.contrib.contenttypes.models import ContentType
 from babel.dates import format_datetime
 from django.utils.timesince import timesince
 from django.utils.timezone import now
-
+from django.shortcuts import get_object_or_404, redirect
 
 MODES = ['view', 'edit']
 WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -368,10 +368,18 @@ class StudentPage(View):
             student = Student.objects.get(id=student_id)
 
             student_persons = StudentPerson.objects.filter(student_id=student_id)
+
+            try:
+                content_type = ContentType.objects.get_for_model(Student)
+                user_watch_record = WatchRecord.objects.get(user=request.user, content_type=content_type, object_id=student_id)
+            except WatchRecord.DoesNotExist:
+                user_watch_record = None
+
             notes = student.notes.all()
             context['student'] = student
             context['notes'] = notes.order_by('-created_at')
             context['student_persons'] = student_persons
+            context['watch_record'] = user_watch_record
 
             users = User.objects.all()
             context['users'] = users
@@ -698,3 +706,28 @@ def mark_notification_as_read(request, notification_id):
         return JsonResponse({'success': True})
     except Notification.DoesNotExist:
         return JsonResponse({'success': False, 'message': 'Notification not found.'}, status=404)
+
+
+def watch_record(request, mode, model_name, record_id):
+    status = False
+    content_type = ContentType.objects.get(model=model_name)
+
+    try:
+        if mode == 'follow':
+            user_watch_record, created = WatchRecord.objects.get_or_create(
+                user=request.user,
+                content_type=content_type,
+                object_id=record_id
+            )
+        else:
+            user_watch_record = WatchRecord.objects.get(
+                user=request.user,
+                content_type=content_type,
+                object_id=record_id
+            )
+            user_watch_record.delete()
+        status = True
+    except Exception as e:
+        print(e)
+
+    return JsonResponse({'status': status})

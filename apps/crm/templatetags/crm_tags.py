@@ -59,3 +59,19 @@ def get_dict_value(dictionary, key):
 @register.filter(name='ifinlist')
 def ifinlist(value, temp_list):
     return str(value) in temp_list
+
+
+@register.filter(name='verbose_name')
+def verbose_name(instance):
+    return instance._meta.verbose_name
+
+
+@register.filter(name='initials')
+def initials(full_name):
+    if not full_name:
+        return ""
+
+    names = full_name.split()
+    initials = ''.join([name[0].upper() for name in names])
+    return initials
+

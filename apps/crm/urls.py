@@ -25,6 +25,8 @@ urlpatterns = [
     path('notifications/', crm_views.get_notifications, name='get_notifications'),
     path('notifications/read/<int:notification_id>/', crm_views.mark_notification_as_read, name='mark_notification_as_read'),
 
+    path('watch/<str:mode>/<str:model_name>/<int:record_id>/', crm_views.watch_record, name='watch_record'),
+
     path("user", crm_views.UserPage.as_view(), name="crm-user-page")
     # path("<path:path>", crm_views.DynamicHTMLView.as_view(), name="dynamic-html"),
     # defaults.page_not_found(request, exception, template_name='404.html')
