@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Person, Student, Lesson, LessonAdjustment, StudentPerson
+from .models import Person, Student, Lesson, LessonAdjustment, StudentPerson, Note, Location, Notification
+from django.contrib.contenttypes.admin import GenericTabularInline
 
 
 @admin.register(Person)
@@ -8,10 +9,19 @@ class PersonAdmin(admin.ModelAdmin):
     search_fields = ('first_name', 'last_name', 'email', 'phone')
 
 
+class NoteItemInline(GenericTabularInline):
+    model = Note
+    extra = 1
+
+
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
     list_display = ('id', 'first_name', 'last_name')
     search_fields = ('first_name', 'last_name')
+
+    inlines = [
+        NoteItemInline,
+    ]
 
 
 class LessonAdjustment_ItemInline(admin.TabularInline):
@@ -37,9 +47,25 @@ class LessonAdmin(admin.ModelAdmin):
 class LessonAdjustmentAdmin(admin.ModelAdmin):
     list_display = ('id', 'original_lesson_date', 'modified_start_time', 'modified_end_time', 'lesson', 'status')
 
+
 @admin.register(StudentPerson)
 class StudentPersonAdmin(admin.ModelAdmin):
     list_display = ('id', 'student', 'person')
+
+
+@admin.register(Note)
+class NoteAdmin(admin.ModelAdmin):
+    list_display = ('content', 'content_type', 'created_by')
+
+
+@admin.register(Location)
+class LocationAdmin(admin.ModelAdmin):
+    list_display = ('name', 'get_full_address')
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ('user', 'message')
 
 # Uncomment the following lines if you decide to use LessonException model
 # from .models import LessonException

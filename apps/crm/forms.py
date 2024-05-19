@@ -31,6 +31,7 @@ class LessonForm(forms.Form):
     status = forms.CharField()
     isAdjustment = forms.BooleanField(required=False)
 
+
 class LessonCreateForm(forms.Form):
     startTime = forms.TimeField()
     endTime = forms.TimeField()

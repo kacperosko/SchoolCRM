@@ -19,6 +19,12 @@ urlpatterns = [
     path("contacts/<str:contact_id>", crm_views.ContactPage.as_view(), name="crm-contacts-page"),
     path("calendar", crm_views.calendar, name="crm-calendar"),
 
+
+    path("crm_api/create-note", crm_views.create_note, name="crm-create_note"),
+
+    path('notifications/', crm_views.get_notifications, name='get_notifications'),
+    path('notifications/read/<int:notification_id>/', crm_views.mark_notification_as_read, name='mark_notification_as_read'),
+
     path("user", crm_views.UserPage.as_view(), name="crm-user-page")
     # path("<path:path>", crm_views.DynamicHTMLView.as_view(), name="dynamic-html"),
     # defaults.page_not_found(request, exception, template_name='404.html')

@@ -16,6 +16,22 @@
     {#    <link rel="stylesheet" href="../../static/css/backend.css?v=1.0.0">#}
     {% block style %}
     {% endblock style %}
+    <style>
+        [data-letters]:before {
+            content: attr(data-letters);
+            display: inline-block;
+            font-size: 1.3em;
+            width: 2em;
+            height: 2em;
+            line-height: 2em;
+            text-align: center;
+            border-radius: 50%;
+            background: plum;
+            vertical-align: middle;
+            margin-right: 0.5em;
+            color: white;
+        }
+    </style>
 </head>
 <body class=" color-light ">
 <!-- loader Start -->
@@ -66,16 +82,20 @@
 <script src="{% static '/js/backend-bundle.min.js' %}"></script>
 <script src="{% static '/js/app.js' %}"></script>
 <script src="{% static '/js/alert.js' %}"></script>
+<script src="{% static '/js/notifications.js' %}"></script>
+<script>
+    const csrf_token = '{% csrf_token %}';
+</script>
 {% if messages %}
     <script>
         const jsonMessages = []
         {% for message in messages %}
             {% with index=forloop.counter %}
-             const message{{ index }} = {
-                "status": {{  message.level }} === 25,
-                "message": "{{message}}"
-            };
-             jsonMessages.push(message{{ index }})
+                const message{{ index }} = {
+                    "status": {{  message.level }} === 25,
+                    "message": "{{message}}"
+                };
+                jsonMessages.push(message{{ index }})
             {% endwith %}
         {% endfor %}
         jsonMessages.forEach((msgJSON) =>

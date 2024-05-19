@@ -8,12 +8,36 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.core.mail import send_mail
 from SchoolCRM.settings import EMAIL_HOST_USER, SITE_URL
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
+from django.contrib.contenttypes.models import ContentType
 
 
-# from rest_framework import serializers
+class Note(models.Model):
+    content = models.CharField(max_length=200)
+    # content = models.TextField()
+
+    # Fields for generic relation
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.content
 
 
-# Create your models here.
+class Notification(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    message = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    read = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.message
+
 
 class Person(models.Model):
     first_name = models.CharField(max_length=255)
@@ -33,6 +57,10 @@ class Student(models.Model):
     last_name = models.CharField(max_length=255)
     email = models.EmailField()
     phone = models.IntegerField(blank=True, null=True)
+    birthdate = models.DateField(blank=True, null=True)
+
+    notes = GenericRelation(Note)
+
     # student = models.OneToOneField(Person, on_delete=models.CASCADE, blank=False, null=False,
     #                                related_name='student_student_person_relationship')
 
@@ -42,9 +70,10 @@ class Student(models.Model):
     def __str__(self):
         return self.first_name + " " + self.last_name
 
+
 class StudentPerson(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE, blank=False, null=False,
-                                   related_name='student_student_relationship')
+                                related_name='student_student_relationship')
     person = models.ForeignKey(Person, on_delete=models.CASCADE, blank=False, null=False,
                                related_name='student_person_relationship')
     relationship_type = models.CharField(max_length=100)
@@ -67,9 +96,16 @@ class Lesson(models.Model):
 
 
 LESSON_STATUTES = (
-    ('Planned', 'Planned'),
-    ('Canceled', 'Canceled')
+    ('Nieobecność', 'Nieobecność'),
+    ('Odwołana - nauczyciel', 'Odwołana - nauczyciel'),
+    ('Odwołana - 24h przed', 'Odwołana - 24h przed')
 )
+
+
+class LessonStatus:
+    NIEOBECNOSC = "Nieobecność"
+    ODWOLANA_NAUCZYCIEL = "Odwołana - nauczyciel"
+    ODWOLANA_24H_PRZED = "Odwołana - 24h przed"
 
 
 class LessonAdjustment(models.Model):
@@ -87,6 +123,22 @@ class Absense(models.Model):
                                 related_name='Absense_teacher_user_relationship')
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
+
+
+class Location(models.Model):
+    name = models.CharField(max_length=100)
+    country = models.CharField(max_length=100)
+    city = models.CharField(max_length=100)
+    street = models.CharField(max_length=255)
+    postal_code = models.CharField(max_length=20)
+
+    notes = GenericRelation(Note)
+
+    def get_full_address(self):
+        return self.country + " " + self.city + " " + self.street
+
+    def __str__(self):
+        return self.name
 
 
 @receiver(pre_save, sender=User)

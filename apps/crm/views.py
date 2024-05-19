@@ -3,11 +3,12 @@ import time
 from django.http import Http404
 from django.shortcuts import render, redirect
 from django.views.generic import View, TemplateView
-from .models import Student, Lesson, LessonAdjustment, Person, StudentPerson
+from .models import Student, Lesson, LessonAdjustment, Person, StudentPerson, Note, Notification
 from django.core.serializers import serialize
 import json
 from django.contrib.auth import authenticate, login, logout
-from .forms import UserCreationForm, LoginForm, PersonForm, LessonForm, LessonPlanForm, LessonCreateForm, StudentPersonForm
+from .forms import UserCreationForm, LoginForm, PersonForm, LessonForm, LessonPlanForm, LessonCreateForm, \
+    StudentPersonForm
 from .middleware.crm_middleware import login_exempt
 from django.contrib.auth.models import User
 from datetime import datetime, timedelta, date, time
@@ -18,6 +19,12 @@ from collections import defaultdict
 from django.utils import timezone as dj_timezone
 from .lesson_handler import count_lessons_for_student_in_months, create_lesson_adjustment
 from django.contrib import messages
+from django.http.response import JsonResponse
+from django.contrib.contenttypes.models import ContentType
+from babel.dates import format_datetime
+from django.utils.timesince import timesince
+from django.utils.timezone import now
+
 
 MODES = ['view', 'edit']
 WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -73,6 +80,7 @@ def students(request):
     context = {'students': students_list}
     print(request.user.get_session_auth_hash())
     return render(request, "crm/students.html", context)
+
 
 def contacts(request):
     persons_list = Person.objects.all()
@@ -360,7 +368,9 @@ class StudentPage(View):
             student = Student.objects.get(id=student_id)
 
             student_persons = StudentPerson.objects.filter(student_id=student_id)
+            notes = student.notes.all()
             context['student'] = student
+            context['notes'] = notes.order_by('-created_at')
             context['student_persons'] = student_persons
 
             users = User.objects.all()
@@ -439,6 +449,7 @@ class StudentPersonDelete(View):
 
         return render(request, "crm/student-person-delete.html", context)
 
+
 class StudentPersonCreate(View):
     @staticmethod
     def post(request, *args, **kwargs):
@@ -461,14 +472,16 @@ class StudentPersonCreate(View):
                 student_person = None
                 if person_id == 'new':
                     try:
-                        person = Person.objects.create(first_name=first_name, last_name=last_name, phone=phone, email=email)
+                        person = Person.objects.create(first_name=first_name, last_name=last_name, phone=phone,
+                                                       email=email)
                     except Exception as e:
                         print(e)
                 else:
                     person = Person.objects.get(id=person_id)
                 try:
                     print(person.first_name, person.last_name, person)
-                    student_person = StudentPerson.objects.create(person=person, relationship_type=relationship_type, student_id=student_id)
+                    student_person = StudentPerson.objects.create(person=person, relationship_type=relationship_type,
+                                                                  student_id=student_id)
                 except Exception as e:
                     print(e)
                 messages.success(request, f'Relacja z {student_person.person.get_full_name()} utworzona')
@@ -507,7 +520,6 @@ class StudentPersonCreate(View):
             context['persons'] = persons
         except Exception as e:
             return HttpResponse(status=404, msg=e)
-
 
         return render(request, "crm/student-person-create.html", context)
 
@@ -604,6 +616,42 @@ class ContactPage(View):
         return render(request, 'crm/contact-page.html', context)
 
 
+def create_note(request):
+    status = False
+    message = ""
+    note_data = None
+    try:
+        student_id = request.POST.get("student_id", None)
+        content = request.POST.get("content", None)
+        if content is None:
+            message = "Treść nie może być pusta"
+            raise Exception(message)
+
+        if student_id is not None:
+            content_object = Student.objects.get(id=student_id)
+
+        note = Note.objects.create(
+            content=content,
+            content_type=ContentType.objects.get_for_model(content_object),
+            object_id=content_object.id,
+            created_by=request.user
+        )
+        formatted_created_at = format_datetime(note.created_at, "d MMMM YYYY HH:mm", locale='pl')
+
+        note_data = {
+            'content': note.content,
+            'created_at': formatted_created_at,
+            'created_by': note.created_by.get_full_name(),
+        }
+
+        status = True
+
+    except Exception as e:
+        print('Create note error:', e)
+
+    return JsonResponse({'status': status, 'message': message, 'note': note_data})
+
+
 class UserPage(View):
     @staticmethod
     def get(request, *args, **kwargs):
@@ -612,3 +660,41 @@ class UserPage(View):
     @staticmethod
     def post(request, *args, **kwargs):
         pass
+
+
+def format_timesince(created_at):
+    # Oblicz różnicę czasu między teraźniejszością a czasem utworzenia powiadomienia
+    timesince_value = timesince(created_at)
+
+    # Jeśli czas różnicy wynosi mniej niż jeden dzień, zwróć wartość "X czasu temu"
+    if timesince_value.startswith("0 minutes") or timesince_value.startswith("0 minute"):
+        return "Teraz"
+    elif "day" in timesince_value:
+        return timesince_value.replace(",", "").split(" ")[0] + " dni temu"
+    else:
+        return timesince_value + " temu"
+
+
+def get_notifications(request):
+    notifications = Notification.objects.filter(user=request.user).order_by('-created_at')
+    unread_notifications = notifications.filter(read=False).count()
+    notifications_data = [{
+        'id': notification.id,
+        'message': notification.message,
+        'read': notification.read,
+        'created_at': format_timesince(notification.created_at)
+    } for notification in notifications]
+
+    print('unread_notifications', unread_notifications)
+
+    return JsonResponse({'notifications': notifications_data, 'unread_notifications': unread_notifications})
+
+
+def mark_notification_as_read(request, notification_id):
+    try:
+        notification = Notification.objects.get(id=notification_id, user=request.user)
+        notification.read = True
+        notification.save()
+        return JsonResponse({'success': True})
+    except Notification.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Notification not found.'}, status=404)
