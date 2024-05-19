@@ -10,8 +10,10 @@ $(document).ready(function () {
 
                 if (notifications.length > 0) {
                     notifications.forEach(function (notification) {
+                        console.log(notification);
                         const notificationElement = `
-                                <li class="dropdown-item-1 float-none p-3 mark-as-read d-flex" id="notification_${notification.id}">
+                                <li class="dropdown-item-1 float-none p-3 mark-as-read d-flex" id="notification_${notification.id}"
+                                ${notification.model_name ? `onclick="location.href='/${notification.model_name}/${notification.record_id}?tab=Notes'"` : ''}>
                                     ${!notification.read ? `<div id="notificationRead_${notification.id}" class="my-auto bg-primary rounded-circle p-1"></div>` : ''}
                                     <div class="list-item d-flex justify-content-start align-items-start notification" >
                                       <div class="list-style-detail ml-2 mr-2">
@@ -32,9 +34,8 @@ $(document).ready(function () {
                         notificationContainer.append(notificationElement);
                     });
 
-                    // Add event listener for mark as read buttons
                     $('.mark-as-read').on('click', function () {
-                        const notificationId = $(this).attr('id').split('_')[1]; // Pobierz ID powiadomienia
+                        const notificationId = $(this).attr('id').split('_')[1];
                         console.log(notificationId);
                         $('#notificationRead_' + notificationId).hide();
                         markNotificationAsRead(notificationId);
@@ -56,34 +57,27 @@ $(document).ready(function () {
 
     function markNotificationAsRead(notificationId) {
         $.ajax({
-            url: `/notifications/read/${notificationId}/`,
-            type: 'POST',
             data: {
                 csrfmiddlewaretoken: $(csrf_token).val(),
             },
             dataType: 'json',
+            error: function (error) {
+                console.error('Error marking notification as read:', error);
+            },
             success: function (data) {
                 if (data.success) {
-                    // fetchNotifications();
-                    console.log('sukces read');
-                    console.log($('#notification_count'));
-                    $('#notification_count').text(parseInt($('#notification_count').text()) - 1);
-                    if (parseInt($('#notification_count').text()) < 1) {
-                        $('#notification_count').hide();
+                    const notification_count = $('#notification_count');
+                    notification_count.text(parseInt(notification_count.text()) - 1);
+                    if (parseInt(notification_count.text()) < 1) {
+                        notification_count.hide();
                     }
                 } else {
                     alert('Error marking notification as read.');
                 }
             },
-            error: function (error) {
-                console.error('Error marking notification as read:', error);
-            }
+            type: 'POST',
+            url: `/notifications/read/${notificationId}/`
         });
     }
-
-    // $('#notification-dropdown').on('click', function () {
-    //     fetchNotifications();
-    // });
-
     fetchNotifications();
 });

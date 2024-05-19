@@ -47,6 +47,10 @@ class Notification(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     read = models.BooleanField(default=False)
 
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True, blank=True)
+    object_id = models.PositiveIntegerField(null=True, blank=True)
+    content_object = GenericForeignKey('content_type', 'object_id')
+
     def __str__(self):
         return self.message
 
@@ -148,7 +152,7 @@ class Location(models.Model):
     notes = GenericRelation(Note)
 
     def get_full_address(self):
-        return self.country + " " + self.city + " " + self.street
+        return self.city + ", ul. " + self.street
 
     def __str__(self):
         return self.name

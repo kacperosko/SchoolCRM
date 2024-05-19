@@ -3,7 +3,7 @@ import time
 from django.http import Http404
 from django.shortcuts import render, redirect
 from django.views.generic import View, TemplateView
-from .models import Student, Lesson, LessonAdjustment, Person, StudentPerson, Note, Notification, WatchRecord
+from .models import Student, Lesson, LessonAdjustment, Person, StudentPerson, Note, Notification, WatchRecord, Location
 from django.core.serializers import serialize
 import json
 from django.contrib.auth import authenticate, login, logout
@@ -54,7 +54,7 @@ def user_login(request):
             user = authenticate(request, username=username, password=password)
             if user:
                 login(request, user)
-                next_url = request.GET.get("next", "/students")
+                next_url = request.GET.get("next", "/student")
                 return redirect(next_url)
             else:
                 message = 'Nazwa użytkownika lub hasło są niepoprawne'
@@ -72,11 +72,11 @@ class CRMHomePage(View):
 
     @staticmethod
     def get(request, *args, **kwargs):
-        return redirect("/students")
+        return redirect("/student")
 
 
 def students(request):
-    students_list = Student.objects.all()
+    students_list = Student.objects.all().order_by("-last_name").order_by("-first_name")
     context = {'students': students_list}
     print(request.user.get_session_auth_hash())
     return render(request, "crm/students.html", context)
@@ -279,7 +279,7 @@ class StudentPage(View):
                 else:
                     messages.error(request, f'Bład podczas zapisywania: {form.errors}')
                 return redirect(
-                    f'/students/{student_id}?tab={tab_name}&opened_months={opened_months}&mode={mode}&selected_year={selected_year}')
+                    f'/student/{student_id}?tab={tab_name}&opened_months={opened_months}&mode={mode}&selected_year={selected_year}')
             elif 'edit_form_submit' in request.POST:
                 print('edit_form_submit')
                 form = LessonForm(request.POST)
@@ -303,7 +303,7 @@ class StudentPage(View):
                 else:
                     messages.error(request, f'Bład podczas zapisywania: {form.errors}')
                 return redirect(
-                    f'/students/{student_id}?tab={tab_name}&opened_months={opened_months}&mode={mode}&selected_year={selected_year}')
+                    f'/student/{student_id}?tab={tab_name}&opened_months={opened_months}&mode={mode}&selected_year={selected_year}')
             elif 'create_form_submit' in request.POST:
                 print('create_form_submit')
                 form = LessonCreateForm(request.POST)
@@ -330,7 +330,7 @@ class StudentPage(View):
                 else:
                     messages.error(request, f'Bład podczas zapisywania: {form.errors}')
                 return redirect(
-                    f'/students/{student_id}?tab={tab_name}&opened_months={opened_months}&mode={mode}&selected_year={selected_year}')
+                    f'/student/{student_id}?tab={tab_name}&opened_months={opened_months}&mode={mode}&selected_year={selected_year}')
             else:
                 print('else form')
                 form = LessonPlanForm(request.POST)
@@ -344,7 +344,7 @@ class StudentPage(View):
                 else:
                     messages.error(request, f'Bład podczas zapisywania: {form.errors}')
                 return redirect(
-                    f'/students/{student_id}?tab={tab_name}&opened_months={opened_months}&mode={mode}&selected_year={selected_year}')
+                    f'/student/{student_id}?tab={tab_name}&opened_months={opened_months}&mode={mode}&selected_year={selected_year}')
 
     @staticmethod
     def get(request, *args, **kwargs):
@@ -413,7 +413,7 @@ def create_student(request):
                 print(e)
             messages.success(request, f'Dodano studenta {student.get_full_name()} pomyslnie!')
 
-            return redirect(f"/students/{student.id}")
+            return redirect(f"/student/{student.id}")
         else:
             print("student_form error", form.errors)
             context['message'] = form.errors
@@ -437,7 +437,7 @@ class StudentPersonDelete(View):
                 print(e)
                 return HttpResponse(status=404, msg=e)
 
-            return redirect(f"/students/{student_id}")
+            return redirect(f"/student/{student_id}")
         else:
             context['message'] = "Nieprawidłowe żądanie"
 
@@ -493,7 +493,7 @@ class StudentPersonCreate(View):
                 except Exception as e:
                     print(e)
                 messages.success(request, f'Relacja z {student_person.person.get_full_name()} utworzona')
-                return redirect(f'/students/{student_id}')
+                return redirect(f'/student/{student_id}')
             else:
                 context['message'] = form.errors
                 context['form'] = form
@@ -510,7 +510,7 @@ class StudentPersonCreate(View):
         #         print(e)
         #         return HttpResponse(status=404, msg=e)
         #
-        #     return redirect(f"/students/{student_id}")
+        #     return redirect(f"/student/{student_id}")
         # else:
         #     context['message'] = "Nieprawidłowe żądanie"
 
@@ -535,7 +535,7 @@ class StudentPersonCreate(View):
 def lesson_page(request, student_id, lesson_id):
     mode = request.GET.get('mode')
     if mode not in MODES:
-        return redirect(f'/students/{student_id}/{lesson_id}?mode=view')
+        return redirect(f'/student/{student_id}/{lesson_id}?mode=view')
     context = {}
     context['lesson'] = Lesson.objects.get(id=lesson_id)
     context['students'] = Student.objects.all()
@@ -629,19 +629,23 @@ def create_note(request):
     message = ""
     note_data = None
     try:
-        student_id = request.POST.get("student_id", None)
+        record_id = request.POST.get("record_id", None)
+        model_name = request.POST.get("model_name", None)
         content = request.POST.get("content", None)
         if content is None:
             message = "Treść nie może być pusta"
             raise Exception(message)
 
-        if student_id is not None:
-            content_object = Student.objects.get(id=student_id)
+        if model_name is None:
+            message = "TECHNICAL Model nie może być pusty"
+            raise Exception(message)
+
+        content_type = ContentType.objects.get(model=model_name)
 
         note = Note.objects.create(
             content=content,
-            content_type=ContentType.objects.get_for_model(content_object),
-            object_id=content_object.id,
+            content_type=content_type,
+            object_id=record_id,
             created_by=request.user
         )
         formatted_created_at = format_datetime(note.created_at, "d MMMM YYYY HH:mm", locale='pl')
@@ -690,10 +694,12 @@ def get_notifications(request):
         'id': notification.id,
         'message': notification.message,
         'read': notification.read,
+        'model_name': notification.content_type.model if notification.content_type else None,
+        'record_id': notification.object_id,
         'created_at': format_timesince(notification.created_at)
     } for notification in notifications]
 
-    print('unread_notifications', unread_notifications)
+    print('unread_notifications', notifications_data)
 
     return JsonResponse({'notifications': notifications_data, 'unread_notifications': unread_notifications})
 
@@ -731,3 +737,72 @@ def watch_record(request, mode, model_name, record_id):
         print(e)
 
     return JsonResponse({'status': status})
+
+
+def locations(request):
+    locations = None
+    try:
+        locations = Location.objects.all()
+    except Exception as e:
+        print(e)
+
+    return render(request, 'crm/locations.html', {'locations': locations})
+
+
+class LocationPage(View):
+    @staticmethod
+    def post(request, *args, **kwargs):
+        form = PersonForm(request.POST)
+        if form.is_valid():
+            first_name = form.cleaned_data['first_name']
+            last_name = form.cleaned_data['last_name']
+            email = form.cleaned_data['email']
+            phone = None
+            print(form.cleaned_data)
+            if 'phone_number' in form.cleaned_data and form.cleaned_data['phone_number']:
+                phone = form.cleaned_data['phone_number']
+            person = None
+            try:
+                person = Person.objects.create(first_name=first_name, last_name=last_name, email=email, phone=phone)
+            except Exception as e:
+                print(e)
+            messages.success(request, f'Dodano kontakt {person.get_full_name()} pomyslnie!')
+
+            return redirect(f"/contacts/{person.id}")
+        else:
+            print("contact_form error", form.errors)
+            context['message'] = form.errors
+            context['form'] = form
+
+    @staticmethod
+    def get(request, *args, **kwargs):
+        context = {}
+        location_id = None
+        try:
+            location_id = kwargs['location_id']
+        except Exception as e:
+            print(e)
+            Http404()
+        tab_name = request.GET.get("tab", "Details")
+        if not request.GET._mutable:
+            request.GET._mutable = True
+
+        request.GET['tab'] = tab_name
+        try:
+            location = Location.objects.get(id=location_id)
+
+            try:
+                content_type = ContentType.objects.get_for_model(Location)
+                user_watch_record = WatchRecord.objects.get(user=request.user, content_type=content_type, object_id=location_id)
+            except WatchRecord.DoesNotExist:
+                user_watch_record = None
+
+            notes = location.notes.all()
+            context['notes'] = notes.order_by('-created_at')
+            context['watch_record'] = user_watch_record
+            context['location'] = location
+
+        except Exception as e:
+            return HttpResponse(status=404, msg=e)
+
+        return render(request, 'crm/location-page.html', context)

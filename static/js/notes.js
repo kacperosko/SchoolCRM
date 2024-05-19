@@ -1,5 +1,6 @@
 function createNote() {
-    const studentId = $('#studentId_addNoteForm').val();
+    const recordId = $('#recordId_addNoteForm').val();
+    const modelName = $('#modelName_addNoteForm').val();
     const content = $('#content_addNoteForm')
     const close_button = $('#addNoteModal_closeWindow')
     const textAreaError = $('#addNoteModal_textAreaError')
@@ -13,7 +14,8 @@ function createNote() {
         url: '/crm_api/create-note',
         type: 'POST',
         data: {
-            student_id: studentId,
+            record_id: recordId,
+            model_name: modelName,
             content: content.val(),
             csrfmiddlewaretoken: $(csrf_token).val(),
         },
