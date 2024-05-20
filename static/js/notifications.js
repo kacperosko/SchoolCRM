@@ -43,7 +43,7 @@ $(document).ready(function () {
 
 
                 } else {
-                    notificationContainer.append('<p>No new notifications.</p>');
+                    notificationContainer.append('<p class="mx-auto text-center py-2 bg-gray">Brak nowych powiadomień</p>');
                 }
                 if (data.unread_notifications > 0) {
                     $('#notification_count').text(data.unread_notifications);

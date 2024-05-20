@@ -15,11 +15,11 @@ class LoginForm(forms.Form):
 
 
 class PersonForm(forms.Form):
-    first_name = forms.CharField()
-    last_name = forms.CharField()
-    email = forms.EmailField()
-    phone_number = forms.CharField(required=False)
-    # birth_date = forms.DateField(required=False)
+    first_name = forms.CharField(label='Imię')
+    last_name = forms.CharField(label='Nazwisko')
+    email = forms.EmailField(label='Email')
+    phone_number = forms.CharField(required=False, label='Telefon')
+    birth_date = forms.DateField(required=False, label='Data urodzin', widget=forms.DateInput(attrs={'type': 'date', 'class': 'mt--2'}))
 
 
 class LessonForm(forms.Form):
@@ -55,3 +55,11 @@ class StudentPersonForm(forms.Form):
     last_name = forms.CharField(required=False)
     email = forms.EmailField(required=False)
     phone_number = forms.CharField(required=False)
+
+
+class LocationForm(forms.Form):
+    name = forms.CharField(label='Nazwa')
+    country = forms.CharField(label='Kraj')
+    city = forms.CharField(label='Miasto')
+    street = forms.CharField(label='Ulica')
+    postal_code = forms.CharField(label='Kod pocztowy', max_length=6)

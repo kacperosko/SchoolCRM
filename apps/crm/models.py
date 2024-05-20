@@ -10,6 +10,7 @@ from django.core.mail import send_mail
 from SchoolCRM.settings import EMAIL_HOST_USER, SITE_URL
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
+from datetime import date
 
 
 class Note(models.Model):
@@ -82,6 +83,15 @@ class Student(models.Model):
 
     def get_full_name(self):
         return self.first_name + " " + self.last_name
+
+    def get_age(self):
+        if self.birthdate:
+            today = date.today()
+            age = today.year - self.birthdate.year - (
+                    (today.month, today.day) < (self.birthdate.month, self.birthdate.day)
+            )
+            return age
+        return None
 
     def __str__(self):
         return self.first_name + " " + self.last_name

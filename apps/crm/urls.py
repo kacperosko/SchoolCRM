@@ -11,6 +11,7 @@ urlpatterns = [
 
     path("student", crm_views.students, name="crm-students"),
     path("student/new", crm_views.create_student, name="crm-student-create"),
+    path("student/edit/<str:student_id>", crm_views.create_student, name="crm-student-create"),
     path("student/<str:student_id>", crm_views.StudentPage.as_view(), name="crm-students"),
     path("student/<str:student_id>/<str:student_person_id>/delete", crm_views.StudentPersonDelete.as_view(), name="crm-student-person-delete"),
     path("student/<str:student_id>/student-person/add", crm_views.StudentPersonCreate.as_view(), name="crm-student-person-delete"),
@@ -22,6 +23,7 @@ urlpatterns = [
     path("calendar", crm_views.calendar, name="crm-calendar"),
 
     path("location", crm_views.locations, name="crm-locations"),
+    path("location/new", crm_views.LocationCreate.as_view(), name="crm-LocationCreate"),
     path("location/<str:location_id>", crm_views.LocationPage.as_view(), name="crm-LocationPage"),
 
 

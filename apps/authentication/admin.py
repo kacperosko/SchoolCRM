@@ -10,4 +10,20 @@ class UserAdmin(admin.ModelAdmin):
     form = UserForm
 
     model = User
+    # filter_horizontal = ('groups', 'user_permissions',)
+
     list_display = ('email', 'first_name', 'last_name',)
+
+    fieldsets = (
+        ('Details', {
+            'fields': ('email', 'first_name', 'last_name', 'phone', 'avatar_color')
+        }),
+
+        ('Permissions', {
+            'fields': ('is_active', 'staff', 'admin', 'is_superuser')
+        }),
+
+        ('Group Permissions', {
+            'fields': ('groups', 'user_permissions',)
+        }),
+    )

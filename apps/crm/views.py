@@ -8,7 +8,7 @@ from django.core.serializers import serialize
 import json
 from django.contrib.auth import authenticate, login, logout
 from .forms import UserCreationForm, LoginForm, PersonForm, LessonForm, LessonPlanForm, LessonCreateForm, \
-    StudentPersonForm
+    StudentPersonForm, LocationForm
 from .middleware.crm_middleware import login_exempt
 from apps.authentication.models import User
 from datetime import datetime, timedelta, date, time
@@ -53,8 +53,11 @@ class CRMHomePage(View):
 
 
 def students(request):
+
     students_list = Student.objects.all().order_by("-last_name").order_by("-first_name")
     context = {'students': students_list}
+    if request.user.groups.filter(permissions__codename='add_student').exists():
+        context['add_perm'] = True
     print(request.user.get_session_auth_hash())
     return render(request, "crm/students.html", context)
 
@@ -325,8 +328,15 @@ class StudentPage(View):
 
     @staticmethod
     def get(request, *args, **kwargs):
-        student_id = kwargs['student_id']
         context = {}
+
+        if request.user.groups.filter(permissions__codename='change_student').exists():
+            context['edit_perm'] = True
+
+        if request.user.groups.filter(permissions__codename='delete_student').exists():
+            context['delete_perm'] = True
+
+        student_id = kwargs['student_id']
         tab_name = request.GET.get("tab", "Details")
         opened_months = request.GET.get("opened_months", "")
         mode = request.GET.get("mode", "view")
@@ -348,7 +358,8 @@ class StudentPage(View):
 
             try:
                 content_type = ContentType.objects.get_for_model(Student)
-                user_watch_record = WatchRecord.objects.get(user=request.user, content_type=content_type, object_id=student_id)
+                user_watch_record = WatchRecord.objects.get(user=request.user, content_type=content_type,
+                                                            object_id=student_id)
             except WatchRecord.DoesNotExist:
                 user_watch_record = None
 
@@ -367,12 +378,26 @@ class StudentPage(View):
         lessons_count = count_lessons_for_student_in_months(student_id, selected_year)
 
         context['months_counter'] = lessons_count
+        context['user'] = request.user
 
         return render(request, "crm/student-page.html", context)
 
 
-def create_student(request):
-    context = {'title': "Studenta"}
+def create_student(request, student_id=None):
+    context = {'title': "Studenta", 'model_name': 'student'}
+    if student_id:
+        context['record_id'] = student_id
+        student = Student.objects.get(id=student_id)
+        initial_data = {
+            'first_name': student.first_name,
+            'last_name': student.last_name,
+            'email': student.email,
+            'phone_number': student.phone,
+            'birth_date': student.birthdate.strftime('%Y-%m-%d'),
+        }
+        form = PersonForm(initial=initial_data)
+    else:
+        form = PersonForm()
     if request.method == 'POST':
         form = PersonForm(request.POST)
         if form.is_valid():
@@ -380,22 +405,31 @@ def create_student(request):
             last_name = form.cleaned_data['last_name']
             email = form.cleaned_data['email']
             phone = None
+            birth_date = None
             print(form.cleaned_data)
+            print('student_id', student_id)
             if 'phone_number' in form.cleaned_data and form.cleaned_data['phone_number']:
                 phone = form.cleaned_data['phone_number']
-            student = None
+            if 'birth_date' in form.cleaned_data and form.cleaned_data['birth_date']:
+                birth_date = form.cleaned_data['birth_date']
             try:
-                student = Student.objects.create(first_name=first_name, last_name=last_name, email=email, phone=phone)
+                if student_id:
+                    student = Student.objects.update(id=student_id, first_name=first_name, last_name=last_name, email=email, phone=phone, birthdate=birth_date)
+                    messages.success(request, f'Zaktualizowano studenta pomyślnie!')
+                else:
+                    student = Student.objects.create(first_name=first_name, last_name=last_name, email=email, phone=phone, birthdate=birth_date)
+                    messages.success(request, f'Dodano studenta {student.get_full_name()} pomyślnie!')
+                    student_id = student.id
+                return redirect(f"/student/{student_id}")
             except Exception as e:
                 print(e)
-            messages.success(request, f'Dodano studenta {student.get_full_name()} pomyslnie!')
+                messages.warning(request, f'Błąd: {e}')
 
-            return redirect(f"/student/{student.id}")
         else:
             print("student_form error", form.errors)
             context['message'] = form.errors
-            context['form'] = form
 
+    context['form'] = form
     return render(request, "crm/person-create.html", context)
 
 
@@ -529,6 +563,7 @@ def lesson_page(request, student_id, lesson_id):
 class CreateContact(View):
     @staticmethod
     def post(request, *args, **kwargs):
+        context = {}
         form = PersonForm(request.POST)
         if form.is_valid():
             first_name = form.cleaned_data['first_name']
@@ -551,9 +586,12 @@ class CreateContact(View):
             context['message'] = form.errors
             context['form'] = form
 
+        return render(request, 'crm/person-create.html', context)
+
     @staticmethod
     def get(request, *args, **kwargs):
-        context = {'title': "Kontaktu", 'btn_title': "Kontakt"}
+        form = PersonForm()
+        context = {'title': "Kontaktu", 'btn_title': "Kontakt", 'form': form}
 
         return render(request, 'crm/person-create.html', context)
 
@@ -641,9 +679,6 @@ def create_note(request):
     return JsonResponse({'status': status, 'message': message, 'note': note_data})
 
 
-
-
-
 def format_timesince(created_at):
     # Oblicz różnicę czasu między teraźniejszością a czasem utworzenia powiadomienia
     timesince_value = timesince(created_at)
@@ -695,6 +730,7 @@ def watch_record(request, mode, model_name, record_id):
                 content_type=content_type,
                 object_id=record_id
             )
+            print(user_watch_record)
         else:
             user_watch_record = WatchRecord.objects.get(
                 user=request.user,
@@ -722,27 +758,7 @@ def locations(request):
 class LocationPage(View):
     @staticmethod
     def post(request, *args, **kwargs):
-        form = PersonForm(request.POST)
-        if form.is_valid():
-            first_name = form.cleaned_data['first_name']
-            last_name = form.cleaned_data['last_name']
-            email = form.cleaned_data['email']
-            phone = None
-            print(form.cleaned_data)
-            if 'phone_number' in form.cleaned_data and form.cleaned_data['phone_number']:
-                phone = form.cleaned_data['phone_number']
-            person = None
-            try:
-                person = Person.objects.create(first_name=first_name, last_name=last_name, email=email, phone=phone)
-            except Exception as e:
-                print(e)
-            messages.success(request, f'Dodano kontakt {person.get_full_name()} pomyslnie!')
-
-            return redirect(f"/contacts/{person.id}")
-        else:
-            print("contact_form error", form.errors)
-            context['message'] = form.errors
-            context['form'] = form
+        pass
 
     @staticmethod
     def get(request, *args, **kwargs):
@@ -763,7 +779,8 @@ class LocationPage(View):
 
             try:
                 content_type = ContentType.objects.get_for_model(Location)
-                user_watch_record = WatchRecord.objects.get(user=request.user, content_type=content_type, object_id=location_id)
+                user_watch_record = WatchRecord.objects.get(user=request.user, content_type=content_type,
+                                                            object_id=location_id)
             except WatchRecord.DoesNotExist:
                 user_watch_record = None
 
@@ -778,3 +795,37 @@ class LocationPage(View):
         return render(request, 'crm/location-page.html', context)
 
 
+class LocationCreate(View):
+    @staticmethod
+    def post(request, *args, **kwargs):
+        context = {}
+        form = LocationForm(request.POST)
+        if form.is_valid():
+            name = form.cleaned_data['name =']
+            country = form.cleaned_data['country']
+            city = form.cleaned_data['city']
+            street = form.cleaned_data['street']
+            postal_code = form.cleaned_data['postal_code']
+
+            print(form.cleaned_data)
+            try:
+                new_location = Location.objects.create(name=name, country=country, city=city, street=street, postal_code=postal_code)
+            except Exception as e:
+                print(e)
+
+            messages.success(request, f'Dodano lokalizacje {new_location.get_full_address()} pomyslnie!')
+
+            return redirect(f"/location/{new_location.id}")
+        else:
+            print("contact_form error", form.errors)
+            context['message'] = form.errors
+            context['form'] = form
+
+        return render(request, 'crm/person-create.html', context)
+
+    @staticmethod
+    def get(request, *args, **kwargs):
+        form = LocationForm()
+        context = {'title': "Lokalizacji", 'btn_title': "Lokalizacja", 'form': form}
+
+        return render(request, 'crm/person-create.html', context)

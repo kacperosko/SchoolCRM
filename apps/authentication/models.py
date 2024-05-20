@@ -2,7 +2,7 @@ import datetime
 from random import random
 
 from django.db import models
-from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, Group
+from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, Group, PermissionsMixin
 
 
 class UserManager(BaseUserManager):
@@ -50,7 +50,7 @@ class UserManager(BaseUserManager):
         return user
 
 
-class User(AbstractBaseUser):
+class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(verbose_name='email', max_length=255, unique=True)
 
     first_name = models.CharField(max_length=255, blank=True, null=True)
@@ -60,6 +60,7 @@ class User(AbstractBaseUser):
     avatar_color = models.CharField(max_length=7, default='#000000')
 
     is_active = models.BooleanField(default=True)
+    is_superuser = models.BooleanField(default=True)
     staff = models.BooleanField(default=False)
     admin = models.BooleanField(default=False)
 

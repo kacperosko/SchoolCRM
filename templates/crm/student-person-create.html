@@ -28,9 +28,8 @@
                             <select name="person" class="form-control choicesjs" id="person_select" required>
                                 <option disabled selected value></option>
                                 <option value="new">+ Dodaj nowy kontakt</option>
-                                <option>test3</option>
                                 {% for p in persons %}
-                                    <option value="{{ p.id }}">{{ p.get_full_name }}</option>
+                                    <option value="{{ p.id }}">{{ p.id }}</option>
                                 {% endfor %}
                             </select>
                         </div>

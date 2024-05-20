@@ -20,31 +20,40 @@
                 </ol>
             </nav>
             <div>
-                <button id="watch-button" class="btn rounded-pill" data-trigger="hover" data-toggle="popover" data-content="{% if watch_record %}Obserwujesz ten rekord{% else %}Chcesz obserwować ten rekord?{% endif %}" data-placement="bottom"
-                    onclick="watchRecord('{{ student.id }}', '{{ student|verbose_name }}')" watching-record="{% if watch_record %}following{% else %}notFollowing{% endif %}">
-                    <svg id="watch_icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="{% if watch_record %}2.5{% else %}1.5{% endif %}"
+                <button id="watch-button" class="btn rounded-pill" data-trigger="hover" data-toggle="popover"
+                        data-content="{% if watch_record %}Obserwujesz ten rekord{% else %}Chcesz obserwować ten rekord?{% endif %}"
+                        data-placement="bottom"
+                        onclick="watchRecord('{{ student.id }}', '{{ student|verbose_name }}')"
+                        watching-record="{% if watch_record %}following{% else %}notFollowing{% endif %}">
+                    <svg id="watch_icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                         stroke-width="{% if watch_record %}2.5{% else %}1.5{% endif %}"
                          stroke="currentColor" class="w-6 h-6 {% if watch_record %}text-primary{% endif %}" width="25">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"></path>
                     </svg>
                 </button>
-                <a href="" class="btn btn-primary rounded-pill font-size-12">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1"
-                         stroke="currentColor" class="w-6 h-6" width="18">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
-                    </svg>
-                    Edytuj
-                </a>
-                <a href="" class="btn btn-danger rounded-pill font-size-12">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1"
+                {% if edit_perm %}
+                    <a href="/student/edit/{{ student.id }}" class="btn btn-primary rounded-pill font-size-12">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1"
+                             stroke="currentColor" class="w-6 h-6" width="18">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                        </svg>
+                        Edytuj
+                    </a>
+                {% endif %}
+            {% if delete_perm %}
+                <a href="" class="btn btn-outline-danger rounded-pill font-size-12">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                          stroke="currentColor" class="w-6 h-6" width="18">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"></path>
                     </svg>
                     Usuń
                 </a>
+            {% endif %}
             </div>
         </div>
         <div class="card-body">
@@ -76,26 +85,44 @@
                         {% csrf_token %}
                         <div class=" row align-items-center">
                             <div class="form-group col-sm-6">
-                                <label for="student_first_name">Imię:</label>
-                                <input name="first_name" type="text" class="form-control" readonly=""
-                                       id="student_first_name"
-                                       value="{{ student.first_name }}">
+                                <label for="student_first_name" class="text-muted">Imię:</label>
+                                <p class="pb-1 field">{{ student.first_name }}</p>
+                                {#                                <input name="first_name" type="text" class="form-control" readonly=""#}
+                                {#                                       id="student_first_name"#}
+                                {#                                       value="{{ student.first_name }}">#}
                             </div>
                             <div class="form-group col-sm-6">
-                                <label for="student_last_name">Nazwisko:</label>
-                                <input name="last_name" type="text" class="form-control" readonly=""
-                                       id="student_last_name"
-                                       value="{{ student.last_name }}">
+                                <label for="student_last_name" class="text-muted">Nazwisko:</label>
+                                <p class="py-1 field">{{ student.last_name }}</p>
+                                {#                                <input name="last_name" type="text" class="form-control" readonly=""#}
+                                {#                                       id="student_last_name"#}
+                                {#                                       value="{{ student.last_name }}">#}
                             </div>
                             <div class="form-group col-sm-6">
-                                <label for="student_email">Email:</label>
-                                <input name="email" type="email" class="form-control" readonly="" id="student_email"
-                                       value="{{ student.email }}">
+                                <a href="mailto:{{ student.email }}">
+                                    <label for="student_email" class="text-muted">Email:</label>
+                                    <p class="pb-1 field">{{ student.email|default_if_none:"" }}</p>
+                                    {#                                <input name="email" type="email" class="form-control pointer-event" readonly="" id="student_email"#}
+                                    {#                                       value="{{ student.email }}" data-trigger="hover" data-toggle="popover" data-content="Utwórz maila" data-placement="bottom">#}
+                                </a>
                             </div>
                             <div class="form-group col-sm-6">
-                                <label for="student_phone">Telefon:</label>
-                                <input name="phone" type="text" class="form-control" readonly id="student_phone"
-                                       value="{{ student.phone|default_if_none:"" }}">
+                                <label for="student_phone" class="text-muted">Telefon:</label>
+                                <p class="pb-1 field">{{ student.phone|default_if_none:"" }}</p>
+                                {#                                <input name="phone" type="text" class="form-control" readonly id="student_phone"#}
+                                {#                                       value="{{ student.phone|default_if_none:"" }}">#}
+                            </div>
+                            <div class="form-group col-sm-6">
+                                <label for="student_phone" class="text-muted">Data Urodzenia:</label>
+                                <p class="pb-1 field">{{ student.birthdate|default_if_none:"" }}</p>
+                                {#                                <input name="phone" type="text" class="form-control" readonly id="student_phone"#}
+                                {#                                       value="{{ student.birthdate|default_if_none:"" }}">#}
+                            </div>
+                            <div class="form-group col-sm-6">
+                                <label for="student_phone" class="text-muted">Wiek:</label>
+                                <p class="pb-1 field">{{ student.get_age|default_if_none:"" }}</p>
+                                {#                                <input name="phone" type="text" class="form-control" readonly id="student_phone"#}
+                                {#                                       value="{{ student.get_age|default_if_none:"" }}">#}
                             </div>
                         </div>
                         {#                        <button id="student_btn_edit" type="button"#}
@@ -120,13 +147,13 @@
                     <div class="table-responsive">
                         <div class="d-flex justify-content-between mb-2">
                             <h5 class="card-title">Powiązane kontakty:</h5>
-                            <a href="/students/{{ student.id }}/student-person/add"
+                            <a href="/student/{{ student.id }}/student-person/add"
                                class="btn btn-primary rounded-pill font-size-12">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                      stroke-width="1.5"
                                      stroke="currentColor" class="w-6 h-6" width="18">
                                     <path stroke-linecap="round" stroke-linejoin="round"
-                                          d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 1-4.512-.645-6.374-1.766Z"/>
+                                          d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 1-4.512-.645-6.374-1.766Z"></path>
                                 </svg>
                                 Dodaj powiązany kontakt
                             </a>
