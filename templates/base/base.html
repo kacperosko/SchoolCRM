@@ -37,15 +37,16 @@
             font-size: 5em;
             margin: auto;
         }
-        
-        .field{
+
+        .field {
+            height: 30px;
             border-bottom: 2px solid #d9d9d9;
         }
     </style>
     {% block style %}
     {% endblock style %}
 </head>
-<body class=" color-light ">
+<body class=" color-light">
 <!-- loader Start -->
 {#<div id="loading">#}
 {#    <div id="loading-center">#}
@@ -96,6 +97,34 @@
 <script src="{% static '/js/notifications.js' %}"></script>
 <script>
     const csrf_token = '{% csrf_token %}';
+
+    $('.data-table').DataTable({
+        "language": {
+            "decimal": "",
+            "emptyTable": "Brak dostępnych danych",
+            "info": "Wyświetlanie od _START_ do _END_ z _TOTAL_ rekordów",
+            "infoEmpty": "Brak rekordów do wyświetlenia",
+            "infoFiltered": "(przefiltrowano z _MAX_ wszystkich rekordów)",
+            "infoPostFix": "",
+            "thousands": ",",
+            "lengthMenu": "Pokaż _MENU_ rekordów",
+            "loadingRecords": "Ładowanie danych...",
+            "processing": "Przetwarzanie...",
+            "search": "Szukaj:",
+            "zeroRecords": "Nie znaleziono pasujących rekordów",
+            "paginate": {
+                "first": "Pierwsza",
+                "last": "Ostatnia",
+                "next": "Następna",
+                "previous": "Poprzednia"
+            },
+            "aria": {
+                "orderable": "Kliknij, aby posortować",
+                "orderableReverse": "Kliknij, aby posortować odwrotnie"
+            }
+        }
+
+    });
 </script>
 {% if messages %}
     <script>

@@ -23,6 +23,7 @@ class LoginRequiredMiddleware:
             print("path in password urls")
             return
 
+        print('login_exempt', getattr(view_func, 'login_exempt', False))
         if getattr(view_func, 'login_exempt', False) and not request.user.is_authenticated:
             print("not authenticated")
             return
@@ -30,7 +31,7 @@ class LoginRequiredMiddleware:
         if request.user.is_authenticated:
             print(request.path)
             if request.path == '/login/':
-                return redirect("/students")
+                return redirect("/student")
             return
 
         return login_required(view_func)(request, *view_args, **view_kwargs)

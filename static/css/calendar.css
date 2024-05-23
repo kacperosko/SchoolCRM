@@ -40,11 +40,12 @@
 
 
 .rm-weekly-schedule {
-    background-color: #f5f5fa;
+    /*background-color: #f5f5fa;*/
     border: 1px solid #ddd;
     display: table;
     overflow: hidden;
     width: 100%;
+    min-width: 740px;
 }
 
 .rmws-hour-labels {

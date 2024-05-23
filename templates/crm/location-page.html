@@ -71,33 +71,23 @@
                         <div class=" row align-items-center">
                             <div class="form-group col-sm-6">
                                 <label for="location_name">Nazwa:</label>
-                                <input name="name" type="text" class="form-control" readonly=""
-                                       id="location_name"
-                                       value="{{ location.name }}">
+                                <p class="pb-1 field">{{ location.name|default_if_none:"" }}</p>
                             </div>
                             <div class="form-group col-sm-6">
                                 <label for="location_country">Kraj:</label>
-                                <input name="country" type="text" class="form-control" readonly=""
-                                       id="location_country"
-                                       value="{{ location.country }}">
+                                <p class="pb-1 field">{{ location.country|default_if_none:"" }}</p>
                             </div>
                             <div class="form-group col-sm-6">
                                 <label for="location_city">Miasto:</label>
-                                <input name="city" type="text" class="form-control" readonly=""
-                                       id="location_city"
-                                       value="{{ location.city }}">
+                                <p class="pb-1 field">{{ location.city|default_if_none:"" }}</p>
                             </div>
                             <div class="form-group col-sm-6">
                                 <label for="location_street">Ulica:</label>
-                                <input name="street" type="text" class="form-control" readonly=""
-                                       id="location_street"
-                                       value="{{ location.street }}">
+                                <p class="pb-1 field">{{ location.street|default_if_none:"" }}</p>
                             </div>
                             <div class="form-group col-sm-6">
                                 <label for="location_postal_code">Kod pocztowy:</label>
-                                <input name="postal_code" type="text" class="form-control" readonly=""
-                                       id="location_postal_code"
-                                       value="{{ location.postal_code }}">
+                                <p class="pb-1 field">{{ location.postal_code|default_if_none:"" }}</p>
                             </div>
                         </div>
                     </form>

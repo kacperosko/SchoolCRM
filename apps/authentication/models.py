@@ -79,23 +79,25 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.email
 
     def has_perm(self, perm, obj=None):
-        "Does the user have a specific permission?"
-        # Simplest possible answer: Yes, always
-        return True
+        """Does the user have a specific permission?"""
+        if self.is_active and (self.is_superuser or super().has_perm(perm, obj)):
+            return True
+        return False
 
     def has_module_perms(self, app_label):
-        "Does the user have permissions to view the app `app_label`?"
-        # Simplest possible answer: Yes, always
-        return True
+        """Does the user have permissions to view the app `app_label`?"""
+        if self.is_active and (self.is_superuser or super().has_module_perms(app_label)):
+            return True
+        return False
 
     @property
     def is_staff(self):
-        "Is the user a member of staff?"
+        """Is the user a member of staff?"""
         return self.staff
 
     @property
     def is_admin(self):
-        "Is the user a admin member?"
+        """Is the user a admin member?"""
         return self.admin
 
     class Meta:

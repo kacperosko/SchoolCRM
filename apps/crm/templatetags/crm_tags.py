@@ -8,7 +8,7 @@ register = template.Library()
 
 @register.filter
 def weekdays(value):
-    return ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    return ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota', 'Niedziela']
 
 
 MONTH_NAMES = [

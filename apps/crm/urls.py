@@ -2,6 +2,7 @@ from django.urls import path, include
 from apps.crm import views as crm_views
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth import views as auth_views
+from django.contrib.auth.decorators import login_required, permission_required
 
 
 urlpatterns = [
@@ -11,15 +12,17 @@ urlpatterns = [
 
     path("student", crm_views.students, name="crm-students"),
     path("student/new", crm_views.create_student, name="crm-student-create"),
-    path("student/edit/<str:student_id>", crm_views.create_student, name="crm-student-create"),
+    # path("student/new", permission_required('crm.add_student', login_url='/')(crm_views.create_student), name="crm-student-create"),
+    path("student/edit/<str:student_id>", crm_views.edit_student, name="crm-student-create"),
     path("student/<str:student_id>", crm_views.StudentPage.as_view(), name="crm-students"),
     path("student/<str:student_id>/<str:student_person_id>/delete", crm_views.StudentPersonDelete.as_view(), name="crm-student-person-delete"),
     path("student/<str:student_id>/student-person/add", crm_views.StudentPersonCreate.as_view(), name="crm-student-person-delete"),
     path("student/<str:student_id>/<str:lesson_id>", crm_views.lesson_page, name="crm-lesson-page"),
 
-    path("contacts", crm_views.contacts, name="crm-contacts"),
-    path("contacts/new", crm_views.CreateContact.as_view(), name="crm-contact-create"),
-    path("contacts/<str:contact_id>", crm_views.ContactPage.as_view(), name="crm-contacts-page"),
+    path("person", crm_views.contacts, name="crm-contacts"),
+    path("person/new", crm_views.CreateContact.as_view(), name="crm-contact-create"),
+    path("person/edit/<str:person_id>", crm_views.edit_person, name="crm-contact-create"),
+    path("person/<str:contact_id>", crm_views.ContactPage.as_view(), name="crm-contacts-page"),
     path("calendar", crm_views.calendar, name="crm-calendar"),
 
     path("location", crm_views.locations, name="crm-locations"),

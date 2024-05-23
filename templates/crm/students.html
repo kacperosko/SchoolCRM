@@ -8,7 +8,7 @@
             <div class="header-title">
                 <h4 class="card-title">Studenci</h4>
             </div>
-            {% if add_perm %}
+            {% if perms.crm.add_student %}
                 <a href="/student/new" class="btn btn-primary rounded-pill">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                          stroke="currentColor" class="w-6 h-6" width="24">

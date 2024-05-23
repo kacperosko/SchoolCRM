@@ -54,7 +54,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'apps.crm.middleware.crm_middleware.LoginRequiredMiddleware',
+    'apps.authentication.middleware.login_required_middleware.LoginRequiredMiddleware',
     # 'apps.crm.middleware.notifications_middleware.UnreadNotificationsMiddleware'
 ]
 MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'

@@ -17,7 +17,7 @@ class LoginForm(forms.Form):
 class PersonForm(forms.Form):
     first_name = forms.CharField(label='Imię')
     last_name = forms.CharField(label='Nazwisko')
-    email = forms.EmailField(label='Email')
+    email = forms.EmailField(required=False, label='Email')
     phone_number = forms.CharField(required=False, label='Telefon')
     birth_date = forms.DateField(required=False, label='Data urodzin', widget=forms.DateInput(attrs={'type': 'date', 'class': 'mt--2'}))
 
@@ -54,7 +54,7 @@ class StudentPersonForm(forms.Form):
     first_name = forms.CharField(required=False)
     last_name = forms.CharField(required=False)
     email = forms.EmailField(required=False)
-    phone_number = forms.CharField(required=False)
+    phone = forms.CharField(required=False)
 
 
 class LocationForm(forms.Form):

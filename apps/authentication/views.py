@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from apps.crm.middleware.crm_middleware import login_exempt
+from .middleware.login_required_middleware import login_exempt
 from .forms import UserCreationForm, LoginForm
 from .models import User
 from django.contrib.auth import authenticate, login, logout
@@ -17,8 +17,8 @@ def user_login(request):
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
             user = authenticate(request, username=username, password=password)
-            print(user)
             if user:
+                print('authenticated', user)
                 login(request, user)
                 next_url = request.GET.get("next", "/student")
                 return redirect(next_url)
@@ -26,6 +26,8 @@ def user_login(request):
                 message = 'Nazwa użytkownika lub hasło są niepoprawne'
                 print(message)
                 sleep(4)
+        else:
+            message = form.errors
     else:
         form = LoginForm()
     return render(request, 'auth/auth-sign-in.html', {'form': form, 'message': message})

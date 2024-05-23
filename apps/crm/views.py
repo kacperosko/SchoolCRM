@@ -9,7 +9,6 @@ import json
 from django.contrib.auth import authenticate, login, logout
 from .forms import UserCreationForm, LoginForm, PersonForm, LessonForm, LessonPlanForm, LessonCreateForm, \
     StudentPersonForm, LocationForm
-from .middleware.crm_middleware import login_exempt
 from apps.authentication.models import User
 from datetime import datetime, timedelta, date, time
 from time import sleep
@@ -25,6 +24,7 @@ from babel.dates import format_datetime
 from django.utils.timesince import timesince
 from django.utils.timezone import now
 from django.shortcuts import get_object_or_404, redirect
+from django.core.exceptions import PermissionDenied
 
 MODES = ['view', 'edit']
 WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -38,7 +38,6 @@ def custom_404(request, exception):
 
 def custom_500(request):
     print("custom 505", request.path)
-    # return render(request, '404.html', status=404)
     return render(request, 'auth/404.html', status=505)
 
 
@@ -53,7 +52,6 @@ class CRMHomePage(View):
 
 
 def students(request):
-
     students_list = Student.objects.all().order_by("-last_name").order_by("-first_name")
     context = {'students': students_list}
     if request.user.groups.filter(permissions__codename='add_student').exists():
@@ -383,6 +381,15 @@ class StudentPage(View):
         return render(request, "crm/student-page.html", context)
 
 
+from django.contrib.auth.decorators import permission_required
+
+
+@permission_required('crm.change_student', raise_exception=True)
+def edit_student(request, student_id):
+    return create_student(request, student_id)
+
+
+@permission_required('crm.add_student', raise_exception=False, login_url="/location")
 def create_student(request, student_id=None):
     context = {'title': "Studenta", 'model_name': 'student'}
     if student_id:
@@ -393,7 +400,7 @@ def create_student(request, student_id=None):
             'last_name': student.last_name,
             'email': student.email,
             'phone_number': student.phone,
-            'birth_date': student.birthdate.strftime('%Y-%m-%d'),
+            'birth_date': student.birthdate.strftime('%Y-%m-%d') if student.birthdate else None,
         }
         form = PersonForm(initial=initial_data)
     else:
@@ -414,10 +421,14 @@ def create_student(request, student_id=None):
                 birth_date = form.cleaned_data['birth_date']
             try:
                 if student_id:
-                    student = Student.objects.update(id=student_id, first_name=first_name, last_name=last_name, email=email, phone=phone, birthdate=birth_date)
+                    print('student_update')
+                    student = Student.objects.filter(id=student_id).update(first_name=first_name, last_name=last_name,
+                                                                           email=email, phone=phone,
+                                                                           birthdate=birth_date)
                     messages.success(request, f'Zaktualizowano studenta pomyślnie!')
                 else:
-                    student = Student.objects.create(first_name=first_name, last_name=last_name, email=email, phone=phone, birthdate=birth_date)
+                    student = Student.objects.create(first_name=first_name, last_name=last_name, email=email,
+                                                     phone=phone, birthdate=birth_date)
                     messages.success(request, f'Dodano studenta {student.get_full_name()} pomyślnie!')
                     student_id = student.id
                 return redirect(f"/student/{student_id}")
@@ -560,6 +571,10 @@ def lesson_page(request, student_id, lesson_id):
     return render(request, "crm/lesson-page.html", context)
 
 
+def edit_person(request, person_id):
+    pass
+
+
 class CreateContact(View):
     @staticmethod
     def post(request, *args, **kwargs):
@@ -580,7 +595,7 @@ class CreateContact(View):
                 print(e)
             messages.success(request, f'Dodano kontakt {person.get_full_name()} pomyslnie!')
 
-            return redirect(f"/contacts/{person.id}")
+            return redirect(f"/person/{person.id}")
         else:
             print("contact_form error", form.errors)
             context['message'] = form.errors
@@ -615,7 +630,7 @@ class ContactPage(View):
                 print(e)
             messages.success(request, f'Dodano kontakt {person.get_full_name()} pomyslnie!')
 
-            return redirect(f"/contacts/{person.id}")
+            return redirect(f"/person/{person.id}")
         else:
             print("contact_form error", form.errors)
             context['message'] = form.errors
@@ -809,7 +824,8 @@ class LocationCreate(View):
 
             print(form.cleaned_data)
             try:
-                new_location = Location.objects.create(name=name, country=country, city=city, street=street, postal_code=postal_code)
+                new_location = Location.objects.create(name=name, country=country, city=city, street=street,
+                                                       postal_code=postal_code)
             except Exception as e:
                 print(e)
 
