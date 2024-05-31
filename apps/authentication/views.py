@@ -6,6 +6,7 @@ from django.contrib.auth import authenticate, login, logout
 from time import sleep
 from django.shortcuts import render, redirect
 from django.views.generic import View, TemplateView
+from django.contrib.auth.decorators import permission_required
 
 
 @login_exempt
@@ -33,6 +34,7 @@ def user_login(request):
     return render(request, 'auth/auth-sign-in.html', {'form': form, 'message': message})
 
 
+@permission_required('crm.view_user', raise_exception=False, login_url="/")
 def users(request):
     users_all = None
     try:

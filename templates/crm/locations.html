@@ -8,14 +8,15 @@
             <div class="header-title">
                 <h4 class="card-title">Lokalizacje</h4>
             </div>
+            {% if perms.crm.add_location %}
             <a href="/location/new" class="btn btn-primary rounded-pill">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                      stroke="currentColor" class="w-6 h-6" width="24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
                 </svg>
-
                 Dodaj Lokalizacje
             </a>
+            {% endif %}
         </div>
 
         <div class="card-body">

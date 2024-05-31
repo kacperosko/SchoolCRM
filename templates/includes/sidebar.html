@@ -18,6 +18,7 @@
                 <li class="px-3 pt-3 pb-2">
                     <span class="text-uppercase small font-weight-bold">Moduły</span>
                 </li>
+                {% if perms.crm.view_student %}
                 <li class="sidebar-layout {% if 'student' in request.path %}active{% endif %}">
                     <a href="/student" class="svg-icon">
                         <i class="">
@@ -30,6 +31,8 @@
                         </i><span class="ml-2">Studenci</span>
                     </a>
                 </li>
+            {% endif %}
+            {% if perms.crm.view_person %}
                 <li class="sidebar-layout {% if 'person' in request.path %}active{% endif %}">
                     <a href="/person" class="svg-icon">
                         <i class="">
@@ -42,6 +45,8 @@
                         </i><span class="ml-2">Kontakty</span>
                     </a>
                 </li>
+            {% endif %}
+            {% if perms.crm.view_user %}
                 <li class="sidebar-layout {% if 'user' in request.path %}active{% endif %}">
                     <a href="/user" class="svg-icon">
                         <i class="">
@@ -55,6 +60,8 @@
                         </i><span class="ml-2">Nauczyciele</span>
                     </a>
                 </li>
+            {% endif %}
+            {% if perms.crm.view_lesson %}
                 <li class="sidebar-layout {% if 'calendar' in request.path %}active{% endif %}">
                     <a href="/calendar" class="svg-icon">
                         <i class="">
@@ -67,6 +74,8 @@
                         </i><span class="ml-2">Kalendarz</span>
                     </a>
                 </li>
+            {% endif %}
+            {% if perms.crm.view_location %}
                 <li class="sidebar-layout {% if 'location' in request.path %}active{% endif %}">
                     <a href="/location" class="svg-icon">
                         <i class="">
@@ -80,6 +89,7 @@
                         </i><span class="ml-2">Lokalizacje</span>
                     </a>
                 </li>
+            {% endif %}
                 {#                <li class=" sidebar-layout">#}
                 {#                    <a href="../app/user-profile.html" class="svg-icon">#}
                 {#                        <i class="">#}

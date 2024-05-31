@@ -17,6 +17,8 @@ from django.contrib import admin
 from django.urls import path, include
 # from apps.crm.forms import MySetPasswordForm
 from django.urls import path
+from django.conf.urls.static import static
+from django.conf import settings
 
 from django.contrib.auth.views import (
     PasswordResetView,
@@ -34,7 +36,7 @@ urlpatterns = [
     path('warsztatownia/', admin.site.urls),
     path("", include("apps.authentication.urls")),
     path("", include("apps.crm.urls")),
-]
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 handler404 = 'apps.crm.views.custom_404'
 handler500 = 'apps.crm.views.custom_500'

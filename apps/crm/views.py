@@ -25,6 +25,9 @@ from django.utils.timesince import timesince
 from django.utils.timezone import now
 from django.shortcuts import get_object_or_404, redirect
 from django.core.exceptions import PermissionDenied
+from django.contrib.auth.decorators import permission_required
+from django.http import HttpResponse
+
 
 MODES = ['view', 'edit']
 WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -234,7 +237,6 @@ class StudentPage(View):
         student_id = kwargs['student_id']
         tab_name = request.GET.get("tab", "Details")
         opened_months = request.GET.get("opened_months", "")
-        mode = request.GET.get("mode", "view")
         selected_year = request.GET.get("selected_year", datetime.now().year)
         if request.method == 'POST':
             if 'cancel_form_submit' in request.POST:
@@ -257,7 +259,7 @@ class StudentPage(View):
                 else:
                     messages.error(request, f'Bład podczas zapisywania: {form.errors}')
                 return redirect(
-                    f'/student/{student_id}?tab={tab_name}&opened_months={opened_months}&mode={mode}&selected_year={selected_year}')
+                    f'/student/{student_id}?tab={tab_name}&opened_months={opened_months}&selected_year={selected_year}')
             elif 'edit_form_submit' in request.POST:
                 print('edit_form_submit')
                 form = LessonForm(request.POST)
@@ -281,34 +283,42 @@ class StudentPage(View):
                 else:
                     messages.error(request, f'Bład podczas zapisywania: {form.errors}')
                 return redirect(
-                    f'/student/{student_id}?tab={tab_name}&opened_months={opened_months}&mode={mode}&selected_year={selected_year}')
-            elif 'create_form_submit' in request.POST:
+                    f'/student/{student_id}?tab={tab_name}&opened_months={opened_months}&selected_year={selected_year}')
+            elif 'create_lesson_form_submit' in request.POST:
                 print('create_form_submit')
                 form = LessonCreateForm(request.POST)
                 if form.is_valid():
                     start_time = form.cleaned_data['startTime']
-                    end_time = form.cleaned_data['endTime']
+                    lesson_duration = int(form.cleaned_data['lessonDuration'])
                     lesson_date = form.cleaned_data['lessonDate']
                     repeat = form.cleaned_data['repeat']
                     is_series = repeat != 'never'
                     description = form.cleaned_data['description']
+                    teacher_id = form.cleaned_data['teacher']
                     end_series = None
                     if is_series:
                         end_series = form.cleaned_data['end_series']
-
+                    #
                     start_datetime = datetime.combine(lesson_date, start_time)
-                    end_datetime = datetime.combine(lesson_date, end_time)
+                    end_datetime = start_datetime + timedelta(minutes=lesson_duration)
+                    #
+                    # start_datetime = datetime.combine(lesson_date, start_time)
+                    #
+                    # # Convert lesson_duration to integer if it's not already
+                    # lesson_duration_minutes = int(lesson_duration)
+                    #
+                    # end_datetime = start_datetime + timedelta(minutes=lesson_duration_minutes)
 
                     lesson = Lesson.objects.create(student_id=student_id, start_time=start_datetime,
                                                    end_time=end_datetime,
-                                                   is_series=is_series, teacher_id=request.user.id,
+                                                   is_series=is_series, teacher_id=teacher_id,
                                                    description=description, series_end_date=end_series)
                     lesson_msg = 'Seria lekcji' if is_series else 'Lekcja'
                     messages.success(request, f'{lesson_msg} dodana pomyślnie!')
                 else:
                     messages.error(request, f'Bład podczas zapisywania: {form.errors}')
                 return redirect(
-                    f'/student/{student_id}?tab={tab_name}&opened_months={opened_months}&mode={mode}&selected_year={selected_year}')
+                    f'/student/{student_id}?tab={tab_name}&opened_months={opened_months}&selected_year={selected_year}')
             else:
                 print('else form')
                 form = LessonPlanForm(request.POST)
@@ -322,7 +332,7 @@ class StudentPage(View):
                 else:
                     messages.error(request, f'Bład podczas zapisywania: {form.errors}')
                 return redirect(
-                    f'/student/{student_id}?tab={tab_name}&opened_months={opened_months}&mode={mode}&selected_year={selected_year}')
+                    f'/student/{student_id}?tab={tab_name}&opened_months={opened_months}&selected_year={selected_year}')
 
     @staticmethod
     def get(request, *args, **kwargs):
@@ -337,7 +347,6 @@ class StudentPage(View):
         student_id = kwargs['student_id']
         tab_name = request.GET.get("tab", "Details")
         opened_months = request.GET.get("opened_months", "")
-        mode = request.GET.get("mode", "view")
         selected_year = int(request.GET.get("selected_year", datetime.now().year))
         print('selected_year', selected_year)
 
@@ -346,7 +355,6 @@ class StudentPage(View):
 
         request.GET['tab'] = tab_name
         request.GET['opened_months'] = opened_months
-        request.GET['mode'] = mode
         request.GET['selected_year'] = selected_year
 
         try:
@@ -369,19 +377,22 @@ class StudentPage(View):
 
             users = User.objects.all()
             context['users'] = users
+        except Student.DoesNotExist as e:
+            print('StudentPage exception', e)
+            messages.error(request, f'Nie znaleziono Studenta z id {student_id}')
+            return redirect('/student')
         except Exception as e:
             print('StudentPage exception', e)
-            return HttpResponse(status=404, msg=e)
+            messages.error(request, f'StudentPage exception: {e}')
+            return custom_404(request, e)
+
 
         lessons_count = count_lessons_for_student_in_months(student_id, selected_year)
-
+        print('lessons_count', lessons_count)
         context['months_counter'] = lessons_count
         context['user'] = request.user
 
         return render(request, "crm/student-page.html", context)
-
-
-from django.contrib.auth.decorators import permission_required
 
 
 @permission_required('crm.change_student', raise_exception=True)
@@ -389,7 +400,7 @@ def edit_student(request, student_id):
     return create_student(request, student_id)
 
 
-@permission_required('crm.add_student', raise_exception=False, login_url="/location")
+@permission_required('crm.add_student', raise_exception=False, login_url="/")
 def create_student(request, student_id=None):
     context = {'title': "Studenta", 'model_name': 'student'}
     if student_id:
@@ -427,6 +438,7 @@ def create_student(request, student_id=None):
                                                                            birthdate=birth_date)
                     messages.success(request, f'Zaktualizowano studenta pomyślnie!')
                 else:
+                    print('student_create')
                     student = Student.objects.create(first_name=first_name, last_name=last_name, email=email,
                                                      phone=phone, birthdate=birth_date)
                     messages.success(request, f'Dodano studenta {student.get_full_name()} pomyślnie!')
@@ -577,6 +589,7 @@ def edit_person(request, person_id):
 
 class CreateContact(View):
     @staticmethod
+    @permission_required('crm.add_person', raise_exception=False, login_url="/")
     def post(request, *args, **kwargs):
         context = {}
         form = PersonForm(request.POST)
@@ -604,6 +617,7 @@ class CreateContact(View):
         return render(request, 'crm/person-create.html', context)
 
     @staticmethod
+    @permission_required('crm.add_person', raise_exception=False, login_url="/")
     def get(request, *args, **kwargs):
         form = PersonForm()
         context = {'title': "Kontaktu", 'btn_title': "Kontakt", 'form': form}
@@ -760,6 +774,7 @@ def watch_record(request, mode, model_name, record_id):
     return JsonResponse({'status': status})
 
 
+@permission_required('crm.view_location', raise_exception=False, login_url="/")
 def locations(request):
     locations_records = None
     try:
@@ -772,10 +787,12 @@ def locations(request):
 
 class LocationPage(View):
     @staticmethod
+    @permission_required('crm.view_location', raise_exception=False, login_url="/")
     def post(request, *args, **kwargs):
         pass
 
     @staticmethod
+    @permission_required('crm.view_location', raise_exception=False, login_url="/")
     def get(request, *args, **kwargs):
         context = {}
         location_id = None
@@ -812,6 +829,7 @@ class LocationPage(View):
 
 class LocationCreate(View):
     @staticmethod
+    @permission_required('crm.add_location', raise_exception=False, login_url="/")
     def post(request, *args, **kwargs):
         context = {}
         form = LocationForm(request.POST)
@@ -840,6 +858,7 @@ class LocationCreate(View):
         return render(request, 'crm/person-create.html', context)
 
     @staticmethod
+    @permission_required('crm.add_location', raise_exception=False, login_url="/")
     def get(request, *args, **kwargs):
         form = LocationForm()
         context = {'title': "Lokalizacji", 'btn_title': "Lokalizacja", 'form': form}

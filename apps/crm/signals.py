@@ -14,7 +14,7 @@ def create_notifications(sender, instance, created, **kwargs):
 
         for watch_record in watch_records:
             if watch_record.user.id == instance.created_by.id:
-                continue #skip creating notification for user who triggered signals
+                continue  # skip creating notification for user who triggered signals
             dots = "..." if len(instance.content) > 16 else ""
             Notification.objects.create(
                 user=watch_record.user,

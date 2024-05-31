@@ -24,7 +24,7 @@ class PersonForm(forms.Form):
 
 class LessonForm(forms.Form):
     startTime = forms.TimeField()
-    endTime = forms.TimeField()
+    lessonDuration = forms.IntegerField()
     lessonDate = forms.DateField()
     originalDate = forms.DateField()
     lessonId = forms.CharField()
@@ -34,7 +34,7 @@ class LessonForm(forms.Form):
 
 class LessonCreateForm(forms.Form):
     startTime = forms.TimeField()
-    endTime = forms.TimeField()
+    lessonDuration = forms.IntegerField()
     lessonDate = forms.DateField()
     repeat = forms.CharField()
     description = forms.CharField()

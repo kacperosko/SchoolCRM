@@ -20,24 +20,32 @@
                 </ol>
             </nav>
             <div>
-                <button id="watch-button" class="btn rounded-pill" data-trigger="hover" data-toggle="popover" data-content="{% if watch_record %}Obserwujesz ten rekord{% else %}Chcesz obserwować ten rekord?{% endif %}" data-placement="bottom"
-                    onclick="watchRecord('{{ location.id }}', '{{ location|verbose_name }}')" watching-record="{% if watch_record %}following{% else %}notFollowing{% endif %}">
-                    <svg id="watch_icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="{% if watch_record %}2.5{% else %}1.5{% endif %}"
+                <button id="watch-button" class="btn rounded-pill" data-trigger="hover" data-toggle="popover"
+                        data-content="{% if watch_record %}Obserwujesz ten rekord{% else %}Chcesz obserwować ten rekord?{% endif %}"
+                        data-placement="bottom"
+                        onclick="watchRecord('{{ location.id }}', '{{ location|verbose_name }}')"
+                        watching-record="{% if watch_record %}following{% else %}notFollowing{% endif %}">
+                    <svg id="watch_icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                         stroke-width="{% if watch_record %}2.5{% else %}1.5{% endif %}"
                          stroke="currentColor" class="w-6 h-6 {% if watch_record %}text-primary{% endif %}" width="25">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"></path>
                     </svg>
                 </button>
-                <a href="" class="btn btn-primary rounded-pill font-size-12">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1"
-                         stroke="currentColor" class="w-6 h-6" width="18">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
-                    </svg>
-                    Edytuj
-                </a>
-                <a href="" class="btn btn-danger rounded-pill font-size-12">
+                {% if perms.crm.change_location %}
+                    <a href="" class="btn btn-primary rounded-pill font-size-12">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1"
+                             stroke="currentColor" class="w-6 h-6" width="18">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                        </svg>
+                        Edytuj
+                    </a>
+                {% endif %}
+                {% if perms.crm.delete_location %}
+                <a href="" class="btn btn-outline-danger rounded-pill font-size-12">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1"
                          stroke="currentColor" class="w-6 h-6" width="18">
                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -45,6 +53,7 @@
                     </svg>
                     Usuń
                 </a>
+            {% endif %}
             </div>
         </div>
         <div class="card-body">

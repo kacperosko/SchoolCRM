@@ -5,7 +5,6 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 CORE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
@@ -16,7 +15,7 @@ SECRET_KEY = 'django-insecure-uta=i!_i25%tc1y*h!!w1r$o+s7tj354vg30hlf8!w42d0mz+%
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
-SITE_URL = 'wasrztatm.pl'
+SITE_URL = 'warsztat-crm.hmcloud.pl'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 SESSION_COOKIE_AGE = 60 * 60  # (60 * 60 seconds = 60 minutes)
 SESSION_SAVE_EVERY_REQUEST = True
@@ -27,7 +26,6 @@ CSRF_COOKIE_SECURE = False
 
 # SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_SSL_REDIRECT = False
-
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -45,7 +43,6 @@ INSTALLED_APPS = [
 
 AUTH_USER_MODEL = 'authentication.User'
 
-
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -61,13 +58,18 @@ MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
 ROOT_URLCONF = 'SchoolCRM.urls'
 
 # Email sending configuration
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST_PORT = 25
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'warsztatm948@gmail.com'
-EMAIL_HOST_PASSWORD = 'zubseh-wewwy5-Hipxih'
+# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+#
+# DEFAULT_FROM_EMAIL = 'biuro@warsztat-crm.hmcloud.pl'
+# EMAIL_HOST = 'mx1.hitme.net.pl'
+# EMAIL_HOST_PORT = 587
+# # EMAIL_USE_TLS = True
+# EMAIL_USE_SSL = True
+EMAIL_HOST_USER = 'biuro@warsztat-crm.hmcloud.pl'
+# # EMAIL_HOST_PASSWORD = 'Kacper123!'
+# EMAIL_HOST_USER = 'warsztat6'
+# EMAIL_HOST_PASSWORD = 'SMdrt2t2CwCcBg'
 
 TEMPLATE_DIR = os.path.join(CORE_DIR, "templates")  # ROOT dir for _templates
 
@@ -89,7 +91,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'SchoolCRM.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
@@ -100,7 +101,6 @@ DATABASES = {
         'TIME_ZONE': 'Europe/Warsaw',
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -130,30 +130,23 @@ LOGIN_URL = '/login'
 LANGUAGE_CODE = 'pl'
 
 TIME_ZONE = 'Europe/Warsaw'
-# TIME_INPUT_FORMATS = [
-#     # '%I:%M:%S',  # 6:22:44 PM
-#     # '%I:%M %p',  # 6:22 PM
-#     # '%I %p',  # 6 PM
-#     '%H:%M:%S',     # '14:30:59'
-#     # '%H:%M:%S.%f',  # '14:30:59.000200'
-#     '%H:%M',        # '14:30'
-# ]
 
-# USE_I18N = True
+USE_I18N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 
 STATICFILES_DIRS = (
-    os.path.join(BASE_DIR, 'static'),
+    os.path.join(BASE_DIR, 'apps/static'),
 )
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# DEFAULT_AUTO_FIELD = 'django.db.models.UUIDField'

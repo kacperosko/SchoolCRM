@@ -11,6 +11,42 @@ from SchoolCRM.settings import EMAIL_HOST_USER, SITE_URL
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from datetime import date
+# import uuid
+
+#
+# class PrefixedUUIDField(models.CharField):
+#     PREFIX_MAP = {
+#         'Note': '0NT',
+#     }
+#
+#     def __init__(self, prefix_func, *args, **kwargs):
+#         self.prefix_func = prefix_func
+#         kwargs['max_length'] = len(prefix_func('')) + 36  # Prefix length + UUID length (36 characters)
+#         kwargs['unique'] = True
+#         super().__init__(*args, **kwargs)
+#
+#     def pre_save(self, model_instance, add):
+#         if add and not getattr(model_instance, self.attname):
+#             value = f"{self.prefix}{uuid.uuid4()}"
+#             setattr(model_instance, self.attname, value)
+#             return value
+#         return super().pre_save(model_instance, add)
+#
+#
+# def model_name_prefix(model_name):
+#     prefixes = {
+#         'Person': '0PR',
+#         'Student': '0ST',
+#         'StudentPerson': '0SP',
+#         'Lesson': '0LS',
+#         'LessonAdjustment': '0LA',
+#         'Location': '0LC',
+#         'Note': '0NT',
+#         'WatchRecord': '0WR',
+#         'Notification': '0NF',
+#
+#     }
+#     return prefixes.get(model_name, '0EX')
 
 
 class Note(models.Model):
@@ -31,8 +67,7 @@ class Note(models.Model):
 
 
 class WatchRecord(models.Model):
-
-    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, db_index=True)
 
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
@@ -109,7 +144,6 @@ class StudentPerson(models.Model):
             raise ValidationError("Student and parent cannot be the same person.")
 
 
-
 class Lesson(models.Model):
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
@@ -122,7 +156,12 @@ class Lesson(models.Model):
                                 related_name='lessonSchedule_teacher_user_relationship')
 
 
+class Statutes:
+    PLANNED = 'Zaplanowana'
+
+
 LESSON_STATUTES = (
+    ('Zaplanowana', 'Zaplanowana'),
     ('Nieobecność', 'Nieobecność'),
     ('Odwołana - nauczyciel', 'Odwołana - nauczyciel'),
     ('Odwołana - 24h przed', 'Odwołana - 24h przed')

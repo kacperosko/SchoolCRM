@@ -1,5 +1,5 @@
 {% extends 'base/base.html' %}
-{% block title %}Calendar{% endblock title %}
+{% block title %}Kalendarz{% endblock title %}
 {% load crm_tags %}
 {% load static %}
 
@@ -11,7 +11,7 @@
     <div class="card">
         <div class="card-header justify-content-between">
             <div class="header-title">
-                <h4 class="card-title">Calendar</h4>
+                <h4 class="card-title">Kalendarz</h4>
             </div>
 
             <div class="my-3">
@@ -34,13 +34,13 @@
             <div id="calendar-container" class="rm-weekly-schedule">
                 <div class="rmws-hour-labels">
                     <div class="rmws-hour-label" style="height: 50px;"></div>
-                    <div class="rmws-hour-label" style="height: 40px;">0:00</div>
-                    <div class="rmws-hour-label" style="height: 40px;">1:00</div>
-                    <div class="rmws-hour-label" style="height: 40px;">2:00</div>
-                    <div class="rmws-hour-label" style="height: 40px;">3:00</div>
-                    <div class="rmws-hour-label" style="height: 40px;">4:00</div>
-                    <div class="rmws-hour-label" style="height: 40px;">5:00</div>
-                    <div class="rmws-hour-label" style="height: 40px;">6:00</div>
+{#                    <div class="rmws-hour-label" style="height: 40px;">0:00</div>#}
+{#                    <div class="rmws-hour-label" style="height: 40px;">1:00</div>#}
+{#                    <div class="rmws-hour-label" style="height: 40px;">2:00</div>#}
+{#                    <div class="rmws-hour-label" style="height: 40px;">3:00</div>#}
+{#                    <div class="rmws-hour-label" style="height: 40px;">4:00</div>#}
+{#                    <div class="rmws-hour-label" style="height: 40px;">5:00</div>#}
+{#                    <div class="rmws-hour-label" style="height: 40px;">6:00</div>#}
                     <div class="rmws-hour-label" style="height: 40px;">7:00</div>
                     <div class="rmws-hour-label" style="height: 40px;">8:00</div>
                     <div class="rmws-hour-label" style="height: 40px;">9:00</div>
@@ -65,7 +65,8 @@
                             <div class="rmws-date-label">DATE</div>
                             <div class="rmws-day-label">{{ day }}</div>
                             <div class="rmws-slots">
-                                {% for foo in '123456789012345678921234'|make_list %} {# loop  24 times #}
+{#                                {% for foo in '123456789012345678921234'|make_list %} {# loop  24 times #}
+                                {% for foo in '9012345678921234'|make_list %} {# loop  24 times #}
                                     <div class="rmws-slot" onclick="addOnCalendar(event)" type="button"
                                          data-toggle="modal"
                                          data-target="#exampleModal"></div>
@@ -355,8 +356,8 @@
                     // Convert lesson start and end time to minutes
                     var startTime = lesson.startTime.split(':');
                     var endTime = lesson.endTime.split(':');
-                    var startMinutes = parseInt(startTime[0]) * 60 + parseInt(startTime[1]);
-                    var endMinutes = parseInt(endTime[0]) * 60 + parseInt(endTime[1]);
+                    var startMinutes = (parseInt(startTime[0]) - 7) * 60 + parseInt(startTime[1]);
+                    var endMinutes = (parseInt(endTime[0]) - 7) * 60 + parseInt(endTime[1]);
 
                     // Calculate duration of lesson in minutes
                     var durationMinutes = endMinutes - startMinutes;
