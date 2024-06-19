@@ -1,0 +1,86 @@
+{% extends 'base/base.html' %}
+{% block title %}{{ contact.get_full_name }}{% endblock title %}
+{% block style %}
+    <style>
+    </style>
+{% endblock style %}
+{% block content %}
+    {% load crm_tags %}
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/contacts"><i
+                            class="ri-home-4-line mr-1 float-left"></i>Kontakty</a></li>
+                    <li class="breadcrumb-item active"
+                        aria-current="page">{{ contact.get_full_name }}
+                    </li>
+                </ol>
+            </nav>
+            <div>
+                {% if perms.crm.change_person %}
+                    <a href="/person/edit/{{ contact.id }}" class="btn btn-primary rounded-pill font-size-12">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1"
+                             stroke="currentColor" class="w-6 h-6" width="18">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                        </svg>
+                        Edytuj
+                    </a>
+                {% endif %}
+                {% if perms.crm.delete_person %}
+                    <a href="" class="btn btn-outline-danger rounded-pill font-size-12">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1"
+                             stroke="currentColor" class="w-6 h-6" width="18">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"></path>
+                        </svg>
+                        Usuń
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card-body">
+            <ul class="nav nav-tabs" id="myTab-1" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.GET.tab == 'Details' %}active{% endif %}" id="home-tab"
+                       data-toggle="tab" href="#details" role="tab"
+                       aria-controls="details" aria-selected="true"
+                       onclick="addParamToURL('tab', 'Details')">Szczegóły</a>
+                </li>
+            </ul>
+            <div class="tab-content" id="tab-student">
+                <div class="tab-pane fade {% if request.GET.tab == 'Details' %}show active{% endif %}" id="details"
+                     role="tabpanel" aria-labelledby="details-tab">
+
+                    <form>
+                        {% csrf_token %}
+                        <div class=" row align-items-center">
+                            <div class="form-group col-sm-6">
+                                <label for="student_first_name">Imię:</label>
+                                <p class="pb-1 field">{{ contact.first_name|default_if_none:"" }}</p>
+                            </div>
+                            <div class="form-group col-sm-6">
+                                <label for="student_last_name">Nazwisko:</label>
+                                <p class="pb-1 field">{{ contact.last_name|default_if_none:"" }}</p>
+                            </div>
+                            <div class="form-group col-sm-6">
+                                <label for="student_email">Email:</label>
+                                <p class="pb-1 field">{{ contact.email|default_if_none:"" }}</p>
+                            </div>
+                            <div class="form-group col-sm-6">
+                                <label for="student_phone">Telefon:</label>
+                                <p class="pb-1 field">{{ contact.name|default_if_none:"" }}</p>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}
+
+{% block javascript %}
+{% endblock javascript %}

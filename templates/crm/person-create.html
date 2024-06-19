@@ -5,7 +5,7 @@
     <div class="card">
         <div class="card-header d-flex justify-content-between">
             <div class="header-title">
-                <h4 class="card-title">Dodawanie nowego rekordu {{ title }}</h4>
+                <h4 class="card-title">{% if 'edit' in request.path %}Edytowanie{% else %}Dodawanie nowego{% endif %} rekordu {{ title }}</h4>
             </div>
 
         </div>
@@ -21,7 +21,7 @@
                                 <div class="text-danger">{{ field.errors|striptags }}</div>
                                 <label for="{{ field.name }}">{{ field.label_tag }}{{ field.field.widget.class }} {% if field.field.required %}<span class="text-danger">*</span>{% endif %}</label>
                                 <input name="{{ field.name }}" type="{{ field.field.widget.input_type }}" class="form-control" style="{% if field.field.widget.input_type == 'date' %}line-height: 25px{% endif %}" id="{{ field.name }}"
-                                       value="{{ field.value|default_if_none:"" }}" {% if field.field.required %}required{% endif %}>
+                                       value="{{ field.value|default_if_none:"" }}" maxlength="{{ field.field.max_length }}" {% if field.field.required %}required{% endif %}>
                             </div>
                             {% endfor %}
 {#                            <div class="form-group col-sm-6">#}

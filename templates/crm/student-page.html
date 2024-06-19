@@ -226,6 +226,12 @@
                                 </svg>
 
                             </button>
+                            <button type="button"
+                                    class="btn btn-outline-primary rounded-pill mx-1 d-flex align-content-center font-size-12"
+                                    id="currentYearBtn"
+                                    onclick="get_lessons('{{ student.id }}')">
+                                Pobierz lekcje
+                            </button>
                         </div>
                         <div class="mx-2 font-weight-500 d-flex align-items-center">
                             <h5 id="selected-year">{{ request.GET.selected_year }}</h5>
@@ -244,7 +250,7 @@
                             Dodaj lekcje
                         </button>
                     </div>
-                    <div class="table-responsive">
+                    <div class="table-responsive" id="table-container">
                         <table class="table table-bordered table-striped">
                             <thead>
                             <tr>
@@ -253,50 +259,50 @@
                                 <th scope="col" class="text-center">Odwołane</th>
                             </tr>
                             </thead>
-                            <tbody>
-                            {% for month_number, statutes in months_counter.items %}
-                                <tr>
-                                    <th scope="row" class="text-center"
-                                        onclick="toggleDetails(this)">
-                                        <a type="button" href="" class="" data-toggle="collapse"
-                                           onclick="refreshOpenedMonths()" id="collapser_{{ month_number }}"
-                                           data-target="#collaps_{{ month_number }}">{{ month_number|get_month_name }}
-                                        </a>
-                                    </th>
-                                    <td class="text-center">{{ statutes.Zaplanowana }}</td>
-                                    <td class="text-warning text-center">{{ statutes.Canceled }}</td>
-                                </tr>
-                                <tr>
-                                    <td class="p-0" colspan="3">
-                                        <div class="collapse in" id="collaps_{{ month_number }}">
-                                            <table class="table">
-                                                <thead>
-                                                </thead>
-                                                <tbody>
-                                                {% if statutes.Lessons %}
-                                                    {% for key, lesson in statutes.Lessons.items %}
-                                                        <tr class="{% if lesson.status == 'Zaplanowana' %} bg-primary-light {% else %}bg-danger-light{% endif %}">
-                                                            <td>{{ lesson.start_date }} ({{ lesson.weekday }})
-                                                                {% if lesson.original_date %}(przeniesione z
-                                                                    {{ lesson.original_date }}){% endif %}</td>
-                                                            <td>{{ lesson.start_time }} - {{ lesson.end_time }}</td>
-                                                            <td>{{ lesson.description }}</td>
-                                                            <td class="d-flex">
-                                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                                     viewBox="0 0 24 24" stroke-width="1.5"
-                                                                     stroke="currentColor" class="mr-1" width="18px">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                                          d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"></path>
-                                                                </svg>
-
-                                                                {{ lesson.teacher }}
-                                                            </td>
-                                                            <td>
-                                                                <a class="bg-blue text-white p-1 rounded-sm font-size-12 menu-button text-center"
-                                                                   type="button" data-toggle="modal"
-                                                                   data-target="#editEventModalCenter"
-                                                                   onclick="modifyEvent('{{ lesson.lesson_id }}', '{{ lesson.start_time }}', '{{ lesson.end_time }}', '{{ lesson.start_date }}', '{{ student.get_full_name }}', '{{ lesson.status }}', '{{ lesson.is_adjustment }}', true)"
-                                                                >Edytuj</a>
+                            <tbody id="lessons_tbody">
+{#                            {% for month_number, statutes in months_counter.items %}#}
+{#                                <tr>#}
+{#                                    <th scope="row" class="text-center"#}
+{#                                        onclick="toggleDetails(this)">#}
+{#                                        <a type="button" href="" class="" data-toggle="collapse"#}
+{#                                           onclick="refreshOpenedMonths()" id="collapser_{{ month_number }}"#}
+{#                                           data-target="#collaps_{{ month_number }}">{{ month_number|get_month_name }}#}
+{#                                        </a>#}
+{#                                    </th>#}
+{#                                    <td class="text-center">{{ statutes.Zaplanowana }}</td>#}
+{#                                    <td class="text-warning text-center">{{ statutes.Canceled }}</td>#}
+{#                                </tr>#}
+{#                                <tr>#}
+{#                                    <td class="p-0" colspan="3">#}
+{#                                        <div class="collapse in" id="collaps_{{ month_number }}">#}
+{#                                            <table class="table">#}
+{#                                                <thead>#}
+{#                                                </thead>#}
+{#                                                <tbody>#}
+{#                                                {% if statutes.Lessons %}#}
+{#                                                    {% for key, lesson in statutes.Lessons.items %}#}
+{#                                                        <tr class="{% if lesson.status == 'Zaplanowana' %} bg-primary-light {% else %}bg-danger-light{% endif %}">#}
+{#                                                            <td>{{ lesson.start_date }} ({{ lesson.weekday }})#}
+{#                                                                {% if lesson.original_date %}(przeniesione z#}
+{#                                                                    {{ lesson.original_date }}){% endif %}</td>#}
+{#                                                            <td>{{ lesson.start_time }} - {{ lesson.end_time }}</td>#}
+{#                                                            <td>{{ lesson.description }}</td>#}
+{#                                                            <td class="d-flex">#}
+{#                                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none"#}
+{#                                                                     viewBox="0 0 24 24" stroke-width="1.5"#}
+{#                                                                     stroke="currentColor" class="mr-1" width="18px">#}
+{#                                                                    <path stroke-linecap="round" stroke-linejoin="round"#}
+{#                                                                          d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"></path>#}
+{#                                                                </svg>#}
+{##}
+{#                                                                {{ lesson.teacher }}#}
+{#                                                            </td>#}
+{#                                                            <td>#}
+{#                                                                <a class="bg-blue text-white p-1 rounded-sm font-size-12 menu-button text-center"#}
+{#                                                                   type="button" data-toggle="modal"#}
+{#                                                                   data-target="#editEventModalCenter"#}
+{#                                                                   onclick="modifyEvent('{{ lesson.lesson_id }}', '{{ lesson.start_time }}', '{{ lesson.end_time }}', '{{ lesson.start_date }}', '{{ student.get_full_name }}', '{{ lesson.status }}', '{{ lesson.is_adjustment }}', true)"#}
+{#                                                                >Edytuj</a>#}
                                                                 {#                                                                {% if lesson.status != 'Canceled' %}#}
                                                                 {#                                                                    <a class="bg-red text-white p-1 rounded-sm font-size-12 menu-button text-center"#}
                                                                 {#                                                                       type="button" data-toggle="modal"#}
@@ -310,22 +316,22 @@
                                                                 {#                                                                       onclick="modifyEvent('{{ lesson.lesson_id }}', '{{ lesson.start_time }}', '{{ lesson.end_time }}', '{{ lesson.start_date }}', '{{ student.get_full_name }}', 'Planned', '{{ lesson.is_adjustment }}')"#}
                                                                 {#                                                                    >Zaplanuj</a>#}
                                                                 {#                                                                {% endif %}#}
-
-                                                            </td>
-                                                        </tr>
-                                                    {% endfor %}
-
-                                                {% else %}
-                                                    <tr class="bg-light text-center">
-                                                        <td colspan="3">Brak lekcji</td>
-                                                    </tr>
-
-                                                {% endif %}
-                                            </table>
-                                        </div>
-                                    </td>
-                                </tr>
-                            {% endfor %}
+{##}
+{#                                                            </td>#}
+{#                                                        </tr>#}
+{#                                                    {% endfor %}#}
+{##}
+{#                                                {% else %}#}
+{#                                                    <tr class="bg-light text-center">#}
+{#                                                        <td colspan="3">Brak lekcji</td>#}
+{#                                                    </tr>#}
+{##}
+{#                                                {% endif %}#}
+{#                                            </table>#}
+{#                                        </div>#}
+{#                                    </td>#}
+{#                                </tr>#}
+{#                            {% endfor %}#}
                             </tbody>
                         </table>
                     </div>
@@ -630,6 +636,7 @@
 {% block javascript %}
     <script src="{% static '/js/notes.js' %}"></script>
     <script src="{% static '/js/watchRecord.js' %}"></script>
+    <script src="{% static '/js/lessons.js' %}"></script>
     <script>
         {#const csrf_token = '{% csrf_token %}';#}
         let student_first_name = document.getElementById("student_first_name");

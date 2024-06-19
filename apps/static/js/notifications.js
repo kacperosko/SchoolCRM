@@ -1,7 +1,7 @@
 $(document).ready(function () {
     function fetchNotifications() {
         $.ajax({
-            url: '/notifications',
+            url: '/crm_api/notifications',
             type: 'GET',
             success: function (data) {
                 const notifications = data.notifications;
@@ -76,7 +76,7 @@ $(document).ready(function () {
                 }
             },
             type: 'POST',
-            url: `/notifications/read/${notificationId}/`
+            url: `/crm_api/notifications/read/${notificationId}/`
         });
     }
     fetchNotifications();

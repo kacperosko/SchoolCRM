@@ -30,9 +30,26 @@ class LessonHandler:
         self.teacher = teacher
         time_difference = end_time - start_time
         self.duration = time_difference.total_seconds() / 60
-        if original_date:
-            if original_date != start_date:
-                self.original_date = original_date.strftime('%d-%m-%Y')
+        if original_date and original_date != start_date:
+            self.original_date = original_date.strftime('%d-%m-%Y')
+        else:
+            self.original_date = None
+
+    def to_dict(self):
+        return {
+            'start_date': self.start_date,
+            'end_date': self.end_date,
+            'start_time': self.start_time,
+            'end_time': self.end_time,
+            'lesson_id': self.lesson_id,
+            'status': self.status,
+            'weekday': self.weekday,
+            'is_adjustment': self.is_adjustment,
+            'description': self.description if self.description else '',
+            'teacher': self.teacher,
+            'duration': self.duration,
+            'original_date': self.original_date if self.original_date else None,
+        }
 
     def __str__(self):
         return f"{self.start_date} {self.end_date} {self.start_time} {self.end_time} {self.status} {self.status}"

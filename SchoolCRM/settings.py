@@ -102,6 +102,17 @@ DATABASES = {
     }
 }
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'warsztat6_warsztat_muzyczny',
+#         'USER': 'warsztat6_warsztat_muzyczny',
+#         'PASSWORD': 'fygdeX-8worwu-tifdov',
+#         'HOST': 'localhost',
+#         'PORT': '',
+#     }
+# }
+
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
 
@@ -140,6 +151,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
+# STATIC_ROOT = '/Users/kacperosko/SchoolCRM/static'
 
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'apps/static'),

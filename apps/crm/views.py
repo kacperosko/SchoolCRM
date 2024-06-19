@@ -8,7 +8,7 @@ from django.core.serializers import serialize
 import json
 from django.contrib.auth import authenticate, login, logout
 from .forms import UserCreationForm, LoginForm, PersonForm, LessonForm, LessonPlanForm, LessonCreateForm, \
-    StudentPersonForm, LocationForm
+    StudentPersonForm, LocationForm, StudentForm
 from apps.authentication.models import User
 from datetime import datetime, timedelta, date, time
 from time import sleep
@@ -27,7 +27,6 @@ from django.shortcuts import get_object_or_404, redirect
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse
-
 
 MODES = ['view', 'edit']
 WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -386,7 +385,6 @@ class StudentPage(View):
             messages.error(request, f'StudentPage exception: {e}')
             return custom_404(request, e)
 
-
         lessons_count = count_lessons_for_student_in_months(student_id, selected_year)
         print('lessons_count', lessons_count)
         context['months_counter'] = lessons_count
@@ -395,7 +393,7 @@ class StudentPage(View):
         return render(request, "crm/student-page.html", context)
 
 
-@permission_required('crm.change_student', raise_exception=True)
+@permission_required('crm.change_student', raise_exception=False, login_url="/")
 def edit_student(request, student_id):
     return create_student(request, student_id)
 
@@ -403,6 +401,7 @@ def edit_student(request, student_id):
 @permission_required('crm.add_student', raise_exception=False, login_url="/")
 def create_student(request, student_id=None):
     context = {'title': "Studenta", 'model_name': 'student'}
+    initial_data = {}
     if student_id:
         context['record_id'] = student_id
         student = Student.objects.get(id=student_id)
@@ -413,11 +412,10 @@ def create_student(request, student_id=None):
             'phone_number': student.phone,
             'birth_date': student.birthdate.strftime('%Y-%m-%d') if student.birthdate else None,
         }
-        form = PersonForm(initial=initial_data)
-    else:
-        form = PersonForm()
+
+    form = StudentForm(initial=initial_data)
     if request.method == 'POST':
-        form = PersonForm(request.POST)
+        form = StudentForm(request.POST)
         if form.is_valid():
             first_name = form.cleaned_data['first_name']
             last_name = form.cleaned_data['last_name']
@@ -450,6 +448,7 @@ def create_student(request, student_id=None):
 
         else:
             print("student_form error", form.errors)
+            messages.warning(request, f'Błąd: {form.errors}')
             context['message'] = form.errors
 
     context['form'] = form
@@ -508,7 +507,6 @@ class StudentPersonCreate(View):
                 phone = None
                 if 'phone' in form.cleaned_data:
                     phone = form.cleaned_data['phone']
-                print('test create')
                 relationship_type = form.cleaned_data['relationship_type']
                 person = None
                 student_person = None
@@ -518,15 +516,22 @@ class StudentPersonCreate(View):
                                                        email=email)
                     except Exception as e:
                         print(e)
+                        messages.error(request, f'Error podczas tworzenia relacji: {e}')
+                        return redirect(f'/student/{student_id}')
                 else:
                     person = Person.objects.get(id=person_id)
-                try:
-                    print(person.first_name, person.last_name, person)
-                    student_person = StudentPerson.objects.create(person=person, relationship_type=relationship_type,
-                                                                  student_id=student_id)
-                except Exception as e:
-                    print(e)
-                messages.success(request, f'Relacja z {student_person.person.get_full_name()} utworzona')
+                if person:
+                    try:
+                        print(person.first_name, person.last_name, person)
+                        student_person = StudentPerson.objects.create(person=person,
+                                                                      relationship_type=relationship_type,
+                                                                      student_id=student_id)
+                        messages.success(request, f'Relacja z {student_person.person.get_full_name()} utworzona')
+                    except Exception as e:
+                        print(e)
+                        messages.error(request, f'Error podczas tworzenia relacji: {e}')
+                else:
+                    messages.error(request, f'Niespodziewany błąd podczas tworzenia relacji')
                 return redirect(f'/student/{student_id}')
             else:
                 context['message'] = form.errors
@@ -583,16 +588,18 @@ def lesson_page(request, student_id, lesson_id):
     return render(request, "crm/lesson-page.html", context)
 
 
+@permission_required('crm.change_person', raise_exception=False, login_url="/")
 def edit_person(request, person_id):
-    pass
+    return create_contact(request, person_id)
 
 
-class CreateContact(View):
-    @staticmethod
-    @permission_required('crm.add_person', raise_exception=False, login_url="/")
-    def post(request, *args, **kwargs):
-        context = {}
+@permission_required('crm.add_person', raise_exception=False, login_url="/")
+def create_contact(request, contact_id=None):
+    context = {'title': "Kontaktu", 'btn_title': "Kontakt", 'model_name': 'person'}
+
+    if request.method == 'POST':
         form = PersonForm(request.POST)
+        context['form'] = form
         if form.is_valid():
             first_name = form.cleaned_data['first_name']
             last_name = form.cleaned_data['last_name']
@@ -603,26 +610,37 @@ class CreateContact(View):
                 phone = form.cleaned_data['phone_number']
             person = None
             try:
-                person = Person.objects.create(first_name=first_name, last_name=last_name, email=email, phone=phone)
-            except Exception as e:
-                print(e)
-            messages.success(request, f'Dodano kontakt {person.get_full_name()} pomyslnie!')
+                if contact_id:
+                    person = Person.objects.filter(id=contact_id).update(first_name=first_name, last_name=last_name,
+                                                                         email=email, phone=phone)
+                    messages.success(request, f'Zaktualizowano kontakt pomyslnie!')
+                else:
+                    person = Person.objects.create(first_name=first_name, last_name=last_name, email=email, phone=phone)
+                    contact_id = person.id
+                    messages.success(request, f'Dodano kontakt {person.get_full_name()} pomyslnie!')
 
-            return redirect(f"/person/{person.id}")
+                return redirect(f"/person/{contact_id}")
+            except Exception as e:
+                print("create_contact error", e)
+                messages.warning(request, f'Błąd kontakt: {e}')
         else:
             print("contact_form error", form.errors)
             context['message'] = form.errors
-            context['form'] = form
 
-        return render(request, 'crm/person-create.html', context)
+    else:
+        initial_data = {}
+        if contact_id:
+            context['record_id'] = contact_id
+            person = Person.objects.get(id=contact_id)
+            initial_data = {
+                'first_name': person.first_name,
+                'last_name': person.last_name,
+                'email': person.email,
+                'phone_number': person.phone,
+            }
+        context['form'] = PersonForm(initial=initial_data)
 
-    @staticmethod
-    @permission_required('crm.add_person', raise_exception=False, login_url="/")
-    def get(request, *args, **kwargs):
-        form = PersonForm()
-        context = {'title': "Kontaktu", 'btn_title': "Kontakt", 'form': form}
-
-        return render(request, 'crm/person-create.html', context)
+    return render(request, "crm/person-create.html", context)
 
 
 class ContactPage(View):
@@ -665,7 +683,7 @@ class ContactPage(View):
         except Exception as e:
             print(e)
 
-        return render(request, 'crm/contact-page.html', context)
+        return render(request, 'crm/person-page.html', context)
 
 
 def create_note(request):
@@ -704,6 +722,7 @@ def create_note(request):
 
     except Exception as e:
         print('Create note error:', e)
+        message = e
 
     return JsonResponse({'status': status, 'message': message, 'note': note_data})
 
@@ -713,7 +732,7 @@ def format_timesince(created_at):
     timesince_value = timesince(created_at)
 
     # Jeśli czas różnicy wynosi mniej niż jeden dzień, zwróć wartość "X czasu temu"
-    if timesince_value.startswith("0 minutes") or timesince_value.startswith("0 minute"):
+    if timesince_value.startswith("0 minutes") or timesince_value.startswith("0 minut"):
         return "Teraz"
     elif "day" in timesince_value:
         return timesince_value.replace(",", "").split(" ")[0] + " dni temu"
@@ -834,7 +853,7 @@ class LocationCreate(View):
         context = {}
         form = LocationForm(request.POST)
         if form.is_valid():
-            name = form.cleaned_data['name =']
+            name = form.cleaned_data['name']
             country = form.cleaned_data['country']
             city = form.cleaned_data['city']
             street = form.cleaned_data['street']
@@ -844,12 +863,13 @@ class LocationCreate(View):
             try:
                 new_location = Location.objects.create(name=name, country=country, city=city, street=street,
                                                        postal_code=postal_code)
+
+                messages.success(request, f'Dodano lokalizacje {new_location.get_full_address()} pomyslnie!')
+                return redirect(f"/location/{new_location.id}")
             except Exception as e:
                 print(e)
+                messages.warning(request, f'Błąd: {e}')
 
-            messages.success(request, f'Dodano lokalizacje {new_location.get_full_address()} pomyslnie!')
-
-            return redirect(f"/location/{new_location.id}")
         else:
             print("contact_form error", form.errors)
             context['message'] = form.errors
@@ -861,6 +881,26 @@ class LocationCreate(View):
     @permission_required('crm.add_location', raise_exception=False, login_url="/")
     def get(request, *args, **kwargs):
         form = LocationForm()
-        context = {'title': "Lokalizacji", 'btn_title': "Lokalizacja", 'form': form}
+        context = {'title': "Lokalizacji", 'btn_title': "Lokalizacja", 'form': form, 'model_name': 'location'}
 
         return render(request, 'crm/person-create.html', context)
+
+
+def get_student_lessons(request, student_id):
+    status = False
+
+    # try:
+    lessons_count = count_lessons_for_student_in_months(student_id, 2024)
+
+    lessons_count_serializable = {}
+    for key, value in lessons_count.items():
+        lessons = {k: v.to_dict() for k, v in value['Lessons'].items()}
+        lessons_count_serializable[key] = {
+            'Zaplanowana': value['Zaplanowana'],
+            'Canceled': value['Canceled'],
+            'Lessons': lessons
+        }
+    status = True
+    print(lessons_count_serializable)
+
+    return JsonResponse({'status': status, 'lessons': lessons_count_serializable})

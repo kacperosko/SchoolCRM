@@ -18,7 +18,14 @@ class PersonForm(forms.Form):
     first_name = forms.CharField(label='Imię')
     last_name = forms.CharField(label='Nazwisko')
     email = forms.EmailField(required=False, label='Email')
-    phone_number = forms.CharField(required=False, label='Telefon')
+    phone_number = forms.CharField(required=False, label='Telefon', max_length=16)
+
+
+class StudentForm(forms.Form):
+    first_name = forms.CharField(label='Imię')
+    last_name = forms.CharField(label='Nazwisko')
+    email = forms.EmailField(required=False, label='Email')
+    phone_number = forms.CharField(required=False, label='Telefon', max_length=16)
     birth_date = forms.DateField(required=False, label='Data urodzin', widget=forms.DateInput(attrs={'type': 'date', 'class': 'mt--2'}))
 
 
@@ -59,7 +66,7 @@ class StudentPersonForm(forms.Form):
 
 class LocationForm(forms.Form):
     name = forms.CharField(label='Nazwa')
-    country = forms.CharField(label='Kraj')
+    country = forms.CharField(label='Kraj', initial='Polska')
     city = forms.CharField(label='Miasto')
     street = forms.CharField(label='Ulica')
     postal_code = forms.CharField(label='Kod pocztowy', max_length=6)

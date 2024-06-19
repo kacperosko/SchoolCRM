@@ -1,5 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
+from django.conf import settings
 
 
 def login_exempt(view):
@@ -18,6 +19,10 @@ class LoginRequiredMiddleware:
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         print(request.path)
+
+        # Check if the request is for a static file
+        if request.path.startswith(settings.STATIC_URL):
+            return
 
         if request.path in self.password_reset_urls or request.path.startswith('/password-reset-confirm/'):
             print("path in password urls")

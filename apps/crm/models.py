@@ -95,7 +95,7 @@ class Person(models.Model):
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
     email = models.EmailField()
-    phone = models.IntegerField(blank=True, null=True)
+    phone = models.CharField(blank=True, null=True, max_length=16)
 
     def __str__(self):
         return self.first_name + " " + self.last_name

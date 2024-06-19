@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="pl">
 {% load static %}
 <head>
     <meta charset="utf-8">
@@ -133,7 +133,7 @@
             {% with index=forloop.counter %}
                 const message{{ index }} = {
                     "status": {{  message.level }} === 25,
-                    "message": "{{message}}"
+                    "message": "{{message | striptags}}"
                 };
                 jsonMessages.push(message{{ index }})
             {% endwith %}
