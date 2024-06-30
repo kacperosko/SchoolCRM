@@ -31,12 +31,14 @@ function get_lessons(student_id) {
 
 
 function generateTable(data) {
+    // Creating table
     var table = document.createElement('table');
     table.classList.add('table', 'table-bordered', 'table-striped');
 
     var thead = document.createElement('thead');
     var headerRow = document.createElement('tr');
 
+    // Creating header
     var headers = ['Miesiąc', 'Zaplanowane', 'Odwołane'];
     headers.forEach(function(headerText) {
         var th = document.createElement('th');
@@ -51,6 +53,7 @@ function generateTable(data) {
     var tbody = document.createElement('tbody');
     tbody.setAttribute('id', 'lessons_tbody');
 
+    // Iterating all months and statutes (e.g. 1: {Cancelled: 1, Planned: 0}, 2: : {Cancelled: 0, Planned: 0} 3: ....)
     Object.entries(data).forEach(function([month_number, statutes]) {
         var row = document.createElement('tr');
 
@@ -102,10 +105,12 @@ function generateTable(data) {
 
         var innerTbody = document.createElement('tbody');
 
+        console.log('lessons -> ' + statutes);
         // Generowanie lekcji
         if (statutes['Lessons']) {
             Object.entries(statutes['Lessons']).forEach(function([key, lesson]) {
                 var lessonRow = document.createElement('tr');
+                lessonRow.classList.add(statutes === "Zaplanowana" ? "bg-primary-light" : "");
 
                 var lessonDateCell = document.createElement('td');
                 lessonDateCell.textContent = lesson['start_date'] + ' (' + lesson['weekday'] + ')';

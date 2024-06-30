@@ -27,6 +27,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse
+from django.core.paginator import Paginator
 
 MODES = ['view', 'edit']
 WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -728,10 +729,10 @@ def create_note(request):
 
 
 def format_timesince(created_at):
-    # Oblicz różnicę czasu między teraźniejszością a czasem utworzenia powiadomienia
+    # Calculate the dirrence beetwen now and created day
     timesince_value = timesince(created_at)
 
-    # Jeśli czas różnicy wynosi mniej niż jeden dzień, zwróć wartość "X czasu temu"
+    # If the time difference is less than one day return "X minutes ago"
     if timesince_value.startswith("0 minutes") or timesince_value.startswith("0 minut"):
         return "Teraz"
     elif "day" in timesince_value:
@@ -741,20 +742,37 @@ def format_timesince(created_at):
 
 
 def get_notifications(request):
-    notifications = Notification.objects.filter(user=request.user).order_by('-created_at')
-    unread_notifications = notifications.filter(read=False).count()
-    notifications_data = [{
-        'id': notification.id,
-        'message': notification.message,
-        'read': notification.read,
-        'model_name': notification.content_type.model if notification.content_type else None,
-        'record_id': notification.object_id,
-        'created_at': format_timesince(notification.created_at)
-    } for notification in notifications]
+    notifications_query = Notification.objects.filter(user=request.user).select_related('content_type').order_by('-created_at')
 
-    print('unread_notifications', notifications_data)
+    unread_notifications_count = notifications_query.filter(read=False).aggregate(count=Count('id'))['count']
+    all_notifications_count = notifications_query.count()
 
-    return JsonResponse({'notifications': notifications_data, 'unread_notifications': unread_notifications})
+    paginator = Paginator(notifications_query, 10)
+    page_number = request.GET.get('notification_page', 1)
+    notifications_page = paginator.page(page_number)
+    notifications_data = notifications_page.object_list.values(
+        'id', 'message', 'read', 'content_type__model', 'object_id', 'created_at'
+    )
+
+    notifications_list = []
+    for notification in notifications_data:
+        notifications_list.append({
+            'id': notification['id'],
+            'message': notification['message'],
+            'read': notification['read'],
+            'model_name': notification['content_type__model'],
+            'record_id': notification['object_id'],
+            'created_at': timesince(notification['created_at'])
+        })
+
+    response_data = {
+        'notifications': notifications_list,
+        'unread_notifications': unread_notifications_count,
+        'all_notifications': all_notifications_count,
+        'max_pages': paginator.num_pages
+    }
+
+    return JsonResponse(response_data)
 
 
 def mark_notification_as_read(request, notification_id):
@@ -770,6 +788,7 @@ def mark_notification_as_read(request, notification_id):
 def watch_record(request, mode, model_name, record_id):
     status = False
     content_type = ContentType.objects.get(model=model_name)
+    print('$$$ watch_record', mode, model_name, record_id)
 
     try:
         if mode == 'follow':
@@ -788,7 +807,7 @@ def watch_record(request, mode, model_name, record_id):
             user_watch_record.delete()
         status = True
     except Exception as e:
-        print(e)
+        print('$$$ watch_record error:', e)
 
     return JsonResponse({'status': status})
 

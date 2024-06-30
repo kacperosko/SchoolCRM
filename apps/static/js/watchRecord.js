@@ -7,7 +7,7 @@ function watchRecord(recordId, modelName) {
     }
 
     $.ajax({
-        url: `/watch/${mode}/${modelName}/${recordId}/`,
+        url: `/crm_api/watch/${mode}/${modelName}/${recordId}/`,
         type: 'POST',
         data: {
             csrfmiddlewaretoken: $(csrf_token).val(),
