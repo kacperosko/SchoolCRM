@@ -1,14 +1,13 @@
-
 const lessons_tbody = $("#lessons_tbody");
-var tableContainer = document.getElementById('table-container');
 
 function get_lessons(student_id) {
-
+    console.log('$$$ YEAR: ' + $('#selected-year').text());
     $.ajax({
         url: '/crm_api/get-lessons/' + student_id,
-        type: 'POST',
+        type: 'GET',
         data: {
-            csrfmiddlewaretoken: $(csrf_token).val(),
+            // csrfmiddlewaretoken: $(csrf_token).val(),
+            selected_year: $('#selected-year').text(),
         },
         dataType: 'json',
         success: function (response) {
@@ -17,8 +16,10 @@ function get_lessons(student_id) {
                 handleResponse(response);
                 console.log("Pobrano lekcje pomyslne");
                 console.log(response.lessons);
-                tableContainer.appendChild(generateTable(response.lessons));
-            }else {
+                const tableContainer = $('#table-container');
+                tableContainer.empty();
+                tableContainer.html(generateTable(response.lessons));
+            } else {
                 handleResponse(response);
             }
         },
@@ -40,7 +41,7 @@ function generateTable(data) {
 
     // Creating header
     var headers = ['Miesiąc', 'Zaplanowane', 'Odwołane'];
-    headers.forEach(function(headerText) {
+    headers.forEach(function (headerText) {
         var th = document.createElement('th');
         th.textContent = headerText;
         th.classList.add('text-center');
@@ -54,15 +55,16 @@ function generateTable(data) {
     tbody.setAttribute('id', 'lessons_tbody');
 
     // Iterating all months and statutes (e.g. 1: {Cancelled: 1, Planned: 0}, 2: : {Cancelled: 0, Planned: 0} 3: ....)
-    Object.entries(data).forEach(function([month_number, statutes]) {
+    Object.entries(data).forEach(function ([month_number, statutes]) {
         var row = document.createElement('tr');
 
         var monthCell = document.createElement('th');
         monthCell.setAttribute('scope', 'row');
         monthCell.classList.add('text-center');
-        monthCell.addEventListener('click', function() {
+        monthCell.addEventListener('click', function () {
             toggleDetails(this);
         });
+
 
         var monthLink = document.createElement('a');
         monthLink.setAttribute('type', 'button');
@@ -105,12 +107,11 @@ function generateTable(data) {
 
         var innerTbody = document.createElement('tbody');
 
-        console.log('lessons -> ' + statutes);
         // Generowanie lekcji
         if (statutes['Lessons']) {
-            Object.entries(statutes['Lessons']).forEach(function([key, lesson]) {
+            Object.entries(statutes['Lessons']).forEach(function ([key, lesson]) {
                 var lessonRow = document.createElement('tr');
-                lessonRow.classList.add(statutes === "Zaplanowana" ? "bg-primary-light" : "");
+                lessonRow.classList.add(lesson.status === "Zaplanowana" ? "bg-primary-light" : "bg-danger-light");
 
                 var lessonDateCell = document.createElement('td');
                 lessonDateCell.textContent = lesson['start_date'] + ' (' + lesson['weekday'] + ')';
@@ -127,16 +128,46 @@ function generateTable(data) {
                 lessonDescriptionCell.textContent = lesson['description'];
                 lessonRow.appendChild(lessonDescriptionCell);
 
-                var teacherCell = document.createElement('td');
-                var teacherSvg = document.createElement('svg');
-                // Dodaj SVG ikony i inne elementy
+                const teacherCell = document.createElement('td');
+                teacherCell.classList.add('d-flex');
+                const teacherSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                const teacherPath = document.createElementNS(
+                    'http://www.w3.org/2000/svg',
+                    'path'
+                );
+                teacherSvg.setAttribute('fill', 'none');
+                teacherSvg.setAttribute('viewBox', '0 0 24 24');
+                teacherSvg.setAttribute('stroke', 'currentColor');
+                teacherSvg.setAttribute('stroke-width', '1.5');
+                teacherSvg.classList.add('mr-1');
+                teacherSvg.setAttribute('width', '18px');
+
+                teacherPath.setAttribute(
+                    'd',
+                    'M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z'
+                );
+                teacherPath.setAttribute('stroke-linecap', 'round');
+                teacherPath.setAttribute('stroke-linejoin', 'round');
+
+                teacherSvg.appendChild(teacherPath);
+
+                // Add SVG and teacher name
                 teacherCell.appendChild(teacherSvg);
-                teacherCell.textContent = lesson['teacher'];
+                teacherCell.append(lesson['teacher']);
                 lessonRow.appendChild(teacherCell);
 
-                var editCell = document.createElement('td');
-                var editLink = document.createElement('a');
-                // Dodaj link do edycji i inne elementy
+                const editCell = document.createElement('td');
+                const editLink = document.createElement('a');
+                editLink.text = 'Edytuj'
+                editLink.className = 'bg-blue text-white p-1 rounded-sm font-size-12 menu-button text-center';
+                editLink.type = 'button';
+                editLink.setAttribute('data-toggle', 'modal');
+                editLink.setAttribute('data-target', '#editEventModalCenter');
+                editLink.setAttribute("onclick",`modifyEvent('${lesson.lesson_id}', '${lesson.start_time}', '${lesson.end_time}', '${lesson.start_date}', '', '${lesson.status}', '${lesson.is_adjustment}');`);
+
+                // editLink.addEventListener('click', modifyEvent(lesson.lesson_id, lesson.start_time, lesson.end_time, lesson.start_date, lesson.get_full_name, lesson.status, lesson.is_adjustment));
+                // editLink.addEventListener('click', modifyEvent(lesson.lesson_id, lesson.start_time, lesson.end_time, lesson.start_date, lesson.get_full_name, lesson.status, lesson.is_adjustment));
+                // Add edit link
                 editCell.appendChild(editLink);
                 lessonRow.appendChild(editCell);
 
@@ -184,3 +215,16 @@ function toggleDetails(element) {
 }
 
 // Generowanie tabeli i dodanie jej do elementu o id "table-container"
+//
+// <svg fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="1.5"
+//      className="mr-1" style="width: 18px;">
+//     <path
+//         d="MM17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+//         stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path>
+// </svg>
+//
+// <svg fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"  stroke="currentColor" stroke-width="1.5"
+//      class="mr-1" width="18px">
+//     <path stroke-linecap="round" stroke-linejoin="round"
+//           d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"></path>
+// </svg>

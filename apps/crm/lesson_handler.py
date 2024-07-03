@@ -203,20 +203,23 @@ def count_lessons_for_student_in_months(student_id, year):
 
 def create_lesson_adjustment(lesson_form, is_edit=False):
     start_time = lesson_form.cleaned_data['startTime']
-    end_time = lesson_form.cleaned_data['endTime']
+    lesson_duration = lesson_form.cleaned_data['lessonDuration']
     lesson_date = lesson_form.cleaned_data['lessonDate']
     original_lesson_date = lesson_form.cleaned_data['originalDate']
+
+    start_datetime = datetime.combine(lesson_date, start_time)
+    end_datetime = start_datetime + timedelta(minutes=lesson_duration)
 
     # Pobranie obiektu Lesson
 
     # Tworzenie świadomej daty i czasu dla start_datetime
     start_datetime = dj_timezone.make_aware(
-        datetime.combine(lesson_date, time(start_time.hour, start_time.minute, start_time.second)),
+        start_datetime,
         dj_timezone.get_current_timezone())
 
     # Tworzenie świadomej daty i czasu dla end_datetime
     end_datetime = dj_timezone.make_aware(
-        datetime.combine(lesson_date, time(end_time.hour, end_time.minute, end_time.second)),
+        end_datetime,
         dj_timezone.get_current_timezone())
 
     if not is_edit:

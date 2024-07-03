@@ -907,9 +907,13 @@ class LocationCreate(View):
 
 def get_student_lessons(request, student_id):
     status = False
+    print('get_student_lessons', request.path)
+    selected_year = int(request.GET.get('selected_year', datetime.now().year))
+    print('get_student_lessons', 'year', selected_year)
+
 
     # try:
-    lessons_count = count_lessons_for_student_in_months(student_id, 2024)
+    lessons_count = count_lessons_for_student_in_months(student_id, selected_year)
 
     lessons_count_serializable = {}
     for key, value in lessons_count.items():
