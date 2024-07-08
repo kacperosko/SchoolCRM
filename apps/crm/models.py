@@ -4,8 +4,6 @@ from django.db import models
 from apps.authentication.models import User
 from django.utils.timezone import now
 from django.core.exceptions import ValidationError
-from django.db.models.signals import pre_save
-from django.dispatch import receiver
 from django.core.mail import send_mail
 from SchoolCRM.settings import EMAIL_HOST_USER, SITE_URL
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
@@ -108,7 +106,7 @@ class Student(models.Model):
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
     email = models.EmailField()
-    phone = models.IntegerField(blank=True, null=True)
+    phone = models.CharField(blank=True, null=True, max_length=16)
     birthdate = models.DateField(blank=True, null=True)
 
     notes = GenericRelation(Note)
@@ -206,25 +204,9 @@ class Location(models.Model):
     def __str__(self):
         return self.name
 
+class Group(models.Model):
+    name = models.CharField(max_length=100)
 
-@receiver(pre_save, sender=User)
-def record_password_change(sender, **kwargs):
-    user = kwargs.get('instance', None)
-    if user:
-        new_password = user.password
-        try:
-            old_password = User.objects.get(pk=user.pk).password
-        except User.DoesNotExist:
-            old_password = None
-
-        if new_password != old_password:
-            try:
-                send_mail(
-                    subject="Twoje hasło zostało zmienione",
-                    message=f"Hej {user.first_name}, dostajesz tego maila ponieważ Twoje hasło na {SITE_URL} zostało zmienione.\nJeśli nie zmieniałeś/aś hasła niezwłocznie skontaktuj się z administratorem strony",
-                    from_email=EMAIL_HOST_USER,
-                    recipient_list=[user.email],
-                    fail_silently=False,
-                )
-            except Exception as e:
-                print(e)
+class GroupStudent(models.Model):
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, blank=False, null=False,)
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, blank=False, null=False,)
