@@ -5,7 +5,7 @@ let max_pages;
 
 function fetchNotifications() {
     if (notification_page === max_pages) {
-        notificationContainer.append('<p class="mx-auto pointer-event text-center py-2 bg-gray mb-0">Brak więcej powiadomień</p>');
+        notificationContainer.append('<p class="mx-auto pointer-event text-center py-2 bg-gray mb-0">Brak wi\u0119cej powiadomie\u0144</p>');
         notificationShowMore.remove();
         return
     }
@@ -59,7 +59,7 @@ function fetchNotifications() {
 
 
             } else {
-                notificationContainer.append('<p class="mx-auto text-center py-2 bg-gray mb-0">Brak nowych powiadomień</p>');
+                notificationContainer.append('<p class="mx-auto text-center py-2 bg-gray mb-0">Brak nowych powiadomie\u0144</p>');
                 notificationShowMore.remove();
             }
             if (data.unread_notifications > 0) {
@@ -68,7 +68,7 @@ function fetchNotifications() {
         },
         error: function (error) {
             console.error('Error fetching notifications:');
-            handleResponse({message:'Błąd podczas pobierania powiadomień', status:false})
+            handleResponse({message:'B\u0142\u0105d podczas pobierania powiadomie\u0144', status:false})
         }
     });
 }

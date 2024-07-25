@@ -1,6 +1,6 @@
 {% extends 'base/base.html' %}
 {% load static %}
-{% block title %}{{ student.get_full_name }}{% endblock title %}
+{% block title %}{{ record.get_full_name }}{% endblock title %}
 {% block style %}
     <style>
     </style>
@@ -16,14 +16,14 @@
                     <li class="breadcrumb-item"><a href="/student"><i
                             class="ri-home-4-line mr-1 float-left"></i>Studenci</a></li>
                     <li class="breadcrumb-item active"
-                        aria-current="page">{{ student.get_full_name }}
+                        aria-current="page">{{ record.get_full_name }}
                 </ol>
             </nav>
             <div>
                 <button id="watch-button" class="btn rounded-pill" data-trigger="hover" data-toggle="popover"
                         data-content="{% if watch_record %}Obserwujesz ten rekord{% else %}Chcesz obserwować ten rekord?{% endif %}"
                         data-placement="bottom"
-                        onclick="watchRecord('{{ student.id }}', '{{ student|verbose_name }}')"
+                        onclick="watchRecord('{{ record.id }}')"
                         watching-record="{% if watch_record %}following{% else %}notFollowing{% endif %}">
                     <svg id="watch_icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                          stroke-width="{% if watch_record %}2.5{% else %}1.5{% endif %}"
@@ -35,7 +35,7 @@
                     </svg>
                 </button>
                 {% if perms.crm.change_student %}
-                    <a href="/student/edit/{{ student.id }}"
+                    <a href="/student/edit/{{ record.id }}"
                        class="btn btn-primary rounded-pill font-size-12 align-content-center d-inline-flex">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1"
                              stroke="currentColor" class="w-6 h-6 mr-1" width="18">
@@ -46,7 +46,7 @@
                     </a>
                 {% endif %}
                 {% if perms.crm.delete_student %}
-                    <a href=""
+                    <a href="/delete/{{ record.id }}"
                        class="btn btn-outline-danger rounded-pill font-size-12 d-inline-flex align-content-center">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                              stroke="currentColor" class="w-6 h-6 mr-1" width="18">
@@ -70,7 +70,7 @@
                     <a class="nav-link {% if request.GET.tab == 'Lessons' %}active{% endif %}" id="lessons-tab"
                        data-toggle="tab" href="#lessons" role="tab"
                        aria-controls="lessons" aria-selected="false"
-                       onclick="addParamToURL('tab', 'Lessons')">Lekcje</a>
+                       onclick="addParamToURL('tab', 'Lessons'), generate_lessons()">Lekcje</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link {% if request.GET.tab == 'Notes' %}active{% endif %}" id="lessons-tab"
@@ -88,43 +88,61 @@
                         <div class=" row align-items-center">
                             <div class="form-group col-sm-6">
                                 <label for="student_first_name" class="text-muted">Imię:</label>
-                                <p class="pb-1 field">{{ student.first_name }}</p>
+                                <p class="pb-1 field">{{ record.first_name }}</p>
                                 {#                                <input name="first_name" type="text" class="form-control" readonly=""#}
                                 {#                                       id="student_first_name"#}
-                                {#                                       value="{{ student.first_name }}">#}
+                                {#                                       value="{{ record.first_name }}">#}
                             </div>
                             <div class="form-group col-sm-6">
                                 <label for="student_last_name" class="text-muted">Nazwisko:</label>
-                                <p class="py-1 field">{{ student.last_name }}</p>
+                                <p class="py-1 field">{{ record.last_name }}</p>
                                 {#                                <input name="last_name" type="text" class="form-control" readonly=""#}
                                 {#                                       id="student_last_name"#}
-                                {#                                       value="{{ student.last_name }}">#}
+                                {#                                       value="{{ record.last_name }}">#}
                             </div>
                             <div class="form-group col-sm-6">
-                                <a {% if student.email %}href="mailto:{{ student.email }}"{% endif %}>
+                                <a {% if record.email %}href="mailto:{{ record.email }}"{% endif %}>
                                     <label for="student_email" class="text-muted">Email:</label>
-                                    <p class="pb-1 field">{{ student.email|default_if_none:"" }}</p>
+                                    <p class="pb-1 field">{{ record.email|default_if_none:"" }}</p>
                                     {#                                <input name="email" type="email" class="form-control pointer-event" readonly="" id="student_email"#}
-                                    {#                                       value="{{ student.email }}" data-trigger="hover" data-toggle="popover" data-content="Utwórz maila" data-placement="bottom">#}
+                                    {#                                       value="{{ record.email }}" data-trigger="hover" data-toggle="popover" data-content="Utwórz maila" data-placement="bottom">#}
                                 </a>
                             </div>
                             <div class="form-group col-sm-6">
                                 <label for="student_phone" class="text-muted">Telefon:</label>
-                                <p class="pb-1 field">{{ student.phone|default_if_none:"" }}</p>
+                                <p class="pb-1 field">{{ record.phone|default_if_none:"" }}</p>
                                 {#                                <input name="phone" type="text" class="form-control" readonly id="student_phone"#}
-                                {#                                       value="{{ student.phone|default_if_none:"" }}">#}
+                                {#                                       value="{{ record.phone|default_if_none:"" }}">#}
                             </div>
                             <div class="form-group col-sm-6">
                                 <label for="student_phone" class="text-muted">Data Urodzenia:</label>
-                                <p class="pb-1 field">{{ student.birthdate|default_if_none:"" }}</p>
+                                <p class="pb-1 field">{{ record.birthdate|default_if_none:"" }}</p>
                                 {#                                <input name="phone" type="text" class="form-control" readonly id="student_phone"#}
-                                {#                                       value="{{ student.birthdate|default_if_none:"" }}">#}
+                                {#                                       value="{{ record.birthdate|default_if_none:"" }}">#}
                             </div>
                             <div class="form-group col-sm-6">
                                 <label for="student_phone" class="text-muted">Wiek:</label>
-                                <p class="pb-1 field">{{ student.get_age|default_if_none:"" }}</p>
+                                <p class="pb-1 field">{{ record.get_age|default_if_none:"" }}</p>
                                 {#                                <input name="phone" type="text" class="form-control" readonly id="student_phone"#}
-                                {#                                       value="{{ student.get_age|default_if_none:"" }}">#}
+                                {#                                       value="{{ record.get_age|default_if_none:"" }}">#}
+                            </div>
+                            <div class="form-group col-sm-6">
+                                <label for="student_phone" class="text-muted">Utworzono:</label>
+                                <p class="pb-1 field">{{ record.created_date|default_if_none:"" }}
+                                    <a href="/user/{{ record.created_by.id}}">
+                                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" class="ml-1" width="18px"><path d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                                    {{ record.created_by.get_full_name|default_if_none:"" }}
+                                        </a>
+                                </p>
+
+                            </div>
+                            <div class="form-group col-sm-6">
+                                <label for="student_phone" class="text-muted">Ostatnio zmodyfikowano:</label>
+                                <p class="pb-1 field">{{ record.modified_date|default_if_none:"" }}
+                                    <a href="/user/{{ record.created_by.id}}">
+                                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" class="ml-1" width="18px"><path d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                                    {{ record.modified_by.get_full_name|default_if_none:"" }}</p>
+
                             </div>
                         </div>
                     </form>
@@ -133,16 +151,16 @@
                         <div class="d-flex justify-content-between mb-2">
                             <h5 class="card-title">Powiązane kontakty:</h5>
                             {% if perms.crm.add_student_person %}
-                            <a href="/student/{{ student.id }}/student-person/add"
-                               class="btn btn-primary rounded-pill font-size-12">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                     stroke-width="1.5"
-                                     stroke="currentColor" class="w-6 h-6" width="18">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                          d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 1-4.512-.645-6.374-1.766Z"></path>
-                                </svg>
-                                Dodaj powiązany kontakt
-                            </a>
+                                <a href="/student/{{ record.id }}/student-person/add"
+                                   class="btn btn-primary rounded-pill font-size-12">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                         stroke-width="1.5"
+                                         stroke="currentColor" class="w-6 h-6" width="18">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 1-4.512-.645-6.374-1.766Z"></path>
+                                    </svg>
+                                    Dodaj powiązany kontakt
+                                </a>
                             {% endif %}
                         </div>
                         <table class="table table-bordered table-striped">
@@ -170,7 +188,7 @@
                                         <td class="text-center">{{ student_person.person.phone|default_if_none:"" }}</td>
                                         <td class="text-center">
                                             <a class="text-warning"
-                                               href="/student/{{ student.id }}/{{ student_person.id }}/delete"
+                                               href="/student/{{ record.id }}/{{ student_person.id }}/delete"
                                                data-trigger="hover" data-toggle="popover"
                                                data-content="Usuń relacje" data-placement="bottom">
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -226,12 +244,6 @@
                                 </svg>
 
                             </button>
-                            <button type="button"
-                                    class="btn btn-outline-primary rounded-pill mx-1 d-flex align-content-center font-size-12"
-                                    id="currentYearBtn"
-                                    onclick="get_lessons('{{ student.id }}')">
-                                Pobierz lekcje
-                            </button>
                         </div>
                         <div class="mx-2 font-weight-500 d-flex align-items-center">
                             <h5 id="selected-year">{{ request.GET.selected_year }}</h5>
@@ -251,199 +263,14 @@
                         </button>
                     </div>
                     <div class="table-responsive" id="table-container">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                                     viewBox="0 0 24 24" stroke-width="1.5"
-                                                                     stroke="currentColor" class="mr-1" width="18px">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                                          d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"></path>
-                                                                </svg>
-{#                        <table class="table table-bordered table-striped">#}
-{#                            <thead>#}
-{#                            <tr>#}
-{#                                <th scope="col" class="text-center">Miesiąc</th>#}
-{#                                <th scope="col" class="text-center">Zaplanowane</th>#}
-{#                                <th scope="col" class="text-center">Odwołane</th>#}
-{#                            </tr>#}
-{#                            </thead>#}
-{#                            <tbody id="lessons_tbody">#}
-{#                            {% for month_number, statutes in months_counter.items %}#}
-{#                                <tr>#}
-{#                                    <th scope="row" class="text-center"#}
-{#                                        onclick="toggleDetails(this)">#}
-{#                                        <a type="button" href="" class="" data-toggle="collapse"#}
-{#                                           onclick="refreshOpenedMonths()" id="collapser_{{ month_number }}"#}
-{#                                           data-target="#collaps_{{ month_number }}">{{ month_number|get_month_name }}#}
-{#                                        </a>#}
-{#                                    </th>#}
-{#                                    <td class="text-center">{{ statutes.Zaplanowana }}</td>#}
-{#                                    <td class="text-warning text-center">{{ statutes.Canceled }}</td>#}
-{#                                </tr>#}
-{#                                <tr>#}
-{#                                    <td class="p-0" colspan="3">#}
-{#                                        <div class="collapse in" id="collaps_{{ month_number }}">#}
-{#                                            <table class="table">#}
-{#                                                <thead>#}
-{#                                                </thead>#}
-{#                                                <tbody>#}
-{#                                                {% if statutes.Lessons %}#}
-{#                                                    {% for key, lesson in statutes.Lessons.items %}#}
-{#                                                        <tr class="{% if lesson.status == 'Zaplanowana' %} bg-primary-light {% else %}bg-danger-light{% endif %}">#}
-{#                                                            <td>{{ lesson.start_date }} ({{ lesson.weekday }})#}
-{#                                                                {% if lesson.original_date %}(przeniesione z#}
-{#                                                                    {{ lesson.original_date }}){% endif %}</td>#}
-{#                                                            <td>{{ lesson.start_time }} - {{ lesson.end_time }}</td>#}
-{#                                                            <td>{{ lesson.description }}</td>#}
-{#                                                            <td class="d-flex">#}
-{#                                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none"#}
-{#                                                                     viewBox="0 0 24 24" stroke-width="1.5"#}
-{#                                                                     stroke="currentColor" class="mr-1" width="18px">#}
-{#                                                                    <path stroke-linecap="round" stroke-linejoin="round"#}
-{#                                                                          d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"></path>#}
-{#                                                                </svg>#}
-{##}
-{#                                                                {{ lesson.teacher }}#}
-{#                                                            </td>#}
-{#                                                            <td>#}
-{#                                                                <a class="bg-blue text-white p-1 rounded-sm font-size-12 menu-button text-center"#}
-{#                                                                   type="button" data-toggle="modal"#}
-{#                                                                   data-target="#editEventModalCenter"#}
-{#                                                                   onclick="modifyEvent('{{ lesson.lesson_id }}', '{{ lesson.start_time }}', '{{ lesson.end_time }}', '{{ lesson.start_date }}', '{{ student.get_full_name }}', '{{ lesson.status }}', '{{ lesson.is_adjustment }}', true)"#}
-{#                                                                >Edytuj</a>#}
-                                                                {#                                                                {% if lesson.status != 'Canceled' %}#}
-                                                                {#                                                                    <a class="bg-red text-white p-1 rounded-sm font-size-12 menu-button text-center"#}
-                                                                {#                                                                       type="button" data-toggle="modal"#}
-                                                                {#                                                                       data-target="#editEventModalCenter"#}
-                                                                {#                                                                       onclick="modifyEvent('{{ lesson.lesson_id }}', '{{ lesson.start_time }}', '{{ lesson.end_time }}', '{{ lesson.start_date }}', '{{ student.get_full_name }}', 'Canceled', '{{ lesson.is_adjustment }}')"#}
-                                                                {#                                                                    >Odwołaj</a>#}
-                                                                {#                                                                {% else %}#}
-                                                                {#                                                                    <a class="bg-green text-white p-1 rounded-sm font-size-12 menu-button text-center"#}
-                                                                {#                                                                       type="button" data-toggle="modal"#}
-                                                                {#                                                                       data-target="#editEventModalCenter"#}
-                                                                {#                                                                       onclick="modifyEvent('{{ lesson.lesson_id }}', '{{ lesson.start_time }}', '{{ lesson.end_time }}', '{{ lesson.start_date }}', '{{ student.get_full_name }}', 'Planned', '{{ lesson.is_adjustment }}')"#}
-                                                                {#                                                                    >Zaplanuj</a>#}
-                                                                {#                                                                {% endif %}#}
-{##}
-{#                                                            </td>#}
-{#                                                        </tr>#}
-{#                                                    {% endfor %}#}
-{##}
-{#                                                {% else %}#}
-{#                                                    <tr class="bg-light text-center">#}
-{#                                                        <td colspan="3">Brak lekcji</td>#}
-{#                                                    </tr>#}
-{##}
-{#                                                {% endif %}#}
-{#                                            </table>#}
-{#                                        </div>#}
-{#                                    </td>#}
-{#                                </tr>#}
-{#                            {% endfor %}#}
-{#                            </tbody>#}
-{#                        </table>#}
-                    </div>
-                </div>
-
-                <div class="tab-pane fade {% if request.GET.tab == 'Notes' %}show active{% endif %}" id="notes"
-                     role="tabpanel" aria-labelledby="details-tab">
-                    <div class="d-flex justify-content-end">
-                        <div class="my-2">
-                            <a href="" class="btn btn-primary rounded-pill font-size-12"
-                               type="button" data-toggle="modal"
-                               data-target="#addNoteModalCenter">
-                                + Dodaj Notatkę
-                            </a>
+                        {# content auto generated by js after tab loaded by user #}
+                        <div class="d-flex mx-auto justify-content-center">
+                            <img src="{% static '/images/loader.gif' %}" alt="loader">
                         </div>
                     </div>
-                    <div id="note-full-container" class="row">
-                    {% if notes %}
-                        {% for note in notes %}
-                            <div class="col-lg-4 col-md-6" style="">
-                                <div class="card card-body">
-                                    <p class="font-12 text-muted">{{ note.created_at }} {{ note.created_by.get_full_name }}</p>
-                                    <div class="">
-                                        <p class="">
-                                            {{ note.content }}
-                                        </p>
-                                    </div>
-                                    <div class="d-flex align-items-center">
-                                        <div class="ml-auto">
-                                            <div class="btn-group">
-                                                <a class="nav-link dropdown-toggle label-group p-0"
-                                                   data-toggle="dropdown" href="#" role="button" aria-haspopup="true"
-                                                   aria-expanded="true">
-                                                </a>
-                                                <div class="dropdown-menu dropdown-menu-right">
-                                                    <a class="badge-group-item dropdown-item position-relative text-info"
-                                                       href="#">
-                                                        Edytuj
-                                                    </a>
-                                                    <a class="badge-group-item dropdown-item position-relative text-danger"
-                                                       href="#;">
-                                                        Usuń
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="bg-light p-2 rounded-normal mx-auto" id="empty-notes-info">Brak notatek</div>
-                    {% endif %}
-                    </div>
-
                 </div>
-            </div>
-        </div>
-    </div>
-    <div class="modal fade" id="addNoteModalCenter" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="noteModalCenterTitle">Dodawanie Notatki</h5>
-                    <button id="addNoteModal_closeWindow" type="button" class="close" data-dismiss="modal"
-                            aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <form method="post" name="add_note_form" id="add_note_from">
-                    {% csrf_token %}
-                    <div class="modal-body">
-                        {% csrf_token %}
-                        <div class=" row align-items-center">
-                            <div class="form-group col-sm-12">
-                                <label for="content_addNoteForm">Treść</label>
-                                <p class="text-danger" id="addNoteModal_textAreaError"></p>
-                                <textarea class="form-control" name="content" id="content_addNoteForm"
-                                          style="line-height: 1"
-                                          rows="4" required maxlength="200"></textarea>
-                            </div>
-                            <div class="form-group col-sm-6">
-                                <label for="student_addNoteForm">Student</label>
-                                <input class="form-control" id="student_addNoteForm" required readonly=""
-                                       value="{{ student.get_full_name }}">
-                            </div>
-                            <div class="form-group col-sm-6" hidden="">
-                                <label for="recordId_addNoteForm">Student Id</label>
-                                <input class="form-control" id="recordId_addNoteForm" required readonly=""
-                                       value="{{ student.id }}">
-                            </div>
-                            <div class="form-group col-sm-6" hidden="">
-                                <label for="modelName_addNoteForm">Model Name</label>
-                                <input class="form-control" id="modelName_addNoteForm" required readonly=""
-                                       value="{{ student|verbose_name }}">
-                            </div>
-                        </div>
 
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Anuluj</button>
-                        <button name="addnote_form_btn" id="addnote_form_btn" type="button"
-                                class="btn btn-primary" onclick="createNote()">Zapisz Notatkę
-                        </button>
-                    </div>
-                </form>
+                {% include 'modules/notes.html' %}
             </div>
         </div>
     </div>
@@ -452,7 +279,7 @@
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="cancelModalCenterTitle">Edytowanie lekcji</h5>
+                    <h5 class="modal-title" id="cancelModalCenterTitle">Edytowanie lekcji: <span id="editEvent_title"></span></h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -490,14 +317,22 @@
                                 <label for="status_cancelForm">Status <span class="text-danger">*</span></label>
                                 <select name="status" class="form-control" id="status_cancelForm" required>
                                     <option>Zaplanowana</option>
-                                    <option>Nieobecność</option>
-                                    <option>Odwołana - nauczyciel</option>
-                                    <option>Odwołana - 24h przed</option>
+                                    <option value="Nieobecnosc">Nieobecność</option>
+                                    <option value="Odwolana - nauczyciel">Odwołana - nauczyciel</option>
+                                    <option value="Odwolana - 24h przed">Odwołana - 24h przed</option>
                                 </select>
                             </div>
                             <div class="form-group col-sm-6">
                                 <label for="studentForm_cancelForm">Student <span class="text-danger">*</span></label>
                                 <input class="form-control" id="studentForm_cancelForm" required readonly="">
+                            </div>
+                             <div class="form-group col-sm-6">
+                                <label for="teacher_createLesson">Nauczyciel <span class="text-danger">*</span></label>
+                                <select class="form-control" id="teacher_createLesson" name="teacher" required>
+                                    {% for user in users %}
+                                        <option value="{{ user.id }}">{{ user.get_full_name }}</option>
+                                    {% endfor %}
+                                </select>
                             </div>
                             <div class="form-group col-sm-6" hidden="">
                                 <label for="originalDate_cancelForm">original_date</label>
@@ -575,12 +410,6 @@
                                     <option value="60">60 min</option>
                                 </select>
                             </div>
-                            {#                            <div class="form-group col-sm-6">#}
-                            {#                                <label for="endTime_createLesson">Godzina Zakończenia</label>#}
-                            {#                                <input name="endTime" type="time" class="form-control" id="endTime_createLesson"#}
-                            {#                                       value=""#}
-                            {#                                       style="line-height: 20px;" required>#}
-                            {#                            </div>#}
                             <div class="form-group col-sm-6">
                                 <label for="lessonDate_createLesson">Data Lekcji <span
                                         class="text-danger">*</span></label>
@@ -605,7 +434,7 @@
                             <div class="form-group col-sm-6">
                                 <label for="studentForm_cancelForm">Student <span class="text-danger">*</span></label>
                                 <input class="form-control" id="studentForm_cancelForm"
-                                       value="{{ student.get_full_name }}" required readonly="">
+                                       value="{{ record.get_full_name }}" required readonly="">
                             </div>
 
                             <div class="form-group col-sm-6">
@@ -640,7 +469,6 @@
 {% endblock content %}
 
 {% block javascript %}
-    <script src="{% static '/js/notes.js' %}"></script>
     <script src="{% static '/js/watchRecord.js' %}"></script>
     <script src="{% static '/js/lessons.js' %}"></script>
     <script>
@@ -677,6 +505,7 @@
         }
 
         function modifyEvent(lesson_schedule_id, startTime, endTime, lessonDate, studentName, status, isAdjustment, is_edit = false) {
+            let editEvent_title = document.getElementById('editEvent_title');
             let startTime_form = document.getElementById('starTime_cancelForm');
             let lessonDuration_form = document.getElementById('lessonDuration_cancelForm');
             let lessonDate_form = document.getElementById('lessonDate_cancelForm');
@@ -693,29 +522,6 @@
             const plan_title = 'Chcesz zaplanować tę lekcję?';
             const edit_title = 'Czy chcesz zedytować tę lekcje?';
 
-
-            {#if (is_edit) {#}
-            {#    btn_plan.style.display = 'none';#}
-            {#    btn_cancel.style.display = 'none';#}
-            {#    btn_edit.style.display = 'block';#}
-            {#    cancelModalCenterTitle.innerHTML = edit_title;#}
-            {#    startTime_form.readOnly = false;#}
-            {#    endTime_form.readOnly = false;#}
-            {#    lessonDate_form.readOnly = false;#}
-            {# else#}
-            {#    btn_edit.style.display = 'none';#}
-            {#    startTime_form.readOnly = true;#}
-            {#    endTime_form.readOnly = true;#}
-            {#    lessonDate_form.readOnly = true;#}
-            {#    if (status === 'Canceled') {#}
-            {#        btn_plan.style.display = 'none';#}
-            {#        btn_cancel.style.display = 'block';#}
-            {#        cancelModalCenterTitle.innerHTML = cancel_title;#}
-            {#    } else {#}
-            {#        btn_plan.style.display = 'block';#}
-            {#        btn_cancel.style.display = 'none';#}
-            {#        cancelModalCenterTitle.innerHTML = plan_title;#}
-            {#    }#}
             let parts = lessonDate.split('-');
             let day = parts[0];
             let month = parts[1];
@@ -729,32 +535,30 @@
             const start = new Date(`1970-01-01T${startTime}:00`);
             const end = new Date(`1970-01-01T${endTime}:00`);
 
+            editEvent_title.innerHTML = year + '-' + month + '-' + day;
             startTime_form.value = startTime;
             lessonDuration_form.value = calculateTimeDifference(startTime, endTime);
             lessonDate_form.value = year + '-' + month + '-' + day;
             lessonId_form.value = lesson_schedule_id;
-            student_form.value = '{{student.get_full_name}}';
+            student_form.value = '{{record.get_full_name}}';
             originalDate_form.value = year + '-' + month + '-' + day;
             status_form.value = status;
-            isAdjustment_form.checked = isAdjustment === 'True';
+            isAdjustment_form.checked = isAdjustment;
         }
 
-        let openedMonths = [];
+        {#let openedMonths = [];#}
+
+        let lessonsLoaded = false;
+
+        function generate_lessons() {
+            if (!lessonsLoaded) {
+                get_lessons('{{ record.id }}')
+                lessonsLoaded = true;
+            }
+        }
 
         document.addEventListener("DOMContentLoaded", function () {
             let urlParams = new URLSearchParams(window.location.search);
-            openedMonths = urlParams.get('opened_months');
-            if (openedMonths) {
-                openedMonths = openedMonths.split(',');
-                openedMonths.forEach(function (monthNumber) {
-                    let collapsibleDiv = document.getElementById('collaps_' + monthNumber);
-                    if (collapsibleDiv) {
-                        collapsibleDiv.classList.add('show');
-                    }
-                });
-            } else {
-                openedMonths = [];
-            }
 
             let selected_year = urlParams.get('selected_year');
             if (!selected_year) {
@@ -764,7 +568,32 @@
             }
             selected_year_div.innerHTML = selected_year
 
-        });
+
+            const tab = urlParams.get('tab');
+            if (tab !== undefined) {
+                if (tab === 'Lessons' && !lessonsLoaded) {
+                    generate_lessons();
+                }
+            }
+            {#openedMonths = urlParams.get('opened_months');#}
+            {#if (openedMonths) {#}
+            {#    console.log('listener openedMonths ' + openedMonths)#}
+            {#    openedMonths = openedMonths.split(',');#}
+            {#    openedMonths.forEach(function (monthNumber) {#}
+            {#        let collapsibleDiv = document.getElementById('collaps_' + monthNumber);#}
+            {#        console.log('listener collapsibleDiv ' + collapsibleDiv)#}
+            {#        if (collapsibleDiv) {#}
+            {#            collapsibleDiv.classList.add('show');#}
+            {#        }#}
+            {#    });#}
+            {# else#}
+            {#    openedMonths = [];#}
+            {##}
+            {##}
+            {#        }#}
+            {#    )#}
+            {#        ;#}
+        })
 
         function setQueryYear(value) {
             selected_year_div.innerHTML = parseInt(selected_year_div.innerHTML) + value;
@@ -772,8 +601,8 @@
             let urlSearchParams = new URLSearchParams(window.location.search);
             urlSearchParams.set('selected_year', selected_year_div.innerHTML);
             urlSearchParams.set('opened_months', '');
-            window.history.pushState({}, document.title, '?' +urlSearchParams.toString());
-            get_lessons('{{ student.id }}');
+            window.history.pushState({}, document.title, '?' + urlSearchParams.toString());
+            get_lessons('{{ record.id }}');
 
             {#window.location.href = currentURL.split('?')[0] + '?' + urlSearchParams.toString();#}
         }
@@ -784,44 +613,33 @@
             const currentURL = window.location.href;
             let urlSearchParams = new URLSearchParams(window.location.search);
             urlSearchParams.set('selected_year', selected_year_div.innerHTML);
-            window.history.pushState({}, document.title, '?' +urlSearchParams.toString());
-            get_lessons('{{ student.id }}');
+            window.history.pushState({}, document.title, '?' + urlSearchParams.toString());
+            get_lessons('{{ record.id }}');
 
             {#window.location.href = currentURL.split('?')[0] + '?' + urlSearchParams.toString();#}
         }
-         {#selected_year_div.addEventListener("change", function () {#}
-         {#   console.log('year changed');#}
-         {#   get_lessons('{{ student.id }}');#}
-         {# });#}
+
+        {#selected_year_div.addEventListener("change", function () {#}
+        {#   console.log('year changed');#}
+        {#   get_lessons('{{ record.id }}');#}
+        {# });#}
 
         async function refreshOpenedMonths() {
             let delayres = await delay(1000);
             let divElements = document.querySelectorAll('[id^="collaps_"]');
+            console.log('refreshing months')
             openedMonths = [];
             divElements.forEach(function (div) {
+                let monthNumber = div.id.split('_')[1];
                 if (div.classList.contains('show')) {
-                    let monthNumber = div.id.split('_')[1];
                     openedMonths.push(monthNumber);
+                    console.log('checking ' + monthNumber);
                 }
             });
 
-            {#let urlParams = new URLSearchParams(window.location.search);#}
-            {#urlParams.set('opened_months', openedMonths.join(','));#}
-            {#window.history.replaceState({}, '', window.location.pathname + '?' + urlParams.toString());#}
-        }
-
-
-        function addParamToURL(key, value) {
-            const currentURL = window.location.href;
-            const searchParams = new URLSearchParams(window.location.search);
-            // Dodaj parametr tab_name
-            searchParams.set(key, value);
-
-            // Utwórz nowy URL z dodanym parametrem
-            const newURL = currentURL.split('?')[0] + '?' + searchParams.toString();
-
-            // Zastąp obecny URL nowym URL z dodanym parametrem
-            window.history.replaceState({path: newURL}, '', newURL);
+            let urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('opened_months', openedMonths.join(','));
+            window.history.replaceState({}, '', window.location.pathname + '?' + urlParams.toString());
         }
 
         function toggleDetails(element) {
@@ -849,6 +667,6 @@
                 endSeries_div.classList.remove('d-none');
             }
 
-        })
+        });
     </script>
 {% endblock javascript %}

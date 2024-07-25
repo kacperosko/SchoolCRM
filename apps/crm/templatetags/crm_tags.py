@@ -75,3 +75,10 @@ def initials(full_name):
     initials = ''.join([name[0].upper() for name in names])
     return initials
 
+
+@register.filter(name='get_model_name')
+def get_model_name(obj, language):
+    if hasattr(obj, 'get_model_name'):
+        return obj.get_model_name(language)
+    return obj.__class__.__name__
+

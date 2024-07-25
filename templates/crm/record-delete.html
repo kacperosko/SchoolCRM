@@ -1,0 +1,39 @@
+{% extends 'base/base.html' %}
+{% load crm_tags %}
+{% block title %}Usuwanie rekordu{% endblock title %}
+{% block content %}
+    <div class="card">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/{{ model_name }}"><i
+                        class="ri-home-4-line mr-1 float-left"></i>{{ record|get_model_name:"pl" }}</a></li>
+                <li class="breadcrumb-item active"
+                    aria-current="page"><a
+                        href="/{{ model_name }}/{{ record_id }}">{{ record }}</a>
+                </li>
+                <li class="breadcrumb-item active"
+                    aria-current="page">Usuwanie rekordu</li>
+            </ol>
+        </nav>
+        <div class="card-body">
+            <div class="tab-pane fade show active" id="details" role="tabpanel" aria-labelledby="details-tab">
+
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="text-danger">{{ message }}</div>
+                    <div class="p-3">
+                        <h4>Czy na pewno chcesz usunąć ten rekord?</h4>
+                        <div class="mt-3">
+                            <p>{{ record }}</p>
+                        </div>
+                    </div>
+                    <a href="/{{ model_name }}/{{ record_id }}"
+                       class="btn btn-outline-primary mr-2 mt-5">Anuluj</a>
+                    <button name="delete_student_person" type="submit" class="btn btn-danger mt-5">Tak, usuń
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+{% endblock content %}

@@ -16,7 +16,7 @@ class NoteItemInline(GenericTabularInline):
 
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
-    list_display = ('id', 'first_name', 'last_name')
+    list_display = ('id', 'first_name', 'last_name', 'modified_date')
     search_fields = ('first_name', 'last_name')
 
     inlines = [

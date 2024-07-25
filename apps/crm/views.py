@@ -3,12 +3,13 @@ import time
 from django.http import Http404
 from django.shortcuts import render, redirect
 from django.views.generic import View, TemplateView
-from .models import Student, Lesson, LessonAdjustment, Person, StudentPerson, Note, Notification, WatchRecord, Location
+from .models import Student, Lesson, LessonAdjustment, Person, StudentPerson, Note, Notification, WatchRecord, Location, \
+    Statutes, get_model_by_prefix, get_model_object_by_prefix
 from django.core.serializers import serialize
 import json
 from django.contrib.auth import authenticate, login, logout
 from .forms import UserCreationForm, LoginForm, PersonForm, LessonForm, LessonPlanForm, LessonCreateForm, \
-    StudentPersonForm, LocationForm, StudentForm
+    StudentPersonForm, LocationForm, StudentForm, get_form_class
 from apps.authentication.models import User
 from datetime import datetime, timedelta, date, time
 from time import sleep
@@ -16,7 +17,7 @@ from django.db.models import Q, Count
 from calendar import monthrange
 from collections import defaultdict
 from django.utils import timezone as dj_timezone
-from .lesson_handler import count_lessons_for_student_in_months, create_lesson_adjustment
+from .lesson_handler import count_lessons_for_student_in_months, create_lesson_adjustment, count_lessons_for_teacher_in_months
 from django.contrib import messages
 from django.http.response import JsonResponse
 from django.contrib.contenttypes.models import ContentType
@@ -24,7 +25,7 @@ from babel.dates import format_datetime
 from django.utils.timesince import timesince
 from django.utils.timezone import now
 from django.shortcuts import get_object_or_404, redirect
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse
 from django.core.paginator import Paginator
@@ -35,6 +36,7 @@ WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 
 
 def custom_404(request, exception):
     print("custom 404", request.path, exception)
+    messages.error(request, exception)
     # return render(request, '404.html', status=404)
     return render(request, 'auth/404.html', status=404)
 
@@ -51,7 +53,8 @@ class CRMHomePage(View):
 
     @staticmethod
     def get(request, *args, **kwargs):
-        return redirect("/student")
+        return render(request, "crm/index.html", {})
+        # return redirect("/student")
 
 
 def students(request):
@@ -96,11 +99,56 @@ def calendar(request):
             return redirect('/calendar')
         else:
             print('ERROR FORM', form.errors)
+        # try:
 
-    lessons = Lesson.objects.filter(teacher=request.user)
+    teacher_id = request.GET.get("selected_teacher", request.user.id)
+    print('selected_teacher', teacher_id)
+    selected_teacher = User.objects.get(id=teacher_id)
+
+    selected_year = int(request.GET.get("selected_year", datetime.now().year))
+
+    selected_start_date = request.GET.get("selected_start_date", None)
+
+    if not request.GET._mutable:
+        request.GET._mutable = True
+
+    request.GET['selected_teacher'] = teacher_id
+    request.GET['selected_year'] = selected_year
+    if selected_start_date is not None and selected_start_date != "" and selected_start_date != "null":
+        print("setting selected_start_date", selected_start_date)
+        request.GET['selected_start_date'] = selected_start_date
+
+    # lessons_count = count_lessons_for_student_in_months(student_id, selected_year)
+    # lessons_count = count_lessons_for_teacher_in_months(teacher_id, 2024)
+    #
+    # lessons_count_serializable = {}
+    # for key, value in lessons_count.items():
+    #     lessons = {k: v.to_dict() for k, v in value['Lessons'].items()}
+    #     lessons_count_serializable[key] = {
+    #         'Zaplanowana': value['Zaplanowana'],
+    #         Statutes.NIEOBECNOSC: value[Statutes.NIEOBECNOSC],
+    #         Statutes.ODWOLANA_NAUCZYCIEL: value[Statutes.ODWOLANA_NAUCZYCIEL],
+    #         Statutes.ODWOLANA_24H_PRZED: value[Statutes.ODWOLANA_24H_PRZED],
+    #         'Lessons': lessons
+    #     }
+
+    lessons = Lesson.objects.filter(
+        Q(teacher_id=teacher_id) &
+        Q(start_time__year__lte=selected_year) &
+        (
+            (Q(series_end_date__year__gte=selected_year) |
+             Q(series_end_date=None))
+        )
+    )
 
     # Fetch lesson adjustments associated with fetched lessons
-    lesson_adjustments = LessonAdjustment.objects.filter(lesson__in=lessons)
+    lesson_adjustments = LessonAdjustment.objects.filter(
+        Q(lesson__teacher_id=teacher_id) &
+        (
+                Q(original_lesson_date__year=selected_year) |
+                Q(modified_start_time__year=selected_year)
+        )
+    )
 
     # Construct a dictionary to hold lesson adjustments data
     lesson_adjustments_data = {}
@@ -117,7 +165,8 @@ def calendar(request):
             'startTime': l_adjustment.modified_start_time.strftime('%H:%M'),
             'endTime': l_adjustment.modified_end_time.strftime('%H:%M'),
             'status': l_adjustment.status,
-            'student': l_adjustment.lesson.student.get_full_name()
+            'teacher': l_adjustment.lesson.teacher.get_full_name(),
+            'description': l_adjustment.lesson.description
         })
     print(lesson_adjustments_data)
     # Construct a list of dictionaries with lesson data
@@ -133,12 +182,22 @@ def calendar(request):
             'startDate': str(lesson.start_time.date()),
             'endDate': str(lesson.series_end_date) if lesson.series_end_date else None,
             'student': lesson.student.get_full_name(),
-            'adjustments': lesson_adjustments_for_lesson
+            'student_id': lesson.student.id,
+            'teacher': lesson.teacher.get_full_name(),
+            'adjustments': lesson_adjustments_for_lesson,
+            'description': lesson.description,
+            'is_series': lesson.is_series
         })
+
+    teachers = list(User.objects.all())
+    if selected_teacher in teachers:
+        teachers.remove(selected_teacher)
 
     # Pass lesson_data to the template context
     context = {
         'lessons': lesson_data,
+        'selected_teacher': selected_teacher,
+        'teachers': teachers
     }
 
     return render(request, "crm/calendar.html", context)
@@ -264,10 +323,10 @@ class StudentPage(View):
                 print('edit_form_submit')
                 form = LessonForm(request.POST)
                 if form.is_valid():
-                    if form.cleaned_data['isAdjustment']:
-                        create_lesson_adjustment(form, is_edit=True)
-                    else:
-                        create_lesson_adjustment(form)
+                    # if form.cleaned_data['isAdjustment']:
+                    create_lesson_adjustment(form, is_edit=form.cleaned_data['isAdjustment'])
+                    # else:
+                    #     create_lesson_adjustment(form)
 
                     lesson_date = dj_timezone.make_aware(
                         datetime.combine(form.cleaned_data['lessonDate'], datetime.min.time()))
@@ -281,7 +340,7 @@ class StudentPage(View):
                     messages.success(request, 'Zaktualizowano lekcje pomyślnie!')
 
                 else:
-                    messages.error(request, f'Bład podczas zapisywania: {form.errors}')
+                    messages.error(request, f'Błąd podczas zapisywania: {form.errors}')
                 return redirect(
                     f'/student/{student_id}?tab={tab_name}&opened_months={opened_months}&selected_year={selected_year}')
             elif 'create_lesson_form_submit' in request.POST:
@@ -298,7 +357,7 @@ class StudentPage(View):
                     end_series = None
                     if is_series:
                         end_series = form.cleaned_data['end_series']
-                    #
+
                     start_datetime = datetime.combine(lesson_date, start_time)
                     end_datetime = start_datetime + timedelta(minutes=lesson_duration)
                     #
@@ -363,14 +422,15 @@ class StudentPage(View):
             student_persons = StudentPerson.objects.filter(student_id=student_id)
 
             try:
-                content_type = ContentType.objects.get_for_model(Student)
-                user_watch_record = WatchRecord.objects.get(user=request.user, content_type=content_type,
+                model_name = get_model_by_prefix(student.id[:3])
+                user_watch_record = WatchRecord.objects.get(user=request.user, content_type__model=model_name.lower(),
                                                             object_id=student_id)
-            except WatchRecord.DoesNotExist:
+            except WatchRecord.DoesNotExist as e:
+                print('watch ERROR', e)
                 user_watch_record = None
 
             notes = student.notes.all()
-            context['student'] = student
+            context['record'] = student
             context['notes'] = notes.order_by('-created_at')
             context['student_persons'] = student_persons
             context['watch_record'] = user_watch_record
@@ -386,9 +446,9 @@ class StudentPage(View):
             messages.error(request, f'StudentPage exception: {e}')
             return custom_404(request, e)
 
-        lessons_count = count_lessons_for_student_in_months(student_id, selected_year)
-        print('lessons_count', lessons_count)
-        context['months_counter'] = lessons_count
+        # lessons_count = count_lessons_for_student_in_months(student_id, selected_year)
+        # print('lessons_count', lessons_count)
+        # context['months_counter'] = lessons_count
         context['user'] = request.user
 
         return render(request, "crm/student-page.html", context)
@@ -432,9 +492,13 @@ def create_student(request, student_id=None):
             try:
                 if student_id:
                     print('student_update')
-                    student = Student.objects.filter(id=student_id).update(first_name=first_name, last_name=last_name,
-                                                                           email=email, phone=phone,
-                                                                           birthdate=birth_date)
+                    student = Student.objects.get(id=student_id)
+                    student.first_name = first_name
+                    student.last_name = last_name
+                    student.email = email
+                    student.phone = phone
+                    student.birth_date = birth_date
+                    student.save()
                     messages.success(request, f'Zaktualizowano studenta pomyślnie!')
                 else:
                     print('student_create')
@@ -453,7 +517,7 @@ def create_student(request, student_id=None):
             context['message'] = form.errors
 
     context['form'] = form
-    return render(request, "crm/person-create.html", context)
+    return render(request, "crm/record-update-create.html", context)
 
 
 class StudentPersonDelete(View):
@@ -641,50 +705,23 @@ def create_contact(request, contact_id=None):
             }
         context['form'] = PersonForm(initial=initial_data)
 
-    return render(request, "crm/person-create.html", context)
+    return render(request, "crm/record-update-create.html", context)
 
 
-class ContactPage(View):
-    @staticmethod
-    def post(request, *args, **kwargs):
-        form = PersonForm(request.POST)
-        if form.is_valid():
-            first_name = form.cleaned_data['first_name']
-            last_name = form.cleaned_data['last_name']
-            email = form.cleaned_data['email']
-            phone = None
-            print(form.cleaned_data)
-            if 'phone_number' in form.cleaned_data and form.cleaned_data['phone_number']:
-                phone = form.cleaned_data['phone_number']
-            person = None
-            try:
-                person = Person.objects.create(first_name=first_name, last_name=last_name, email=email, phone=phone)
-            except Exception as e:
-                print(e)
-            messages.success(request, f'Dodano kontakt {person.get_full_name()} pomyslnie!')
+def view_person(request, contact_id):
+    context = {}
+    tab_name = request.GET.get("tab", "Details")
+    if not request.GET._mutable:
+        request.GET._mutable = True
 
-            return redirect(f"/person/{person.id}")
-        else:
-            print("contact_form error", form.errors)
-            context['message'] = form.errors
-            context['form'] = form
+    request.GET['tab'] = tab_name
+    try:
+        person = Person.objects.get(id=contact_id)
+        context['contact'] = person
+    except Exception as e:
+        print(e)
 
-    @staticmethod
-    def get(request, *args, **kwargs):
-        context = {}
-        contact_id = kwargs['contact_id']
-        tab_name = request.GET.get("tab", "Details")
-        if not request.GET._mutable:
-            request.GET._mutable = True
-
-        request.GET['tab'] = tab_name
-        try:
-            person = Person.objects.get(id=contact_id)
-            context['contact'] = person
-        except Exception as e:
-            print(e)
-
-        return render(request, 'crm/person-page.html', context)
+    return render(request, 'crm/person-page.html', context)
 
 
 def create_note(request):
@@ -693,27 +730,47 @@ def create_note(request):
     note_data = None
     try:
         record_id = request.POST.get("record_id", None)
-        model_name = request.POST.get("model_name", None)
         content = request.POST.get("content", None)
+        note_id = request.POST.get("note_id", None)
         if content is None:
             message = "Treść nie może być pusta"
             raise Exception(message)
 
-        if model_name is None:
-            message = "TECHNICAL Model nie może być pusty"
-            raise Exception(message)
+        if note_id: # if note id is provide invoke an update
+            try:
+                note = Note.objects.get(id=note_id)
+                note.content = content
+                note.created_at = now()
+                note.created_by = request.user
+                note.save()
+            except Exception as e:
+                message = str(e)
+                status = False
+                return JsonResponse({'status': status, 'message': message})
+        else:
+            try:
+                model_name = get_model_by_prefix(record_id[:3])
+                if model_name is None:
+                    message = "Nie wspierany model"
+                    raise Exception(message)
 
-        content_type = ContentType.objects.get(model=model_name)
+                content_type = ContentType.objects.get(model=model_name.lower())
 
-        note = Note.objects.create(
-            content=content,
-            content_type=content_type,
-            object_id=record_id,
-            created_by=request.user
-        )
+                note = Note.objects.create(
+                    content=content,
+                    content_type=content_type,
+                    object_id=record_id,
+                    created_by=request.user
+                )
+            except Exception as e:
+                message = str(e)
+                status = False
+                return JsonResponse({'status': status, 'message': message})
+
         formatted_created_at = format_datetime(note.created_at, "d MMMM YYYY HH:mm", locale='pl')
 
         note_data = {
+            'note_id': note.id,
             'content': note.content,
             'created_at': formatted_created_at,
             'created_by': note.created_by.get_full_name(),
@@ -726,6 +783,30 @@ def create_note(request):
         message = e
 
     return JsonResponse({'status': status, 'message': message, 'note': note_data})
+
+def delete_note(request):
+    status = False
+    message = ""
+    try:
+        note_id = request.POST.get("note_id", None)
+        if note_id is None:
+            message = "Nie można odczytać notatki"
+            raise Exception(message)
+
+        try:
+            note = Note.objects.get(id=note_id)
+            note.delete()
+        except Exception as e:
+            message = str(e)
+            status = False
+            return JsonResponse({'status': status, 'message': message})
+        status = True
+
+    except Exception as e:
+        print('Delete note error:', e)
+        message = e
+
+    return JsonResponse({'status': status, 'message': message})
 
 
 def format_timesince(created_at):
@@ -742,7 +823,8 @@ def format_timesince(created_at):
 
 
 def get_notifications(request):
-    notifications_query = Notification.objects.filter(user=request.user).select_related('content_type').order_by('-created_at')
+    notifications_query = Notification.objects.filter(user=request.user).select_related('content_type').order_by(
+        '-created_at')
 
     unread_notifications_count = notifications_query.filter(read=False).aggregate(count=Count('id'))['count']
     all_notifications_count = notifications_query.count()
@@ -785,8 +867,14 @@ def mark_notification_as_read(request, notification_id):
         return JsonResponse({'success': False, 'message': 'Notification not found.'}, status=404)
 
 
-def watch_record(request, mode, model_name, record_id):
+def watch_record(request, mode, record_id):
     status = False
+    print('WATCH', record_id, 'PREFIX', record_id[:3])
+    model_name = get_model_by_prefix(record_id[:3])
+    if model_name is None:
+        return JsonResponse({'success': False, 'message': 'Ten rekord nie obsługuje tej funkcji'})
+    model_name = model_name.lower()
+    print(model_name)
     content_type = ContentType.objects.get(model=model_name)
     print('$$$ watch_record', mode, model_name, record_id)
 
@@ -837,8 +925,7 @@ class LocationPage(View):
         try:
             location_id = kwargs['location_id']
         except Exception as e:
-            print(e)
-            Http404()
+            return custom_404(request, e)
         tab_name = request.GET.get("tab", "Details")
         if not request.GET._mutable:
             request.GET._mutable = True
@@ -846,10 +933,10 @@ class LocationPage(View):
         request.GET['tab'] = tab_name
         try:
             location = Location.objects.get(id=location_id)
-
             try:
-                content_type = ContentType.objects.get_for_model(Location)
-                user_watch_record = WatchRecord.objects.get(user=request.user, content_type=content_type,
+                # content_type = ContentType.objects.get_for_model(Location)
+                model_name = get_model_by_prefix(location.id[:3])
+                user_watch_record = WatchRecord.objects.get(user=request.user, content_type__model=model_name.lower(),
                                                             object_id=location_id)
             except WatchRecord.DoesNotExist:
                 user_watch_record = None
@@ -857,10 +944,13 @@ class LocationPage(View):
             notes = location.notes.all()
             context['notes'] = notes.order_by('-created_at')
             context['watch_record'] = user_watch_record
-            context['location'] = location
+            context['record'] = location
 
+        except ObjectDoesNotExist as e:
+            messages.error(request, 'Nie znaleziono takiego rekordu')
+            return redirect('/location')
         except Exception as e:
-            return HttpResponse(status=404, msg=e)
+            return custom_404(request, e)
 
         return render(request, 'crm/location-page.html', context)
 
@@ -894,7 +984,7 @@ class LocationCreate(View):
             context['message'] = form.errors
             context['form'] = form
 
-        return render(request, 'crm/person-create.html', context)
+        return render(request, 'crm/record-update-create.html', context)
 
     @staticmethod
     @permission_required('crm.add_location', raise_exception=False, login_url="/")
@@ -902,15 +992,13 @@ class LocationCreate(View):
         form = LocationForm()
         context = {'title': "Lokalizacji", 'btn_title': "Lokalizacja", 'form': form, 'model_name': 'location'}
 
-        return render(request, 'crm/person-create.html', context)
-
+        return render(request, 'crm/record-update-create.html', context)
 
 def get_student_lessons(request, student_id):
     status = False
     print('get_student_lessons', request.path)
     selected_year = int(request.GET.get('selected_year', datetime.now().year))
     print('get_student_lessons', 'year', selected_year)
-
 
     # try:
     lessons_count = count_lessons_for_student_in_months(student_id, selected_year)
@@ -920,10 +1008,122 @@ def get_student_lessons(request, student_id):
         lessons = {k: v.to_dict() for k, v in value['Lessons'].items()}
         lessons_count_serializable[key] = {
             'Zaplanowana': value['Zaplanowana'],
-            'Canceled': value['Canceled'],
+            Statutes.NIEOBECNOSC: value[Statutes.NIEOBECNOSC],
+            Statutes.ODWOLANA_NAUCZYCIEL: value[Statutes.ODWOLANA_NAUCZYCIEL],
+            Statutes.ODWOLANA_24H_PRZED: value[Statutes.ODWOLANA_24H_PRZED],
             'Lessons': lessons
         }
     status = True
     print(lessons_count_serializable)
 
     return JsonResponse({'status': status, 'lessons': lessons_count_serializable})
+
+
+def delete_record(request, record_id):
+    context = {}
+    model_name = get_model_by_prefix(record_id[:3])
+    if model_name is not None:
+        if request.user.has_perm(f'crm.delete_{model_name.lower()}'):
+            model_object = get_model_object_by_prefix(record_id[:3])
+            record = model_object.objects.get(id=record_id)
+            if request.method == 'GET':
+                context['model_name'] = model_name.lower()
+                context['record'] = record
+                context['record_id'] = record_id
+                return render(request, 'crm/record-delete.html', context)
+
+            if request.method == 'POST':
+                record.delete()
+                messages.success(request, 'Rekord usunięty')
+                return redirect(f'/{model_name.lower()}')
+        else:
+            messages.error(request, 'Brak uprawnień do usunięcia rekordu')
+            return redirect(f'/{model_name.lower()}/{record_id}')
+    else:
+        return custom_404(request, "Nie można usunąć wybranego rekordu")
+
+
+def check_and_save_form(request, form_class, record_id=None):
+    """
+    Universal method to check and save a form in Django.
+
+    :param request: HttpRequest object
+    :param form_class: The form class to use
+    :param record_id: Optional ID of the record to update
+    :return: True if the form is valid and saved successfully, False otherwise
+    """
+    if record_id:
+        instance = get_model_object_by_prefix(record_id[:3])
+    else:
+        instance = None
+    if instance:
+        form = form_class(request.POST, instance=instance)
+
+        if form.is_valid():
+            saved_instance = form.save()
+            return saved_instance.id
+
+    return None
+
+
+def upsert_record(request, model_name, record_id=None):
+    context = {}
+    context['record_id'] = record_id
+    context['model_name'] = model_name
+    record = None
+    form_name = str(model_name).capitalize() + "Form"
+    try:
+        form_class = get_form_class(form_name)
+    except Exception as e:
+        print("ERROR", e)
+        messages.error(request, e)
+        if record_id:
+            print("sprawdzanie uprawnien")
+            return redirect(f'/{model_name.lower()}/{record_id}')
+
+        else:
+            return redirect(f'/{model_name.lower()}')
+
+    context['title'] = form_class.title
+
+    if record_id:
+        if request.user.has_perm(f'crm.change_{model_name.lower()}'):
+            model_instance = get_model_object_by_prefix(record_id[:3])
+            record = model_instance.objects.get(id=record_id)
+        else:
+            messages.error(request, 'Brak uprawnień do edytowania rekordu')
+            return redirect(f'/{model_name.lower()}/{record_id}')
+    else:
+        if not request.user.has_perm(f'crm.add_{model_name.lower()}'):
+            messages.error(request, 'Brak uprawnień do utworzenia rekordu')
+            return redirect(f'/{model_name.lower()}')
+    if request.method == 'GET':
+        if record_id:
+            context['form'] = form_class(initial=record.__dict__)
+            print(context['form'].fields)
+            # print(context['form'].fields['birthdate'].value)
+            # for field in context['form']:
+                # print(field.value.value)
+        else:
+            context['form'] = form_class()
+
+    if request.method == 'POST':
+        form = form_class(request.POST, instance=record)
+        context['form'] = form
+        if form.is_valid():
+            print(form.cleaned_data)
+            try:
+                saved_instance = form.save()
+                messages.success(request, f'Rekord zapisany pomyślnie')
+                if saved_instance.id:
+                    return redirect(f'/{get_model_by_prefix(saved_instance.id[:3]).lower()}/{saved_instance.id}')
+
+            except Exception as e:
+                print("ERROR", e)
+                messages.error(request, e)
+        else:
+            print("location_form error", form.errors)
+            context['message'] = form.errors
+            messages.error(request, form.errors)
+
+    return render(request, "crm/record-update-create.html", context)

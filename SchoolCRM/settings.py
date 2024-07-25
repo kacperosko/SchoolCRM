@@ -52,22 +52,23 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'apps.authentication.middleware.login_required_middleware.LoginRequiredMiddleware',
+    'apps.authentication.middleware.current_user_middleware.CurrentUserMiddleware',
     # 'apps.crm.middleware.notifications_middleware.UnreadNotificationsMiddleware'
 ]
 MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
 ROOT_URLCONF = 'SchoolCRM.urls'
 
 # Email sending configuration
-# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+# EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 #
-# DEFAULT_FROM_EMAIL = 'biuro@warsztat-crm.hmcloud.pl'
-# EMAIL_HOST = 'mx1.hitme.net.pl'
-# EMAIL_HOST_PORT = 587
-# # EMAIL_USE_TLS = True
+DEFAULT_FROM_EMAIL = 'biuro@warsztat-crm.hmcloud.pl'
+EMAIL_HOST = 'mx1.hitme.net.pl'
+EMAIL_HOST_PORT = 465
+EMAIL_USE_TLS = True
 # EMAIL_USE_SSL = True
 EMAIL_HOST_USER = 'biuro@warsztat-crm.hmcloud.pl'
-# # EMAIL_HOST_PASSWORD = 'Kacper123!'
+EMAIL_HOST_PASSWORD = 'K@cper123!'
 # EMAIL_HOST_USER = 'warsztat6'
 # EMAIL_HOST_PASSWORD = 'SMdrt2t2CwCcBg'
 

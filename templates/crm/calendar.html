@@ -5,96 +5,161 @@
 
 {% block style %}
     <link rel="stylesheet" href="{% static 'css/calendar.css' %}">
+    <style>
+        {% for teacher in teachers %}
+            #initial_{{ teacher.id }}.initialspage:before {
+                background: {{ teacher.avatar_color }} !important;
+                margin-left: -14px;
+            }
+        {% endfor %}
+
+        #initial_{{ selected_teacher.id }}.initialspage:before {
+            background: {{ selected_teacher.avatar_color }} !important;
+            margin-left: -14px;
+        }
+
+        .teachers-selector:first-child {
+            margin-left: 1px !important;
+        }
+
+        .dropdown-toggle::after {
+            position: absolute;
+            right: 10px;
+            bottom: 45%;
+        }
+    </style>
 {% endblock style %}
 
 {% block content %}
     <div class="card">
         <div class="card-header justify-content-between">
-            <div class="header-title">
+            <div class="header-title d-flex">
                 <h4 class="card-title">Kalendarz</h4>
+                <button onclick="copyCalendarLink()" class="btn p-0 ml-2 text-primary" type="button"
+                        data-trigger="hover" data-toggle="popover"
+                        data-content="Skopiuj link do obecnego widoku kalendarza" data-placement="bottom">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+                         stroke="currentColor" class="" width="18">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244"></path>
+                    </svg>
+
+
+                </button>
             </div>
 
             <div class="my-3">
-                <button type="button" class="btn btn-primary rounded-pill mt-2  font-size-12" id="prevWeekBtn">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                         stroke="currentColor" class="w-6 h-6" width="18">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"></path>
-                    </svg>
-                    Poprzedni tydzień
-                </button>
-                <button type="button" class="btn btn-primary rounded-pill mt-2 mx-1 font-size-12" id="todayBtn">Teraz
-                </button>
-                <button type="button" class="btn btn-primary rounded-pill mt-2 font-size-12" id="nextWeekBtn">
-                    Następny tydzień
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                         stroke="currentColor" class="w-6 h-6" width="18">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"></path>
-                    </svg>
-                </button>
+                <div class="d-flex align-content-center">
+                    <button type="button" class="btn btn-primary rounded-pill mt-2  font-size-12 my-auto"
+                            style="height: 40px" id="prevWeekBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                             stroke="currentColor" class="w-6 h-6" width="18">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"></path>
+                        </svg>
+                        Poprzedni tydzień
+                    </button>
+                    <button type="button" class="btn btn-primary rounded-pill mt-2 mx-1 font-size-12 my-auto"
+                            style="height: 40px" id="todayBtn">
+                        Teraz
+                    </button>
+                    <button type="button" class="btn btn-primary rounded-pill mt-2 font-size-12  my-auto"
+                            style="height: 40px" id="nextWeekBtn">
+                        Następny tydzień
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                             stroke="currentColor" class="w-6 h-6" width="18">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"></path>
+                        </svg>
+                    </button>
+                    <div class="dropdown ml-5">
+                        <button class="btn bg-primary-light dropdown-toggle" type="button" id="dropdownMenuButton"
+                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <div class="user-display pr-2">
+                                <span id="initial_{{ selected_teacher.id }}"
+                                      data-letters="{{ selected_teacher.get_full_name|initials }}"
+                                      class="initialssmall initialspage mx-auto"></span>
+                                <span class="ml-2 font-size-18">{{ selected_teacher.get_full_name }}</span>
+                            </div>
+                        </button>
+                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                            {% for teacher in teachers %}
+                                <a class="dropdown-item user-item"
+                                   onclick="showByRecord('{{ teacher.id }}')"
+                                        {#                                   href="/calendar?selected_teacher={{ teacher.id }}&selected_year={{ request.GET.selected_year }}&selected_start_date={{ request.GET.selected_start_date }}"#}
+                                   data-initials="AB"
+                                   data-fullname="Alice Brown">
+                                    <span id="initial_{{ teacher.id }}"
+                                          data-letters="{{ teacher.get_full_name|initials }}"
+                                          class="initialssmall initialspage mx-auto"></span>
+                                    <span class="ml-2">{{ teacher.get_full_name }}</span>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
             </div>
             <div id="calendar-container" class="rm-weekly-schedule">
-                <div class="rmws-hour-labels">
-                    <div class="rmws-hour-label" style="height: 50px;"></div>
-                    {#                    <div class="rmws-hour-label" style="height: 40px;">0:00</div>#}
-                    {#                    <div class="rmws-hour-label" style="height: 40px;">1:00</div>#}
-                    {#                    <div class="rmws-hour-label" style="height: 40px;">2:00</div>#}
-                    {#                    <div class="rmws-hour-label" style="height: 40px;">3:00</div>#}
-                    {#                    <div class="rmws-hour-label" style="height: 40px;">4:00</div>#}
-                    {#                    <div class="rmws-hour-label" style="height: 40px;">5:00</div>#}
-                    {#                    <div class="rmws-hour-label" style="height: 40px;">6:00</div>#}
-                    <div class="rmws-hour-label" style="height: 40px;">7:00</div>
-                    <div class="rmws-hour-label" style="height: 40px;">8:00</div>
-                    <div class="rmws-hour-label" style="height: 40px;">9:00</div>
-                    <div class="rmws-hour-label" style="height: 40px;">10:00</div>
-                    <div class="rmws-hour-label" style="height: 40px;">11:00</div>
-                    <div class="rmws-hour-label" style="height: 40px;">12:00</div>
-                    <div class="rmws-hour-label" style="height: 40px;">13:00</div>
-                    <div class="rmws-hour-label" style="height: 40px;">14:00</div>
-                    <div class="rmws-hour-label" style="height: 40px;">15:00</div>
-                    <div class="rmws-hour-label" style="height: 40px;">16:00</div>
-                    <div class="rmws-hour-label" style="height: 40px;">17:00</div>
-                    <div class="rmws-hour-label" style="height: 40px;">18:00</div>
-                    <div class="rmws-hour-label" style="height: 40px;">19:00</div>
-                    <div class="rmws-hour-label" style="height: 40px;">20:00</div>
-                    <div class="rmws-hour-label" style="height: 40px;">21:00</div>
-                    <div class="rmws-hour-label" style="height: 40px;">22:00</div>
-                    <div class="rmws-hour-label" style="height: 40px;">23:00</div>
+                <div class="hour-labels">
+                    <div class="hour-label" style="height: 50px;"></div>
+                    {#                    <div class="hour-label" style="height: 40px;">0:00</div>#}
+                    {#                    <div class="hour-label" style="height: 40px;">1:00</div>#}
+                    {#                    <div class="hour-label" style="height: 40px;">2:00</div>#}
+                    {#                    <div class="hour-label" style="height: 40px;">3:00</div>#}
+                    {#                    <div class="hour-label" style="height: 40px;">4:00</div>#}
+                    {#                    <div class="hour-label" style="height: 40px;">5:00</div>#}
+                    {#                    <div class="hour-label" style="height: 40px;">6:00</div>#}
+                    <div class="hour-label" style="height: 40px;">7:00</div>
+                    <div class="hour-label" style="height: 40px;">8:00</div>
+                    <div class="hour-label" style="height: 40px;">9:00</div>
+                    <div class="hour-label" style="height: 40px;">10:00</div>
+                    <div class="hour-label" style="height: 40px;">11:00</div>
+                    <div class="hour-label" style="height: 40px;">12:00</div>
+                    <div class="hour-label" style="height: 40px;">13:00</div>
+                    <div class="hour-label" style="height: 40px;">14:00</div>
+                    <div class="hour-label" style="height: 40px;">15:00</div>
+                    <div class="hour-label" style="height: 40px;">16:00</div>
+                    <div class="hour-label" style="height: 40px;">17:00</div>
+                    <div class="hour-label" style="height: 40px;">18:00</div>
+                    <div class="hour-label" style="height: 40px;">19:00</div>
+                    <div class="hour-label" style="height: 40px;">20:00</div>
+                    <div class="hour-label" style="height: 40px;">21:00</div>
+                    <div class="hour-label" style="height: 40px;">22:00</div>
+                    <div class="hour-label" style="height: 40px;">23:00</div>
                 </div>
-                <div class="rmws-days">
+                <div class="days">
                     {% for day in tag|weekdays %}
-                        <div class="rmws-day">
-                            <div class="rmws-date-label">DATE</div>
-                            <div class="rmws-day-label">{{ day }}</div>
-                            <div class="rmws-slots">
-                                {#                                {% for foo in '123456789012345678921234'|make_list %} {# loop  24 times #}
+                        <div class="day">
+                            <div class="date-label">DATE</div>
+                            <div class="day-label bg-primary-light">{{ day }}</div>
+                            <div class="slots">
                                 {% for foo in '9012345678921234'|make_list %} {# loop  24 times #}
-                                    <div class="rmws-slot" onclick="addOnCalendar(event)" type="button"
-                                         data-toggle="modal"
-                                         data-target="#exampleModal"></div>
-                                    <div class="rmws-slot"
+                                    {#                                    <div class="slot" onclick="addOnCalendar(event)" type="button"#}
+                                    {#                                         data-toggle="modal"#}
+                                    {#                                         data-target="#exampleModal"></div>#}
+                                    <div class="slot"></div>
+                                    <div class="slot"
                                          onclick=""></div>
-                                    <div class="rmws-slot"></div>
-                                    <div class="rmws-slot"
+                                    <div class="slot"></div>
+                                    <div class="slot"
                                          style="border-bottom-width: 1px; border-bottom-style: solid; border-bottom-color: rgb(208, 208, 208);"></div>
                                 {% endfor %}
 
-                                <div class="rmws-event rmws-event-completed"
-                                     style="top: calc((12*60 + 20 )/15 * 10px); height: 69px; cursor: default;">
-                                    <div class="rmws-time">0:00—1:45</div>
-                                    Kamil pianino
-
-                                    <div style="top: 0; right: 0; margin-right: 5px; margin-top: -5px;font-size: 20px; cursor: pointer"
-                                         class="position-absolute event-menu">
-                                        {#                                         onclick="showHideMenu('menu_{{ day }}')">#}
-                                        ...
-                                        <div style="top: 0; right: 0; margin-right: 5px; margin-top: -5px; visibility: hidden"
-                                             class="position-absolute bg-white p-2 rounded-sm" id="menu_{{ day }}">
-                                            <a class="bg-red text-white p-1 rounded-sm">Cancel</a>
-                                        </div>
-                                    </div>
-                                </div>
+                                {#                                <div class="event event-completed"#}
+                                {#                                     style="top: calc((12*60 + 20 )/15 * 10px); height: 69px; cursor: default;">#}
+                                {#                                    <div class="time">0:00—1:45</div>#}
+                                {#                                    Kamil pianino#}
+                                {##}
+                                {#                                    <div style="top: 0; right: 0; margin-right: 5px; margin-top: -5px;font-size: 20px; cursor: pointer"#}
+                                {#                                         class="position-absolute event-menu">#}
+                                {#                                         onclick="showHideMenu('menu_{{ day }}')">#}
+                                {#                                        ...#}
+                                {#                                        <div style="top: 0; right: 0; margin-right: 5px; margin-top: -5px; visibility: hidden"#}
+                                {#                                             class="position-absolute bg-white p-2 rounded-sm" id="menu_{{ day }}">#}
+                                {#                                            <a class="bg-red text-white p-1 rounded-sm">Cancel</a>#}
+                                {#                                        </div>#}
+                                {#                                    </div>#}
+                                {#                                </div>#}
 
                             </div>
                         </div>
@@ -119,21 +184,6 @@
                     <form method="POST">
                         {% csrf_token %}
                         <div class=" row align-items-center">
-                            {#                        <div class="form-group col-sm-6">#}
-                            {#                            <label>Weekday:</label>#}
-                            {#                            <select class="form-control" id="weekday" name="weekday"#}
-                            {#                                    {% if mode == "view" %}disabled="disabled"{% endif %} required>#}
-                            {#                                {% for weekday in tag|weekdays %}#}
-                            {#                                    {% if weekday == lesson.weekDay %}#}
-                            {#                                        <option selected>{{ weekday }}</option>#}
-                            {#                                    {% else %}#}
-                            {#                                        <option>{{ weekday }}</option>#}
-                            {#                                    {% endif %}#}
-                            {#                                {% endfor %}#}
-                            {#                            </select>#}
-                            {#                        </div>#}
-                            {#                        <div class="form-group col-sm-6">#}
-                            {#                        </div>#}
                             <div class="form-group col-sm-6">
                                 <label for="starTime">Start Time</label>
                                 <input type="time" class="form-control" id="starTime"
@@ -263,15 +313,12 @@
     </div>
 {% endblock content %}
 {% block javascript %}
-
     <script>
-        function addOnCalendar(event) {
-            var clickedElement = event.target;
-            var parentElement = clickedElement.parentElement;
-            var children = Array.from(parentElement.children);
-            var childIndex = children.indexOf(clickedElement);
-            console.log("Clicked on child #" + (childIndex + 1));
-        }
+
+        let selected_year;
+        let startDate;
+        let selected_teacher;
+
 
         function cancelEvent(lesson_schedule_id, startTime, endTime, lessonDate, studentName) {
             let startTime_form = document.getElementById('starTime_cancelForm');
@@ -293,14 +340,64 @@
             status_form.value = 'Canceled';
         }
 
+        function adjustToNearestMonday(date) {
+            const day = date.getDay();
+            // If the day is not Monday (1)
+            if (day !== 1) {
+                // Calculate how many days to add to reach the next Monday
+                const daysToAdd = (day === 0) ? 1 : (8 - day);
+                date.setDate(date.getDate() + daysToAdd);
+            }
+            return date;
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
+            let urlParams = new URLSearchParams(window.location.search);
+
+
+            selected_teacher = urlParams.get('selected_teacher');
+
+            selected_year = parseInt(urlParams.get('selected_year'));
+
+            let selected_start_date = urlParams.get('selected_start_date');
+
+            if (selected_start_date != null && selected_start_date !== "") {
+                const decodedDate = decodeURIComponent(selected_start_date);
+                // Convert the string to a Date object
+                startDate = adjustToNearestMonday(new Date(decodedDate));
+            }
+
+            if (!selected_teacher) {
+                selected_teacher = '{{ request.user.id }}';
+                addParamToURL('selected_teacher', selected_teacher)
+            }
+            if (!selected_year) {
+                selected_year = new Date().getFullYear();
+                addParamToURL('selected_year', selected_year)
+            }
+
             // Function to update dates based on the current week
             function updateToCurrentWeek() {
                 // Clear the calendar first
                 clearCalendar();
 
-                var today = new Date();
+                var today;
+                {#if (!startDate) {#}
+                today = new Date();
+                today.setFullYear(today.getFullYear()); // Set the year to selected_year
+                today.setMonth(today.getMonth()); // Set the month to current month
+                today.setDate(today.getDate()); // Set the day to today
 
+                removeParamFromURL('selected_start_date');
+
+                if (today.getFullYear() !== selected_year) {
+                    addParamToURL('selected_start_date', "");
+                    addParamToURL('selected_year', today.getFullYear());
+
+                    location.reload();
+                }
+
+                console.log('TODAY: ' + today);
                 // Adjust to consider Monday as the first day of the week
                 var firstDayOfWeek = 1; // 0: Sunday, 1: Monday, ..., 6: Saturday
                 var todayDay = (today.getDay() + 7 - firstDayOfWeek) % 7;
@@ -308,6 +405,7 @@
                 // Calculate the starting date of the current week
                 startDate = new Date(today);
                 startDate.setDate(startDate.getDate() - todayDay); // Set to Monday of the current week
+
 
                 // Update date labels
                 updateDates(startDate);
@@ -317,7 +415,7 @@
 
             // Function to clear the calendar
             function clearCalendar() {
-                let lessonElements = document.querySelectorAll('.rmws-event');
+                let lessonElements = document.querySelectorAll('.event');
                 lessonElements.forEach(function (element) {
                     console.log('removing -> ' + element.id)
                     element.remove();
@@ -326,7 +424,7 @@
 
             // Function to update the date labels
             function updateDates(startDate) {
-                var dateLabels = document.querySelectorAll('.rmws-date-label');
+                var dateLabels = document.querySelectorAll('.date-label');
                 dateLabels.forEach(function (label, index) {
                     var date = new Date(startDate);
                     date.setDate(startDate.getDate() + index);
@@ -346,7 +444,7 @@
             function addDynamicLessons() {
                 var lessons = JSON.parse('{{lessons|jsonify}}');
                 var weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-                var startDate = new Date(document.querySelector('.rmws-date-label').textContent);
+                var startDate = new Date(document.querySelector('.date-label').textContent);
                 var endDate = new Date(startDate);
                 endDate.setDate(endDate.getDate() + 6); // Set endDate to the end of the week
                 var today = new Date(); // Get today's date
@@ -375,48 +473,49 @@
                         lessonDate.setDate(startDate.getDate() + lessonWeekDayIndex);
 
                         // Check if the lesson is within the current selected week
-                        var isWithinWeek = (new Date(lesson.startDate) <= endDate) && (lesson.endDate === null || new Date(lesson.endDate) >= startDate);
+                        let isWithinWeek
+                        if (lesson.is_series) {
+                            isWithinWeek = (new Date(lesson.startDate) <= endDate) && (lesson.endDate === null || new Date(lesson.endDate) >= startDate);
+                        } else {
+                            isWithinWeek = (new Date(lesson.startDate) <= endDate && new Date(lesson.startDate) >= startDate);
+                        }
                         if (isWithinWeek) {
                             // Create lesson element and set its position and duration
                             var lessonElement = document.createElement('div');
-                            lessonElement.classList.add('rmws-event');
+                            lessonElement.classList.add('event');
                             lessonElement.id = 'lesson_' + lesson.id + '_' + formatDate(lessonDate); // Set ID using lesson ID and date from JSON
+                            console.log('lesson startMinutes: ' + startMinutes)
                             lessonElement.style.top = 'calc(' + (startMinutes / 15) * 10 + 'px)';
                             lessonElement.style.height = durationMinutes / 15 * 10 + 'px';
-                            lessonElement.innerHTML = '<div class="rmws-time">' + lesson.startTime + '—' + lesson.endTime + '</div>' +
-                                lesson.student +
-                                '<div style="top: 0; right: 0; margin-right: 5px; margin-top: -5px;font-size: 20px; cursor: pointer" class="position-absolute event-menu">' +
-                                '...' +
-                                '<div style="top: 0; right: 0; margin-top: 15px; z-index: 400" class="position-absolute bg-white p-2 rounded-sm event-menu-expand">' +
-                                '<a class="bg-red text-white p-1 rounded-sm font-size-12 menu-button text-center"  type="button" data-toggle="modal" data-target="#exampleModalCenter"' +
-                                'onclick="cancelEvent(\'' + lesson.id + '\',\'' + lesson.startTime + '\',\'' + lesson.endTime + '\',\'' + lessonDate.toISOString().slice(0, 10) + '\',\'' + lesson.student + '\')">Odwołaj</a>' +
-                                '<a class="bg-blue text-white p-1 rounded-sm font-size-12 menu-button text-center">Edytuj</a>' +
-                                '</div>' +
-                                '</div>' +
-                                '</div>';
-
+                            {#lessonElement.innerHTML = '<div class="time">' + lesson.startTime + '—' + lesson.endTime + '</div>' +#}
+                            lessonElement.innerHTML = `<a class="" href="student/${lesson.student_id}">${lesson.student}</a>`;
+                            {# data-content="{{ teacher.get_full_name }}"#}
+                            {#data-placement="bottom" data-trigger="hover" data-toggle="popover"#}
+                            lessonElement.setAttribute('data-content', lesson.startTime + '—' + lesson.endTime + '<br/>Opis: ' + lesson.description + '<br/>Nauczyciel: ' + lesson.teacher);
+                            lessonElement.setAttribute('data-placement', 'bottom');
+                            lessonElement.setAttribute('data-trigger', 'hover');
+                            lessonElement.setAttribute('data-toggle', 'popover');
+                            lessonElement.setAttribute('data-html', 'true');
+                            $(lessonElement).popover();
                             // Add the appropriate class based on the date
-                            if (lessonDate > today) {
-                                lessonElement.classList.add('rmws-event-pending');
-                            } else {
-                                lessonElement.classList.add('rmws-event-completed');
-                            }
+                            lessonElement.classList.add('bg-success-light');
+
 
                             // Add the lesson element to the correct weekday container
-                            var weekdayContainer = document.querySelectorAll('.rmws-day')[lessonWeekDayIndex];
-                            weekdayContainer.querySelector('.rmws-slots').appendChild(lessonElement);
+                            var weekdayContainer = document.querySelectorAll('.day')[lessonWeekDayIndex];
+                            weekdayContainer.querySelector('.slots').appendChild(lessonElement);
 
                             console.log('Added lesson:', lesson);
                         }
                     }
                     if (lesson.adjustments && lesson.adjustments.length > 0) {
                         lesson.adjustments.forEach(function (adjustment) {
-                            console.log('Processing adjustment:', adjustment);
+                            {#console.log('Processing adjustment:', adjustment);#}
                             // Convert adjustment start and end time to minutes
                             var adjStartTime = adjustment.startTime.split(':');
                             var adjEndTime = adjustment.endTime.split(':');
-                            var adjStartMinutes = parseInt(adjStartTime[0]) * 60 + parseInt(adjStartTime[1]);
-                            var adjEndMinutes = parseInt(adjEndTime[0]) * 60 + parseInt(adjEndTime[1]);
+                            var adjStartMinutes = (parseInt(adjStartTime[0]) - 7) * 60 + parseInt(adjStartTime[1]);
+                            var adjEndMinutes = (parseInt(adjEndTime[0]) - 7) * 60 + parseInt(adjEndTime[1]);
 
                             // Calculate duration of adjustment in minutes
                             var adjDurationMinutes = adjEndMinutes - adjStartMinutes;
@@ -428,31 +527,38 @@
                                 console.log('withinWeek TRUE')
                                 // Create adjustment element and set its position and duration
                                 var adjustmentElement = document.createElement('div');
-                                adjustmentElement.classList.add('rmws-event');
+                                adjustmentElement.classList.add('event');
                                 adjustmentElement.id = 'adjustment_' + adjustment.id + '_' + formatDate(adjustmentDate); // Set ID using adjustment ID and date from JSON
+                                {#var adjustedValue = Math.round((adjStartMinutes / 15) * 4.4);#}
+                                {#var roundedValue = Math.round(adjustedValue / 10) * 10;#}
+                                {#console.log('adjStartMinutes: ' + adjStartMinutes + ' calc: ' + roundedValue)#}
+                                {#adjustmentElement.style.top = 'calc(' + roundedValue + 'px)';#}
+
+                                console.log('adjStartMinutes: ' + adjStartMinutes)
                                 adjustmentElement.style.top = 'calc(' + (adjStartMinutes / 15) * 10 + 'px)';
                                 adjustmentElement.style.height = adjDurationMinutes / 15 * 10 + 'px';
-                                adjustmentElement.innerHTML = '<div class="rmws-time">' + adjustment.startTime + '—' + adjustment.endTime + '</div>' +
-                                    lesson.student +
-                                    '<div style="top: 0; right: 0; margin-right: 5px; margin-top: -5px;font-size: 20px; cursor: pointer; z-index: 50" class="position-absolute event-menu">' +
-                                    '...' +
-                                    '<div style="top: 0; right: 0; margin-top: 15px; z-index: 400" class="position-absolute bg-white p-2 rounded-sm event-menu-expand">' +
-                                    '<a class="bg-green text-white p-1 rounded-sm font-size-12 menu-button text-center"' +
-                                    'onclick="">Zaplanuj</a>' +
-                                    '<a class="bg-blue text-white p-1 rounded-sm font-size-12 menu-button text-center">Edytuj</a>' +
-                                    '</div>' +
-                                    '</div>' +
-                                    '</div>';
-
+                                adjustmentElement.innerHTML = `<a class="" href="student/${lesson.student_id}">${lesson.student}</a>`;
+                                adjustmentElement.setAttribute('data-content', adjustment.startTime + '—' + adjustment.endTime + '<br/>Opis: ' + lesson.description + '<br/>Nauczyciel: ' + lesson.teacher);
+                                adjustmentElement.setAttribute('data-placement', 'bottom');
+                                adjustmentElement.setAttribute('data-trigger', 'hover');
+                                adjustmentElement.setAttribute('data-toggle', 'popover');
+                                adjustmentElement.setAttribute('data-html', 'true');
+                                $(adjustmentElement).popover();
                                 // Add the appropriate class based on the date
-                                if (adjustment.status === 'Canceled') {
-                                    adjustmentElement.classList.add('rmws-event-canceled');
-                                } else {
-                                    if (adjustmentDate > today) {
-                                        adjustmentElement.classList.add('rmws-event-pending');
-                                    } else {
-                                        adjustmentElement.classList.add('rmws-event-completed');
-                                    }
+                                console.log('changing adjusmnent bg -> ' + adjustment.status);
+                                switch (adjustment.status) {
+                                    case 'Nieobecnosc':
+                                        adjustmentElement.classList.add('bg-danger-light');
+                                        break;
+                                    case 'Odwolana - nauczyciel':
+                                        adjustmentElement.classList.add('bg-orange-light');
+                                        break;
+                                    case 'Odwolana - 24h przed':
+                                        adjustmentElement.classList.add('bg-orange-light');
+                                        break;
+                                    case 'Zaplanowana':
+                                        adjustmentElement.classList.add('bg-success-light');
+                                        break;
                                 }
 
 
@@ -465,8 +571,8 @@
                                     adjustmentWeekdayIndex--;
                                 }
                                 console.log('adjustmentWeekdayIndex -> ' + adjustmentWeekdayIndex);
-                                var weekdayContainer = document.querySelectorAll('.rmws-day')[adjustmentWeekdayIndex]; // Get the weekday container using the adjustment date
-                                weekdayContainer.querySelector('.rmws-slots').appendChild(adjustmentElement);
+                                var weekdayContainer = document.querySelectorAll('.day')[adjustmentWeekdayIndex]; // Get the weekday container using the adjustment date
+                                weekdayContainer.querySelector('.slots').appendChild(adjustmentElement);
 
                                 console.log('Added adjustment:', adjustment);
 
@@ -483,10 +589,14 @@
                 });
             }
 
+            if (!startDate) {
+                // Initialize to current week
+                updateToCurrentWeek();
+            } else {
+                updateDates(startDate);
+                addDynamicLessons()
+            }
 
-            // Initialize to current week
-            var startDate;
-            updateToCurrentWeek();
 
             // Today button click event
             document.getElementById('todayBtn').addEventListener('click', function () {
@@ -495,21 +605,47 @@
 
             // Previous week button click event
             document.getElementById('prevWeekBtn').addEventListener('click', function () {
-                clearCalendar();
-                startDate.setDate(startDate.getDate() - 7);
-                updateDates(startDate);
-                addDynamicLessons();
+                set_calendar_date(-7)
             });
 
             // Next week button click event
             document.getElementById('nextWeekBtn').addEventListener('click', function () {
-                clearCalendar();
-                startDate.setDate(startDate.getDate() + 7);
-                updateDates(startDate);
-                addDynamicLessons();
+                set_calendar_date(7)
             });
 
+            function set_calendar_date(days) {
+                clearCalendar();
+                startDate.setDate(startDate.getDate() + days);
+                addParamToURL('selected_start_date', startDate.toISOString());
+
+                if (startDate.getFullYear() !== selected_year) {
+                    addParamToURL('selected_year', startDate.getFullYear());
+                    location.reload();
+                }
+
+                updateDates(startDate);
+                addDynamicLessons()
+            }
+
+
         });
+
+        function showByRecord(recordId) {
+            addParamToURL('selected_start_date', startDate.toISOString());
+            addParamToURL('selected_year', startDate.getFullYear());
+            addParamToURL('selected_teacher', recordId);
+
+            location.reload();
+        }
+
+        function copyCalendarLink() {
+            addParamToURL('selected_start_date', startDate.toISOString());
+            addParamToURL('selected_year', startDate.getFullYear());
+            addParamToURL('selected_teacher', selected_teacher);
+
+            navigator.clipboard.writeText(window.location.href);
+            handleResponse({status: true, message: "Link skopiowany pomy\u015Blnie"});
+        }
     </script>
 
 {% endblock javascript %}

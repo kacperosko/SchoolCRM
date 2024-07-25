@@ -1,4 +1,9 @@
 const lessons_tbody = $("#lessons_tbody");
+let openedMonths = [];
+// document.addEventListener('DOMContentLoaded', function () {
+//
+// });
+
 
 function get_lessons(student_id) {
     console.log('$$$ YEAR: ' + $('#selected-year').text());
@@ -13,19 +18,20 @@ function get_lessons(student_id) {
         success: function (response) {
             if (response.status) {
                 response.message = "Pobrano lekcje pomyslne";
-                handleResponse(response);
+                // handleResponse(response);
                 console.log("Pobrano lekcje pomyslne");
                 console.log(response.lessons);
                 const tableContainer = $('#table-container');
                 tableContainer.empty();
                 tableContainer.html(generateTable(response.lessons));
+
+                open_months_url();
             } else {
                 handleResponse(response);
             }
         },
         error: function (error) {
-            console.error('Error creating note:', error);
-            alert('Failed to create note.');
+            console.error('B\u0142\u0105d pobierania lekcji', error);
         }
     });
 }
@@ -40,7 +46,7 @@ function generateTable(data) {
     var headerRow = document.createElement('tr');
 
     // Creating header
-    var headers = ['Miesiąc', 'Zaplanowane', 'Odwołane'];
+    var headers = ['Miesi\u0105c', 'Zaplanowane', 'Odwo\u0142ane - nauczyciel', 'Odwo\u0142ane - 24h przed', 'Nieobecne'];
     headers.forEach(function (headerText) {
         var th = document.createElement('th');
         th.textContent = headerText;
@@ -74,6 +80,8 @@ function generateTable(data) {
         monthLink.setAttribute('onclick', 'refreshOpenedMonths()');
         monthLink.setAttribute('id', 'collapser_' + month_number);
         monthLink.setAttribute('data-target', '#collaps_' + month_number);
+        // monthLink.setAttribute("onclick", `getMonthName();`);
+
         monthLink.textContent = getMonthName(month_number);
         monthCell.appendChild(monthLink);
 
@@ -84,17 +92,29 @@ function generateTable(data) {
         zaplanowaneCell.textContent = statutes['Zaplanowana'];
         row.appendChild(zaplanowaneCell);
 
-        var odwolaneCell = document.createElement('td');
-        odwolaneCell.classList.add('text-warning', 'text-center');
-        odwolaneCell.textContent = statutes['Canceled'];
-        row.appendChild(odwolaneCell);
+
+
+        var odwolaneTeacherCell = document.createElement('td');
+        odwolaneTeacherCell.classList.add('text-center');
+        odwolaneTeacherCell.textContent = statutes['Odwolana - nauczyciel'];
+        row.appendChild(odwolaneTeacherCell);
+
+         var odwolane24hCell = document.createElement('td');
+        odwolane24hCell.classList.add('text-center');
+        odwolane24hCell.textContent = statutes["Odwolana - 24h przed"];
+        row.appendChild(odwolane24hCell);
+
+        var canceledeCell = document.createElement('td');
+        canceledeCell.classList.add('text-warning', 'text-center');
+        canceledeCell.textContent = statutes['Nieobecnosc'];
+        row.appendChild(canceledeCell);
 
         tbody.appendChild(row);
 
-        // Dodanie szczegółów
+        // Dodanie szczeg\u00F3\u0142\u00F3w
         var detailsRow = document.createElement('tr');
         var detailsCell = document.createElement('td');
-        detailsCell.setAttribute('colspan', '3');
+        detailsCell.setAttribute('colspan', '5');
         detailsCell.classList.add("p-0");
 
         var detailsCollapse = document.createElement('div');
@@ -110,14 +130,30 @@ function generateTable(data) {
         // Generowanie lekcji
         if (statutes['Lessons']) {
             Object.entries(statutes['Lessons']).forEach(function ([key, lesson]) {
-                var lessonRow = document.createElement('tr');
-                lessonRow.classList.add(lesson.status === "Zaplanowana" ? "bg-primary-light" : "bg-danger-light");
+                const lessonRow = document.createElement('tr');
 
-                var lessonDateCell = document.createElement('td');
+                const lessonDateCell = document.createElement('td');
                 lessonDateCell.textContent = lesson['start_date'] + ' (' + lesson['weekday'] + ')';
-                if (lesson['original_date']) {
-                    lessonDateCell.textContent += ' (przeniesione z ' + lesson['original_date'] + ')';
+
+                if (lesson['original_date'] !== lesson['start_date'] && lesson['is_adjustment']){
+                    lessonDateCell.textContent += ' (przeniesione z ' + lesson['original_date'] + ' ' + lesson['original_time'] + ')';
+                } else if (lesson['original_time'] !== lesson['start_time'] && lesson['is_adjustment'] ){
+                    lessonDateCell.textContent += ' (przeniesione z ' + lesson['original_time'] + ')';
                 }
+
+                if (lesson.status === "Zaplanowana") {
+                    lessonRow.classList.add("bg-primary-light");
+                } else {
+                    if (lesson.status === 'Nieobecnosc') {
+                        lessonRow.classList.add("bg-danger-light");
+                    } else {
+                        lessonRow.classList.add("bg-orange-light");
+                    }
+                }
+                //
+                // if (lesson['original_date']) {
+                //     lessonDateCell.textContent += ' (przeniesione z ' + lesson['original_date'] + ')';
+                // }
                 lessonRow.appendChild(lessonDateCell);
 
                 var lessonTimeCell = document.createElement('td');
@@ -156,6 +192,10 @@ function generateTable(data) {
                 teacherCell.append(lesson['teacher']);
                 lessonRow.appendChild(teacherCell);
 
+                var lessonStatusCell = document.createElement('td');
+                lessonStatusCell.textContent = lesson['status'];
+                lessonRow.appendChild(lessonStatusCell);
+
                 const editCell = document.createElement('td');
                 const editLink = document.createElement('a');
                 editLink.text = 'Edytuj'
@@ -163,13 +203,15 @@ function generateTable(data) {
                 editLink.type = 'button';
                 editLink.setAttribute('data-toggle', 'modal');
                 editLink.setAttribute('data-target', '#editEventModalCenter');
-                editLink.setAttribute("onclick",`modifyEvent('${lesson.lesson_id}', '${lesson.start_time}', '${lesson.end_time}', '${lesson.start_date}', '', '${lesson.status}', '${lesson.is_adjustment}');`);
+                editLink.setAttribute("onclick", `modifyEvent(lesson_schedule_id='${lesson.lesson_id}', startTime='${lesson.start_time}', endTime='${lesson.end_time}', lessonDate='${lesson.start_date}', studentName='', status='${lesson.status}', isAdjustment=${lesson.is_adjustment});`);
 
                 // editLink.addEventListener('click', modifyEvent(lesson.lesson_id, lesson.start_time, lesson.end_time, lesson.start_date, lesson.get_full_name, lesson.status, lesson.is_adjustment));
                 // editLink.addEventListener('click', modifyEvent(lesson.lesson_id, lesson.start_time, lesson.end_time, lesson.start_date, lesson.get_full_name, lesson.status, lesson.is_adjustment));
                 // Add edit link
                 editCell.appendChild(editLink);
                 lessonRow.appendChild(editCell);
+
+
 
                 innerTbody.appendChild(lessonRow);
             });
@@ -198,20 +240,38 @@ function generateTable(data) {
     return table;
 }
 
-// Funkcja pomocnicza do zmiany numeru miesiąca na jego nazwę
+// Funkcja pomocnicza do zmiany numeru miesi\u0105ca na jego nazw\u0119
 function getMonthName(monthNumber) {
     var months = [
-        "Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec",
-        "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"
+        "Stycze\u0144", "Luty", "Marzec", "Kwiecie\u0144", "Maj", "Czerwiec",
+        "Lipiec", "Sierpie\u0144", "Wrzesie\u0144", "Pa\u017Adziernik", "Listopad", "Grudzie\u0144"
     ];
     return months[monthNumber - 1];
 }
 
-// Funkcja do zmiany widoczności szczegółów miesiąca
+// Funkcja do zmiany widoczno\u015Bci szczeg\u00F3\u0142\u00F3w miesi\u0105ca
 function toggleDetails(element) {
     var targetId = element.children[0].getAttribute('data-target');
     var target = document.querySelector(targetId);
     target.classList.toggle('show');
+}
+
+function open_months_url() {
+    let urlParams = new URLSearchParams(window.location.search);
+    openedMonths = urlParams.get('opened_months');
+    if (openedMonths) {
+        console.log('listener openedMonths ' + openedMonths)
+        openedMonths = openedMonths.split(',');
+        openedMonths.forEach(function (monthNumber) {
+            let collapsibleDiv = document.getElementById('collaps_' + monthNumber);
+            console.log('listener collapsibleDiv ' + collapsibleDiv)
+            if (collapsibleDiv) {
+                collapsibleDiv.classList.add('show');
+            }
+        });
+    } else {
+        openedMonths = [];
+    }
 }
 
 // Generowanie tabeli i dodanie jej do elementu o id "table-container"

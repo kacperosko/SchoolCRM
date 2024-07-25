@@ -24,17 +24,17 @@ function handleResponse(response) {
 
 function renderAlerts() {
     const alertContainer = document.getElementById('alertContainer');
-    alertContainer.innerHTML = ''; // Wyczyść kontener
+    alertContainer.innerHTML = ''; // Wyczy\u015B\u0107 kontener
 
-    // Dodaj alerty w kolejności od najnowszego do najstarszego
+    // Dodaj alerty w kolejno\u015Bci od najnowszego do najstarszego
     for (let i = alertStack.length - 1; i >= 0; i--) {
         alertContainer.innerHTML += alertStack[i];
     }
 
-    // Usuń alerty po 3 sekundach
+    // Usu\u0144 alerty po 3 sekundach
     setTimeout(function () {
-        alertStack.shift(); // Usuń najstarszy alert ze stosu
-        renderAlerts(); // Odśwież widok alertów
+        alertStack.shift(); // Usu\u0144 najstarszy alert ze stosu
+        renderAlerts(); // Od\u015Bwie\u017C widok alert\u00F3w
     }, 6000);
 }
 

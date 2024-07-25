@@ -38,6 +38,21 @@
             margin: auto;
         }
 
+        [data-letters].initialssmall:before {
+            width: 2em;
+            height: 2em;
+        {#line-height: 2em;#} line-height: 2em;
+            font-size: 1.5em;
+            margin: auto;
+        {#border: #fff solid 4px;#}
+        }
+
+        .initials_selected:before {
+            line-height: 1.7em !important;
+            border: #0d5fff solid 4px !important;;
+        {#border-width: 1px;#}{#border-color: #0d5fff;#}
+        }
+
         .field {
             height: 30px;
             border-bottom: 2px solid #d9d9d9;
@@ -74,21 +89,21 @@
     </div>
 </div>
 <!-- Wrapper End-->
-<footer class="iq-footer">
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-lg-6">
-            </div>
-            <div class="col-lg-6 text-right">
-                    <span class="mr-1">
-                        Copyright
-                        <script>document.write(new Date().getFullYear())</script>© <a href="#" class="">Datum</a>
-                        All Rights Reserved.
-                    </span>
-            </div>
-        </div>
-    </div>
-</footer>
+{#<footer class="iq-footer">#}
+{#    <div class="container-fluid">#}
+{#        <div class="row">#}
+{#            <div class="col-lg-6">#}
+{#            </div>#}
+{#            <div class="col-lg-6 text-right">#}
+{#                    <span class="mr-1">#}
+{#                        Copyright#}
+{#                        <script>document.write(new Date().getFullYear())</script>© <a href="#" class="">Datum</a>#}
+{#                        All Rights Reserved.#}
+{#                    </span>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{#</footer>#}
 <!-- Backend Bundle JavaScript -->
 
 <script src="{% static '/js/backend-bundle.min.js' %}"></script>
@@ -125,6 +140,25 @@
         }
 
     });
+
+    function addParamToURL(key, value) {
+        const currentURL = window.location.href;
+        const searchParams = new URLSearchParams(window.location.search);
+        // Dodaj parametr tab_name
+        searchParams.set(key, value);
+
+        // Utwórz nowy URL z dodanym parametrem
+        const newURL = currentURL.split('?')[0] + '?' + searchParams.toString();
+
+        // Zastąp obecny URL nowym URL z dodanym parametrem
+        window.history.replaceState({path: newURL}, '', newURL);
+    }
+
+    function removeParamFromURL(key) {
+        const url = new URL(window.location.href);
+        url.searchParams.delete(key);
+        window.history.replaceState(null, '', url.toString());
+    }
 </script>
 {% if messages %}
     <script>
@@ -141,6 +175,8 @@
         jsonMessages.forEach((msgJSON) =>
             handleResponse(msgJSON)
         )
+
+
     </script>
 {% endif %}
 {% block javascript %}

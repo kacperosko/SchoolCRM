@@ -1,0 +1,47 @@
+{% extends 'base/base.html' %}
+{% block content %}
+    {% load crm_tags %}
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between">
+            <div class="header-title">
+                <h4 class="card-title">{% if 'edit' in request.path %}Edytowanie{% else %}Dodawanie nowego{% endif %}
+                    rekordu: {{ title }}</h4>
+            </div>
+
+        </div>
+        <div class="card-body">
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="details" role="tabpanel" aria-labelledby="details-tab">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class=" row align-items-center">
+                            {% for field in form %}
+                                <div class="form-group col-sm-6" style=" {% if field.name == 'id' %}visibility: hidden; display: none{% endif %}">
+                                    <div class="text-danger">{{ field.errors|striptags }}</div>
+                                    <label for="{{ field.name }}">
+                                        {{ field.label_tag }}{{ field.field.widget.class }}
+                                        {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                                    </label>
+                                    <input name="{{ field.name }}" type="{{ field.field.widget.input_type }}"
+                                           class="form-control"
+                                           style="{% if field.field.widget.input_type == 'date' %}line-height: 25px{% endif %}"
+                                           id="{{ field.name }}"
+                                           value="{% if field.field.widget.input_type == 'date' %}{{ field.value|date:"Y-m-d"|default_if_none:"" }}{% else %}{{ field.value|default_if_none:"" }}{% endif %}"
+                                           maxlength="{{ field.field.max_length }}"
+                                           {% if field.field.required %}required{% endif %}>
+                                </div>
+                            {% endfor %}
+
+                        </div>
+                        <a href="/{{ model_name }}{% if 'edit' in request.path %}/{{ record_id }}{% endif %}"
+                           class="btn btn-outline-primary mr-2 mt-5">Anuluj</a>
+                        <button type="submit" class="btn btn-primary mt-5">
+                            Zapisz rekord
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

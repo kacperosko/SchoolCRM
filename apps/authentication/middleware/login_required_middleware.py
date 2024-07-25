@@ -18,23 +18,18 @@ class LoginRequiredMiddleware:
         return self.get_response(request)
 
     def process_view(self, request, view_func, view_args, view_kwargs):
-        print(request.path)
 
         # Check if the request is for a static file
         if request.path.startswith(settings.STATIC_URL):
             return
 
         if request.path in self.password_reset_urls or request.path.startswith('/password-reset-confirm/'):
-            print("path in password urls")
             return
 
-        print('login_exempt', getattr(view_func, 'login_exempt', False))
         if getattr(view_func, 'login_exempt', False) and not request.user.is_authenticated:
-            print("not authenticated")
             return
 
         if request.user.is_authenticated:
-            print(request.path)
             if request.path == '/login/':
                 return redirect("/student")
             return

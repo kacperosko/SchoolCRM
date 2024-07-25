@@ -11,7 +11,7 @@
         <div class="card-header d-flex justify-content-between">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="/contacts"><i
+                    <li class="breadcrumb-item"><a href="/person"><i
                             class="ri-home-4-line mr-1 float-left"></i>Kontakty</a></li>
                     <li class="breadcrumb-item active"
                         aria-current="page">{{ contact.get_full_name }}
@@ -30,7 +30,7 @@
                     </a>
                 {% endif %}
                 {% if perms.crm.delete_person %}
-                    <a href="" class="btn btn-outline-danger rounded-pill font-size-12">
+                    <a href="/delete/{{ contact.id }}" class="btn btn-outline-danger rounded-pill font-size-12">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1"
                              stroke="currentColor" class="w-6 h-6" width="18">
                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -71,7 +71,7 @@
                             </div>
                             <div class="form-group col-sm-6">
                                 <label for="student_phone">Telefon:</label>
-                                <p class="pb-1 field">{{ contact.name|default_if_none:"" }}</p>
+                                <p class="pb-1 field">{{ contact.phone|default_if_none:"" }}</p>
                             </div>
                         </div>
                     </form>
