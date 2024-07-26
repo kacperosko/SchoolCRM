@@ -64,6 +64,8 @@ class LessonForm(forms.Form):
     lessonId = forms.CharField()
     status = forms.CharField()
     isAdjustment = forms.BooleanField(required=False)
+    teacher = forms.CharField()
+    location = forms.CharField()
 
 
 class LessonCreateForm(forms.Form):
@@ -74,6 +76,7 @@ class LessonCreateForm(forms.Form):
     description = forms.CharField()
     end_series = forms.DateField(required=False)
     teacher = forms.CharField()
+    location = forms.CharField()
 
 
 class LessonPlanForm(forms.Form):

@@ -129,18 +129,26 @@
                             <div class="form-group col-sm-6">
                                 <label for="student_phone" class="text-muted">Utworzono:</label>
                                 <p class="pb-1 field">{{ record.created_date|default_if_none:"" }}
-                                    <a href="/user/{{ record.created_by.id}}">
-                                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" class="ml-1" width="18px"><path d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-                                    {{ record.created_by.get_full_name|default_if_none:"" }}
-                                        </a>
+                                    <a href="/user/{{ record.created_by.id }}">
+                                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"
+                                             class="ml-1" width="18px">
+                                            <path d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                                                  stroke-linecap="round" stroke-linejoin="round"></path>
+                                        </svg>
+                                        {{ record.created_by.get_full_name|default_if_none:"" }}
+                                    </a>
                                 </p>
 
                             </div>
                             <div class="form-group col-sm-6">
                                 <label for="student_phone" class="text-muted">Ostatnio zmodyfikowano:</label>
                                 <p class="pb-1 field">{{ record.modified_date|default_if_none:"" }}
-                                    <a href="/user/{{ record.created_by.id}}">
-                                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" class="ml-1" width="18px"><path d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                                    <a href="/user/{{ record.created_by.id }}">
+                                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"
+                                             class="ml-1" width="18px">
+                                            <path d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                                                  stroke-linecap="round" stroke-linejoin="round"></path>
+                                        </svg>
                                     {{ record.modified_by.get_full_name|default_if_none:"" }}</p>
 
                             </div>
@@ -279,7 +287,8 @@
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="cancelModalCenterTitle">Edytowanie lekcji: <span id="editEvent_title"></span></h5>
+                    <h5 class="modal-title" id="cancelModalCenterTitle">Edytowanie lekcji: <span
+                            id="editEvent_title"></span></h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -326,7 +335,7 @@
                                 <label for="studentForm_cancelForm">Student <span class="text-danger">*</span></label>
                                 <input class="form-control" id="studentForm_cancelForm" required readonly="">
                             </div>
-                             <div class="form-group col-sm-6">
+                            <div class="form-group col-sm-6">
                                 <label for="teacher_createLesson">Nauczyciel <span class="text-danger">*</span></label>
                                 <select class="form-control" id="teacher_createLesson" name="teacher" required>
                                     {% for user in users %}
@@ -346,6 +355,22 @@
                                        id="lessonId_cancelForm"
                                        value=""
                                        style="line-height: 20px;" readonly="">
+                            </div>
+                            <div class="form-group col-sm-6">
+                                <label for="location_createLesson">Lokalizacja <span
+                                        class="text-danger">*</span></label>
+                                <select class="form-control" id="location_createLesson" name="location" required>
+                                    {% for location in locations %}
+                                        <option value="{{ location.id }}">{{ location.get_full_address }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group col-sm-6 d-none" id="lessonDate_endSeries_div">
+                                <label for="lessonDate_endSeries">Koniec Serii</label>
+                                <input name="end_series" type="date" class="form-control" id="lessonDate_endSeries"
+                                       value=""
+                                       style="line-height: 20px;" data-toggle="tooltip" data-placement="right"
+                                       title="Podaj datę ostatniej lekcji z serii. Może być puste">
                             </div>
                             {#                            <div class="form-group col-sm-6">#}
                             {#                                <label for="status_cancelForm">lessonSchedule</label>#}
@@ -445,6 +470,15 @@
                                     {% endfor %}
                                 </select>
                             </div>
+                            <div class="form-group col-sm-6">
+                                <label for="location_createLesson">Lokalizacja <span
+                                        class="text-danger">*</span></label>
+                                <select class="form-control" id="location_createLesson" name="location" required>
+                                    {% for location in locations %}
+                                        <option value="{{ location.id }}">{{ location.get_full_address }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
                             <div class="form-group col-sm-6 d-none" id="lessonDate_endSeries_div">
                                 <label for="lessonDate_endSeries">Koniec Serii</label>
                                 <input name="end_series" type="date" class="form-control" id="lessonDate_endSeries"
@@ -495,7 +529,7 @@
             const start = new Date(`1970-01-01T${startTime}:00`);
             const end = new Date(`1970-01-01T${endTime}:00`);
 
-            // Obliczenie różnicy w milisekundach
+            // Obliczenie r\u00F3\u017Cnicy w milisekundach
             const differenceInMilliseconds = end - start;
 
             // Konwersja milisekund na minuty
@@ -518,19 +552,19 @@
             let btn_edit = document.getElementById('cancel_form_btn_edit');
             let cancelModalCenterTitle = document.getElementById('cancelModalCenterTitle');
             let isAdjustment_form = document.getElementById('isAdjustment_cancelForm');
-            const cancel_title = 'Chcesz odwołać tę lekcję?';
-            const plan_title = 'Chcesz zaplanować tę lekcję?';
-            const edit_title = 'Czy chcesz zedytować tę lekcje?';
+            const cancel_title = 'Chcesz odwo\u0142a\u0107 t\u0119 lekcj\u0119?';
+            const plan_title = 'Chcesz zaplanowa\u0107 t\u0119 lekcj\u0119?';
+            const edit_title = 'Czy chcesz zedytowa\u0107 t\u0119 lekcje?';
 
             let parts = lessonDate.split('-');
             let day = parts[0];
             let month = parts[1];
             let year = parts[2];
 
-            // Utwórz obiekt Date z rozdzielonej daty
+            // Utw\u00F3rz obiekt Date z rozdzielonej daty
             let dateObject = new Date(year, month - 1, day + 1);
 
-            // Uzyskaj wartość w formacie rok-miesiąc-dzień
+            // Uzyskaj warto\u015B\u0107 w formacie rok-miesi\u0105c-dzie\u0144
             let formattedDate = dateObject.toISOString().slice(0, 10);
             const start = new Date(`1970-01-01T${startTime}:00`);
             const end = new Date(`1970-01-01T${endTime}:00`);

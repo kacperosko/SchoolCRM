@@ -29,7 +29,7 @@ urlpatterns = [
     path("person/<str:contact_id>", crm_views.view_person, name="crm-contacts-page"),
     path("calendar", crm_views.calendar, name="crm-calendar"),
 
-    path("location", crm_views.locations, name="crm-locations"),
+    path("location", crm_views.all_locations, name="crm-locations"),
     # path("location/new", crm_views.LocationCreate.as_view(), name="crm-LocationCreate"),
     path("<str:model_name>/new", crm_views.upsert_record, name="crm-LocationCreate"),
     path("location/<str:location_id>", crm_views.LocationPage.as_view(), name="crm-LocationPage"),

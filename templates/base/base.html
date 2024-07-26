@@ -116,26 +116,26 @@
     $('.data-table').DataTable({
         "language": {
             "decimal": "",
-            "emptyTable": "Brak dostępnych danych",
-            "info": "Wyświetlanie od _START_ do _END_ z _TOTAL_ rekordów",
-            "infoEmpty": "Brak rekordów do wyświetlenia",
-            "infoFiltered": "(przefiltrowano z _MAX_ wszystkich rekordów)",
+            "emptyTable": "Brak dost\u0119pnych danych",
+            "info": "Wy\u015Bwietlanie od _START_ do _END_ z _TOTAL_ rekord\u00F3w",
+            "infoEmpty": "Brak rekord\u00F3w do wy\u015Bwietlenia",
+            "infoFiltered": "(przefiltrowano z _MAX_ wszystkich rekord\u00F3w)",
             "infoPostFix": "",
             "thousands": ",",
-            "lengthMenu": "Pokaż _MENU_ rekordów",
-            "loadingRecords": "Ładowanie danych...",
+            "lengthMenu": "Poka\u017C _MENU_ rekord\u00F3w",
+            "loadingRecords": "\u0141adowanie danych...",
             "processing": "Przetwarzanie...",
             "search": "Szukaj:",
-            "zeroRecords": "Nie znaleziono pasujących rekordów",
+            "zeroRecords": "Nie znaleziono pasuj\u0105cych rekord\u00F3w",
             "paginate": {
                 "first": "Pierwsza",
                 "last": "Ostatnia",
-                "next": "Następna",
+                "next": "Nast\u0119pna",
                 "previous": "Poprzednia"
             },
             "aria": {
-                "orderable": "Kliknij, aby posortować",
-                "orderableReverse": "Kliknij, aby posortować odwrotnie"
+                "orderable": "Kliknij, aby posortowa\u0107",
+                "orderableReverse": "Kliknij, aby posortowa\u0107 odwrotnie"
             }
         }
 
@@ -147,10 +147,10 @@
         // Dodaj parametr tab_name
         searchParams.set(key, value);
 
-        // Utwórz nowy URL z dodanym parametrem
+        // Utw\u00F3rz nowy URL z dodanym parametrem
         const newURL = currentURL.split('?')[0] + '?' + searchParams.toString();
 
-        // Zastąp obecny URL nowym URL z dodanym parametrem
+        // Zast\u0105p obecny URL nowym URL z dodanym parametrem
         window.history.replaceState({path: newURL}, '', newURL);
     }
 

@@ -354,24 +354,19 @@ class StudentPage(View):
                     is_series = repeat != 'never'
                     description = form.cleaned_data['description']
                     teacher_id = form.cleaned_data['teacher']
+                    location_id = form.cleaned_data['location']
                     end_series = None
                     if is_series:
                         end_series = form.cleaned_data['end_series']
 
                     start_datetime = datetime.combine(lesson_date, start_time)
                     end_datetime = start_datetime + timedelta(minutes=lesson_duration)
-                    #
-                    # start_datetime = datetime.combine(lesson_date, start_time)
-                    #
-                    # # Convert lesson_duration to integer if it's not already
-                    # lesson_duration_minutes = int(lesson_duration)
-                    #
-                    # end_datetime = start_datetime + timedelta(minutes=lesson_duration_minutes)
+
 
                     lesson = Lesson.objects.create(student_id=student_id, start_time=start_datetime,
                                                    end_time=end_datetime,
                                                    is_series=is_series, teacher_id=teacher_id,
-                                                   description=description, series_end_date=end_series)
+                                                   description=description, series_end_date=end_series, location_id=location_id)
                     lesson_msg = 'Seria lekcji' if is_series else 'Lekcja'
                     messages.success(request, f'{lesson_msg} dodana pomyślnie!')
                 else:
@@ -437,6 +432,9 @@ class StudentPage(View):
 
             users = User.objects.all()
             context['users'] = users
+
+            locations = Location.objects.all()
+            context['locations'] = locations
         except Student.DoesNotExist as e:
             print('StudentPage exception', e)
             messages.error(request, f'Nie znaleziono Studenta z id {student_id}')
@@ -901,7 +899,7 @@ def watch_record(request, mode, record_id):
 
 
 @permission_required('crm.view_location', raise_exception=False, login_url="/")
-def locations(request):
+def all_locations(request):
     locations_records = None
     try:
         locations_records = Location.objects.all()

@@ -1,6 +1,7 @@
 from smtplib import SMTPException
 
 from django.db import models
+
 from apps.authentication.models import User
 from django.utils.timezone import now
 from django.core.exceptions import ValidationError
@@ -194,6 +195,30 @@ class StudentPerson(models.Model):
             raise ValidationError("Student and parent cannot be the same person.")
 
 
+class Location(models.Model):
+    id = PrefixedUUIDField(primary_key=True)
+
+    name = models.CharField(max_length=100)
+    country = models.CharField(max_length=100)
+    city = models.CharField(max_length=100)
+    street = models.CharField(max_length=255)
+    postal_code = models.CharField(max_length=20)
+
+    notes = GenericRelation(Note)
+
+    def get_full_address(self):
+        return self.city + ", ul. " + self.street
+
+    def get_model_name(self, language):
+        names = {
+            "pl": "Lokalizacja"
+        }
+        return names.get(language, self.__class__.__name__)
+
+    def __str__(self):
+        return self.name + ", adres: " + self.country + ", city: " + self.city + ", street: " + self.street + ", postal code: " + self.postal_code
+
+
 class Lesson(models.Model):
     id = PrefixedUUIDField(primary_key=True)
 
@@ -204,8 +229,10 @@ class Lesson(models.Model):
     series_end_date = models.DateField(blank=True, null=True)
     student = models.ForeignKey(Student, on_delete=models.CASCADE, blank=False, null=False,
                                 related_name='lessonSchedule_student_student_relationship')
-    teacher = models.ForeignKey(User, on_delete=models.CASCADE, blank=False, null=False,
+    teacher = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=False, null=False,
                                 related_name='lessonSchedule_teacher_user_relationship')
+    location = models.ForeignKey(Location, on_delete=models.DO_NOTHING, blank=False, null=False,
+                                 related_name='lessonSchedule_location_relationship')
 
     def get_model_name(self, language):
         names = {
@@ -229,12 +256,6 @@ LESSON_STATUTES = (
 )
 
 
-# class LessonStatus:
-#     NIEOBECNOSC = "Nieobecność"
-#     ODWOLANA_NAUCZYCIEL = "Odwołana - nauczyciel"
-#     ODWOLANA_24H_PRZED = "Odwołana - 24h przed"
-#
-
 class LessonAdjustment(models.Model):
     id = PrefixedUUIDField(primary_key=True)
 
@@ -245,6 +266,10 @@ class LessonAdjustment(models.Model):
                                related_name='lesson_lesson_relationship')
     status = models.CharField(max_length=64, choices=LESSON_STATUTES, null=True, blank=True)
     comments = models.CharField(max_length=255, blank=True, null=True)
+    teacher = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=False, null=False,
+                                related_name='lessonAdjustment_teacher_user_relationship')
+    location = models.ForeignKey(Location, on_delete=models.DO_NOTHING, blank=False, null=False,
+                                 related_name='lessonAdjustment_location_relationship')
 
 
 class Absense(models.Model):
@@ -252,30 +277,6 @@ class Absense(models.Model):
                                 related_name='Absense_teacher_user_relationship')
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
-
-
-class Location(models.Model):
-    id = PrefixedUUIDField(primary_key=True)
-
-    name = models.CharField(max_length=100)
-    country = models.CharField(max_length=100)
-    city = models.CharField(max_length=100)
-    street = models.CharField(max_length=255)
-    postal_code = models.CharField(max_length=20)
-
-    notes = GenericRelation(Note)
-
-    def get_full_address(self):
-        return self.city + ", ul. " + self.street
-
-    def get_model_name(self, language):
-        names = {
-            "pl": "Lokalizacja"
-        }
-        return names.get(language, self.__class__.__name__)
-
-    def __str__(self):
-        return self.name + ", adres: " + self.country + ", city: " + self.city + ", street: " + self.street + ", postal code: " + self.postal_code
 
 
 class Group(models.Model):

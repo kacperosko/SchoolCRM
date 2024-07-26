@@ -216,10 +216,10 @@
             // Dodaj parametr tab_name
             searchParams.set(key, value);
 
-            // Utwórz nowy URL z dodanym parametrem
+            // Utw\u00F3rz nowy URL z dodanym parametrem
             const newURL = currentURL.split('?')[0] + '?' + searchParams.toString();
 
-            // Zastąp obecny URL nowym URL z dodanym parametrem
+            // Zast\u0105p obecny URL nowym URL z dodanym parametrem
             window.history.replaceState({path: newURL}, '', newURL);
         }
     </script>
