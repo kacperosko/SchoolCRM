@@ -17,7 +17,8 @@ from django.db.models import Q, Count
 from calendar import monthrange
 from collections import defaultdict
 from django.utils import timezone as dj_timezone
-from .lesson_handler import count_lessons_for_student_in_months, create_lesson_adjustment, count_lessons_for_teacher_in_months
+from .lesson_handler import count_lessons_for_student_in_months, create_lesson_adjustment, \
+    get_lessons_for_teacher_in_months, get_lessons_for_location_in_months
 from django.contrib import messages
 from django.http.response import JsonResponse
 from django.contrib.contenttypes.models import ContentType
@@ -84,76 +85,37 @@ def contacts(request):
 
 
 def calendar(request):
-    # Fetch lessons associated with the current teacher
-    if request.method == 'POST':
-        form = LessonForm(request.POST)
-        if form.is_valid():
-            print(form)
-            lessonDate = datetime.strptime(str(form.cleaned_data['lessonDate']), "%Y-%m-%d").date()
-            lesson = LessonAdjustment.objects.create(lessonSchedule_id=form.cleaned_data['lessonSchedule'],
-                                                     startTime=form.cleaned_data['startTime'],
-                                                     endTime=form.cleaned_data['endTime'],
-                                                     lessonDate=lessonDate,
-                                                     originalLessonDate=lessonDate, status=form.cleaned_data['status'])
-            print('lesson created ->', lesson.id)
-            return redirect('/calendar')
-        else:
-            print('ERROR FORM', form.errors)
-        # try:
-
-    teacher_id = request.GET.get("selected_teacher", request.user.id)
-    print('selected_teacher', teacher_id)
-    selected_teacher = User.objects.get(id=teacher_id)
+    selected_teacher = request.GET.get("selected_teacher", request.user.id)
+    selected_location = request.GET.get("selected_location", None)
 
     selected_year = int(request.GET.get("selected_year", datetime.now().year))
-
     selected_start_date = request.GET.get("selected_start_date", None)
 
     if not request.GET._mutable:
         request.GET._mutable = True
 
-    request.GET['selected_teacher'] = teacher_id
-    request.GET['selected_year'] = selected_year
-    if selected_start_date is not None and selected_start_date != "" and selected_start_date != "null":
-        print("setting selected_start_date", selected_start_date)
-        request.GET['selected_start_date'] = selected_start_date
+    teachers = User.objects.all()
+    locations = Location.objects.all()
 
-    # lessons_count = count_lessons_for_student_in_months(student_id, selected_year)
-    # lessons_count = count_lessons_for_teacher_in_months(teacher_id, 2024)
-    #
-    # lessons_count_serializable = {}
-    # for key, value in lessons_count.items():
-    #     lessons = {k: v.to_dict() for k, v in value['Lessons'].items()}
-    #     lessons_count_serializable[key] = {
-    #         'Zaplanowana': value['Zaplanowana'],
-    #         Statutes.NIEOBECNOSC: value[Statutes.NIEOBECNOSC],
-    #         Statutes.ODWOLANA_NAUCZYCIEL: value[Statutes.ODWOLANA_NAUCZYCIEL],
-    #         Statutes.ODWOLANA_24H_PRZED: value[Statutes.ODWOLANA_24H_PRZED],
-    #         'Lessons': lessons
-    #     }
+    if selected_location:
+        print('get_lessons_for_location_in_months')
+        selected_record = Location.objects.get(id=selected_location)
+        lesson_result = get_lessons_for_location_in_months(selected_location, selected_year)
+        locations = locations.exclude(id=selected_location)
 
-    lessons = Lesson.objects.filter(
-        Q(teacher_id=teacher_id) &
-        Q(start_time__year__lte=selected_year) &
-        (
-            (Q(series_end_date__year__gte=selected_year) |
-             Q(series_end_date=None))
-        )
-    )
+    else:
+        print('get_lessons_for_teacher_in_months')
+        selected_record = User.objects.get(id=selected_teacher)
+        lesson_result = get_lessons_for_teacher_in_months(selected_teacher, selected_year)
+        teachers = teachers.exclude(id=selected_teacher)
 
-    # Fetch lesson adjustments associated with fetched lessons
-    lesson_adjustments = LessonAdjustment.objects.filter(
-        Q(lesson__teacher_id=teacher_id) &
-        (
-                Q(original_lesson_date__year=selected_year) |
-                Q(modified_start_time__year=selected_year)
-        )
-    )
+
+    lessons = lesson_result['lessons']
+    lesson_adjustments = lesson_result['adjustments']
 
     # Construct a dictionary to hold lesson adjustments data
     lesson_adjustments_data = {}
     for l_adjustment in lesson_adjustments:
-        print('l_Adjustment ->', l_adjustment.modified_start_time, l_adjustment.modified_end_time)
         lesson_id = l_adjustment.lesson.id
         if lesson_id not in lesson_adjustments_data:
             lesson_adjustments_data[lesson_id] = []
@@ -165,15 +127,14 @@ def calendar(request):
             'startTime': l_adjustment.modified_start_time.strftime('%H:%M'),
             'endTime': l_adjustment.modified_end_time.strftime('%H:%M'),
             'status': l_adjustment.status,
-            'teacher': l_adjustment.lesson.teacher.get_full_name(),
-            'description': l_adjustment.lesson.description
+            'teacher': l_adjustment.teacher.get_full_name(),
+            'description': l_adjustment.lesson.description,
+            'location': l_adjustment.location.get_full_name(),
         })
-    print(lesson_adjustments_data)
     # Construct a list of dictionaries with lesson data
     lesson_data = []
     for lesson in lessons:
         lesson_adjustments_for_lesson = lesson_adjustments_data.get(lesson.id, [])
-        print(lesson_adjustments_for_lesson)
         lesson_data.append({
             'id': lesson.id,
             'weekDay': WEEKDAYS[lesson.start_time.weekday()],
@@ -186,19 +147,26 @@ def calendar(request):
             'teacher': lesson.teacher.get_full_name(),
             'adjustments': lesson_adjustments_for_lesson,
             'description': lesson.description,
-            'is_series': lesson.is_series
+            'is_series': lesson.is_series,
+            'location': lesson.location.get_full_name(),
         })
-
-    teachers = list(User.objects.all())
-    if selected_teacher in teachers:
-        teachers.remove(selected_teacher)
 
     # Pass lesson_data to the template context
     context = {
         'lessons': lesson_data,
-        'selected_teacher': selected_teacher,
-        'teachers': teachers
+        'selected_record': selected_record,
+        'teachers': teachers,
+        'locations': locations
     }
+
+    if selected_location:
+        request.GET['selected_location'] = selected_location
+    else:
+        request.GET['selected_teacher'] = selected_teacher
+
+    request.GET['selected_year'] = selected_year
+    if selected_start_date is not None and selected_start_date != "" and selected_start_date != "null":
+        request.GET['selected_start_date'] = selected_start_date
 
     return render(request, "crm/calendar.html", context)
 
@@ -298,44 +266,15 @@ class StudentPage(View):
         opened_months = request.GET.get("opened_months", "")
         selected_year = request.GET.get("selected_year", datetime.now().year)
         if request.method == 'POST':
-            if 'cancel_form_submit' in request.POST:
-                print('cancel_form_submit')
-                form = LessonForm(request.POST)
-                print(form)
-                if form.is_valid():
-                    if form.cleaned_data['isAdjustment']:
-                        print('isAdjustment')
-                        leson_adjustment = LessonAdjustment.objects.get(id=form.cleaned_data['lessonId'])
-                        leson_adjustment.status = form.cleaned_data['status']
-
-                        leson_adjustment.save()
-                        print('lesson adjustment canceled')
-                    else:
-                        print('NOT isAdjustment ')
-                        create_lesson_adjustment(form)
-
-                    messages.success(request, 'Odwołano lekcje pomyślnie!')
-                else:
-                    messages.error(request, f'Bład podczas zapisywania: {form.errors}')
-                return redirect(
-                    f'/student/{student_id}?tab={tab_name}&opened_months={opened_months}&selected_year={selected_year}')
-            elif 'edit_form_submit' in request.POST:
+            if 'edit_form_submit' in request.POST:
                 print('edit_form_submit')
                 form = LessonForm(request.POST)
                 if form.is_valid():
-                    # if form.cleaned_data['isAdjustment']:
+
                     create_lesson_adjustment(form, is_edit=form.cleaned_data['isAdjustment'])
-                    # else:
-                    #     create_lesson_adjustment(form)
 
                     lesson_date = dj_timezone.make_aware(
                         datetime.combine(form.cleaned_data['lessonDate'], datetime.min.time()))
-
-                    # opened_months_list = [int(month) for month in opened_months.split(',') if month]
-                    #
-                    # if lesson_date.month not in opened_months_list:
-                    #     opened_months_list.append(lesson_date.month)
-                    #     opened_months = ','.join(map(str, opened_months_list))
 
                     messages.success(request, 'Zaktualizowano lekcje pomyślnie!')
 
@@ -362,11 +301,11 @@ class StudentPage(View):
                     start_datetime = datetime.combine(lesson_date, start_time)
                     end_datetime = start_datetime + timedelta(minutes=lesson_duration)
 
-
                     lesson = Lesson.objects.create(student_id=student_id, start_time=start_datetime,
                                                    end_time=end_datetime,
                                                    is_series=is_series, teacher_id=teacher_id,
-                                                   description=description, series_end_date=end_series, location_id=location_id)
+                                                   description=description, series_end_date=end_series,
+                                                   location_id=location_id)
                     lesson_msg = 'Seria lekcji' if is_series else 'Lekcja'
                     messages.success(request, f'{lesson_msg} dodana pomyślnie!')
                 else:
@@ -374,19 +313,18 @@ class StudentPage(View):
                 return redirect(
                     f'/student/{student_id}?tab={tab_name}&opened_months={opened_months}&selected_year={selected_year}')
             else:
-                print('else form')
-                form = LessonPlanForm(request.POST)
-                if form.is_valid():
-                    leson_adjustment = LessonAdjustment.objects.get(id=form.cleaned_data['lessonId'])
-                    leson_adjustment.status = form.cleaned_data['status']
-
-                    leson_adjustment.save()
-                    print('lesson adjustment updated')
-                    messages.success(request, 'Zaplanowano lekcje pomyślnie!')
-                else:
-                    messages.error(request, f'Bład podczas zapisywania: {form.errors}')
-                return redirect(
-                    f'/student/{student_id}?tab={tab_name}&opened_months={opened_months}&selected_year={selected_year}')
+                # print('else form')
+                # form = LessonPlanForm(request.POST)
+                # if form.is_valid():
+                #     leson_adjustment = LessonAdjustment.objects.get(id=form.cleaned_data['lessonId'])
+                #     leson_adjustment.status = form.cleaned_data['status']
+                #
+                #     leson_adjustment.save()
+                #     print('lesson adjustment updated')
+                #     messages.success(request, 'Zaplanowano lekcje pomyślnie!')
+                # else:
+                messages.error(request, f'Nieobsługiwany formularz: {request.POST}')
+                return render(request, "crm/student-page.html", context)
 
     @staticmethod
     def get(request, *args, **kwargs):
@@ -734,7 +672,7 @@ def create_note(request):
             message = "Treść nie może być pusta"
             raise Exception(message)
 
-        if note_id: # if note id is provide invoke an update
+        if note_id:  # if note id is provide invoke an update
             try:
                 note = Note.objects.get(id=note_id)
                 note.content = content
@@ -781,6 +719,7 @@ def create_note(request):
         message = e
 
     return JsonResponse({'status': status, 'message': message, 'note': note_data})
+
 
 def delete_note(request):
     status = False
@@ -971,7 +910,7 @@ class LocationCreate(View):
                 new_location = Location.objects.create(name=name, country=country, city=city, street=street,
                                                        postal_code=postal_code)
 
-                messages.success(request, f'Dodano lokalizacje {new_location.get_full_address()} pomyslnie!')
+                messages.success(request, f'Dodano lokalizacje {new_location.get_full_name()} pomyslnie!')
                 return redirect(f"/location/{new_location.id}")
             except Exception as e:
                 print(e)
@@ -991,6 +930,7 @@ class LocationCreate(View):
         context = {'title': "Lokalizacji", 'btn_title': "Lokalizacja", 'form': form, 'model_name': 'location'}
 
         return render(request, 'crm/record-update-create.html', context)
+
 
 def get_student_lessons(request, student_id):
     status = False
@@ -1101,7 +1041,7 @@ def upsert_record(request, model_name, record_id=None):
             print(context['form'].fields)
             # print(context['form'].fields['birthdate'].value)
             # for field in context['form']:
-                # print(field.value.value)
+            # print(field.value.value)
         else:
             context['form'] = form_class()
 

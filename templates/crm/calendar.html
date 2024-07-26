@@ -27,6 +27,20 @@
             right: 10px;
             bottom: 45%;
         }
+
+        .location_icon {
+            width: 2em;
+            height: 2em;
+            line-height: 2em;
+            font-size: 1.5em;
+            margin: auto;
+            content: "";
+            display: inline-block;
+            text-align: center;
+            border-radius: 50%;
+            vertical-align: middle;
+            color: white;
+        }
     </style>
 {% endblock style %}
 
@@ -75,24 +89,52 @@
                     <div class="dropdown ml-5">
                         <button class="btn bg-primary-light dropdown-toggle" type="button" id="dropdownMenuButton"
                                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <div class="user-display pr-2">
-                                <span id="initial_{{ selected_teacher.id }}"
-                                      data-letters="{{ selected_teacher.get_full_name|initials }}"
-                                      class="initialssmall initialspage mx-auto"></span>
-                                <span class="ml-2 font-size-16">{{ selected_teacher.get_full_name }}</span>
-                            </div>
+                            <span class="user-display pr-2">
+                                {% if selected_record|get_model_name:'en' == "User" %}
+                                    <span id="initial_{{ selected_record.id }}"
+                                          data-letters="{{ selected_record.get_full_name|initials }}"
+                                          class="initialssmall initialspage mx-auto"></span>
+                                {% else %}
+                                    <svg width="20px" class="svg-icon" xmlns="http://www.w3.org/2000/svg"
+                                         fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                  d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                  d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"></path>
+                                        </svg>
+                                {% endif %}
+                                <span class="ml-2 font-size-16">{{ selected_record.get_full_name }}</span>
+                            </span>
                         </button>
                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                            <a class="text-center bg-skyblue-light">
+                                <h5 class="mx-auto  bg-orange-light rounded-normal">Nauczyciele</h5>
+                            </a>
                             {% for teacher in teachers %}
                                 <a class="dropdown-item user-item"
-                                   onclick="showByRecord('{{ teacher.id }}')"
-                                        {#                                   href="/calendar?selected_teacher={{ teacher.id }}&selected_year={{ request.GET.selected_year }}&selected_start_date={{ request.GET.selected_start_date }}"#}
-                                   data-initials="AB"
-                                   data-fullname="Alice Brown">
+                                   onclick="showByTeacher('{{ teacher.id }}')">
                                     <span id="initial_{{ teacher.id }}"
                                           data-letters="{{ teacher.get_full_name|initials }}"
                                           class="initialssmall initialspage mx-auto"></span>
                                     <span class="ml-2">{{ teacher.get_full_name }}</span>
+                                </a>
+                            {% endfor %}
+                            <a class="text-center bg-skyblue-light">
+                                <h5 class="mx-auto bg-purple-light rounded-normal">Lokalizacje</h5>
+                            </a>
+                            {% for location in locations %}
+                                <a class="dropdown-item user-item pl-0"
+                                   onclick="showByLocation('{{ location.id }}')">
+                                    <span class="location_icon bg-skyblue-light">
+                                        <svg width="20px" class="svg-icon" xmlns="http://www.w3.org/2000/svg"
+                                             fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                  d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                  d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"></path>
+                                        </svg>
+                                    </span>
+                                    <span class="ml-2">{{ location.get_full_name }}</span>
                                 </a>
                             {% endfor %}
                         </div>
@@ -630,10 +672,23 @@
 
         });
 
-        function showByRecord(recordId) {
+        function showByTeacher(teacherId) {
+            addParamToURL('selected_teacher', teacherId);
+            removeParamFromURL('selected_location');
+
+            showByRecord();
+        }
+
+        function showByLocation(locationId) {
+            addParamToURL('selected_location', locationId);
+            removeParamFromURL('selected_teacher');
+
+            showByRecord();
+        }
+
+        function showByRecord() {
             addParamToURL('selected_start_date', startDate.toISOString());
             addParamToURL('selected_year', startDate.getFullYear());
-            addParamToURL('selected_teacher', recordId);
 
             location.reload();
         }

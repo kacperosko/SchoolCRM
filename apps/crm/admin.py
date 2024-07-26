@@ -60,7 +60,7 @@ class NoteAdmin(admin.ModelAdmin):
 
 @admin.register(Location)
 class LocationAdmin(admin.ModelAdmin):
-    list_display = ('name', 'get_full_address')
+    list_display = ('name', 'get_full_name')
 
 
 @admin.register(Notification)

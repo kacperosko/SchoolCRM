@@ -17,7 +17,7 @@ class LessonHandler:
     }
 
     def __init__(self, start_date: date, end_date: date, start_time: time, end_time: time, lesson_id,
-                 description, teacher, original_date=None, status=Statutes.PLANNED, is_adjustment=False):
+                 description, teacher, location, original_date=None, status=Statutes.PLANNED, is_adjustment=False):
         self.start_date = start_date.strftime('%d-%m-%Y')
         self.end_date = end_date.strftime('%d-%m-%Y')
         self.start_time = start_time.strftime('%H:%M')
@@ -28,6 +28,7 @@ class LessonHandler:
         self.is_adjustment = is_adjustment
         self.description = description
         self.teacher = teacher
+        self.location = location
         time_difference = end_time - start_time
         self.duration = time_difference.total_seconds() / 60
         if original_date:
@@ -49,6 +50,7 @@ class LessonHandler:
             'is_adjustment': self.is_adjustment,
             'description': self.description if self.description else '',
             'teacher': self.teacher,
+            'location': self.location,
             'duration': self.duration,
             'original_date': self.original_date if self.original_date else None,
             'original_time': self.original_time if self.original_time else None,
@@ -63,7 +65,6 @@ def generate_lesson_dict_key(start_time: datetime, lesson_id):
 
 
 def count_lessons_for_student_in_months(student_id, year):
-    # Pobieramy lekcje serii dla danego studenta i roku
     lessons = Lesson.objects.filter(
         Q(student_id=student_id) &
         Q(start_time__year__lte=year) &
@@ -73,7 +74,6 @@ def count_lessons_for_student_in_months(student_id, year):
         )
     )
 
-    # Pobieramy dostosowania lekcji dla danego studenta i roku
     adjustments = LessonAdjustment.objects.filter(
         Q(lesson__student_id=student_id) &
         (
@@ -85,7 +85,7 @@ def count_lessons_for_student_in_months(student_id, year):
     return generate_lessons(lessons, adjustments, year)
 
 
-def count_lessons_for_teacher_in_months(teacher_id, year):
+def get_lessons_for_teacher_in_months(teacher_id, year):
     lessons = Lesson.objects.filter(
         Q(teacher_id=teacher_id) &
         Q(start_time__year__lte=year) &
@@ -96,14 +96,34 @@ def count_lessons_for_teacher_in_months(teacher_id, year):
     )
 
     adjustments = LessonAdjustment.objects.filter(
-        Q(lesson__teacher_id=teacher_id) &
+        Q(teacher_id=teacher_id) &
         (
                 Q(original_lesson_date__year=year) |
                 Q(modified_start_time__year=year)
         )
     )
 
-    return generate_lessons(lessons, adjustments, year)
+    return {'lessons': lessons, 'adjustments': adjustments}
+
+def get_lessons_for_location_in_months(location_id, year):
+    lessons = Lesson.objects.filter(
+        Q(location_id=location_id) &
+        Q(start_time__year__lte=year) &
+        (
+            (Q(series_end_date__year__gte=year) |
+             Q(series_end_date=None))
+        )
+    )
+
+    adjustments = LessonAdjustment.objects.filter(
+        Q(location_id=location_id) &
+        (
+                Q(original_lesson_date__year=year) |
+                Q(modified_start_time__year=year)
+        )
+    )
+
+    return {'lessons': lessons, 'adjustments': adjustments}
 
 
 def generate_lessons(lessons, adjustments, year):
@@ -114,7 +134,9 @@ def generate_lessons(lessons, adjustments, year):
     print('current_timezone', current_timezone)
     print('current_datetime', current_datetime)
 
-    lessons_count_in_months = defaultdict(lambda: {Statutes.PLANNED: 0, Statutes.NIEOBECNOSC: 0, Statutes.ODWOLANA_NAUCZYCIEL: 0, Statutes.ODWOLANA_24H_PRZED: 0, 'Lessons': {}})
+    lessons_count_in_months = defaultdict(
+        lambda: {Statutes.PLANNED: 0, Statutes.NIEOBECNOSC: 0, Statutes.ODWOLANA_NAUCZYCIEL: 0,
+                 Statutes.ODWOLANA_24H_PRZED: 0, 'Lessons': {}})
 
     # create placeholders for all months
     all_months = range(1, 13)
@@ -158,7 +180,8 @@ def generate_lessons(lessons, adjustments, year):
                         end_time=lesson.end_time,
                         lesson_id=lesson.id,
                         description=lesson.description,
-                        teacher=lesson.teacher.get_full_name()
+                        teacher=lesson.teacher.get_full_name(),
+                        location=lesson.location.get_full_name()
                     )
 
                 # Przechodzimy do następnego tygodnia
@@ -176,7 +199,8 @@ def generate_lessons(lessons, adjustments, year):
                 end_time=lesson.end_time,
                 lesson_id=lesson.id,
                 description=lesson.description,
-                teacher=lesson.teacher.get_full_name()
+                teacher=lesson.teacher.get_full_name(),
+                location=lesson.location.get_full_name()
             )
 
     for adjustment in adjustments:
@@ -214,7 +238,8 @@ def generate_lessons(lessons, adjustments, year):
                 is_adjustment=True,
                 original_date=adjustment.original_lesson_date,
                 description=adjustment.lesson.description,
-                teacher=adjustment.lesson.teacher.get_full_name()
+                teacher=adjustment.teacher.get_full_name(),
+                location=adjustment.location.get_full_name()
             )
 
     lessons_count_in_months = dict(sorted(lessons_count_in_months.items()))
@@ -231,24 +256,21 @@ def create_lesson_adjustment(lesson_form, is_edit=False):
     lesson_date = lesson_form.cleaned_data['lessonDate']
     original_lesson_date = lesson_form.cleaned_data['originalDate']
 
+    teacher = lesson_form.cleaned_data['teacher']
+    location = lesson_form.cleaned_data['location']
+
     start_datetime = datetime.combine(lesson_date, start_time)
     end_datetime = start_datetime + timedelta(minutes=lesson_duration)
 
-    # Pobranie obiektu Lesson
-
-    # Tworzenie świadomej daty i czasu dla start_datetime
     start_datetime = dj_timezone.make_aware(
         start_datetime,
         dj_timezone.get_current_timezone())
 
-    # Tworzenie świadomej daty i czasu dla end_datetime
     end_datetime = dj_timezone.make_aware(
         end_datetime,
         dj_timezone.get_current_timezone())
-    print('$$$ is edit', is_edit)
     if not is_edit:
         lesson = Lesson.objects.get(id=lesson_form.cleaned_data['lessonId'])
-        print('$$$ lesson', lesson, lesson.student)
 
         original_datetime = dj_timezone.make_aware(
             datetime.combine(original_lesson_date, lesson.start_time.time()),
@@ -260,7 +282,9 @@ def create_lesson_adjustment(lesson_form, is_edit=False):
             modified_start_time=start_datetime,
             modified_end_time=end_datetime,
             original_lesson_date=original_datetime,
-            status=lesson_form.cleaned_data['status']
+            status=lesson_form.cleaned_data['status'],
+            teacher_id=teacher,
+            location_id=location,
         )
     else:
         lesson_adjustment_id = lesson_form.cleaned_data['lessonId']
@@ -268,5 +292,7 @@ def create_lesson_adjustment(lesson_form, is_edit=False):
         lesson_adjustment.modified_start_time = start_datetime
         lesson_adjustment.modified_end_time = end_datetime
         lesson_adjustment.status = lesson_form.cleaned_data['status']
+        lesson_adjustment.teacher_id = teacher
+        lesson_adjustment.location_id = location
 
         lesson_adjustment.save()

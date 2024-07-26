@@ -206,7 +206,7 @@ class Location(models.Model):
 
     notes = GenericRelation(Note)
 
-    def get_full_address(self):
+    def get_full_name(self):
         return self.city + ", ul. " + self.street
 
     def get_model_name(self, language):

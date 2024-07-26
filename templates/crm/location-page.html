@@ -1,6 +1,6 @@
 {% extends 'base/base.html' %}
 {% load static %}
-{% block title %}{{ record.get_full_address }}{% endblock title %}
+{% block title %}{{ record.get_full_name }}{% endblock title %}
 {% block style %}
     <style>
     </style>
@@ -16,7 +16,7 @@
                     <li class="breadcrumb-item"><a href="/location"><i
                             class="ri-home-4-line mr-1 float-left"></i>Lokalizacje</a></li>
                     <li class="breadcrumb-item active"
-                        aria-current="page">{{ record.get_full_address }}
+                        aria-current="page">{{ record.get_full_name }}
                 </ol>
             </nav>
             <div>
