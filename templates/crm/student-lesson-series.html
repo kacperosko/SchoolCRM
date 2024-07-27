@@ -1,0 +1,58 @@
+{% extends 'base/base.html' %}
+{% block title %} Studenci {% endblock title %}
+{% load static %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header d-flex justify-content-between">
+            <div class="header-title">
+                <h4 class="card-title">Studenci</h4>
+            </div>
+            {% if perms.crm.add_student %}
+                <a href="/student/new" class="btn btn-primary rounded-pill font-size-12 align-content-center d-inline-flex">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                         stroke="currentColor" class="w-6 h-6 mr-1"  width="18">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z"></path>
+                    </svg>
+                    Dodaj Studenta
+                </a>
+            {% endif %}
+
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="datatable-students" class="table data-table table-striped table-bordered">
+                    <thead>
+                    <tr>
+                        <th>Imię Nazwisko</th>
+                        <th>Email</th>
+                        <th>Telefon</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for student in students %}
+                        <tr>
+                            <td>
+                                <a href="/student/{{ student.id }}">{{ student.get_full_name }}</a>
+                            </td>
+                            <td>{{ student.email }}</td>
+                            <td>{{ student.phone|default_if_none:"" }}</td>
+
+                        </tr>
+                    {% endfor %}
+
+                    </tbody>
+                    <tfoot>
+                    <tr>
+                        <th>Imię Nazwisko</th>
+                        <th>Email</th>
+                        <th>Telefon</th>
+                    </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
