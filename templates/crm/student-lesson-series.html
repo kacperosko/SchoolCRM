@@ -1,24 +1,22 @@
 {% extends 'base/base.html' %}
 {% block title %} Studenci {% endblock title %}
 {% load static %}
+{% load crm_tags %}
 
 {% block content %}
     <div class="card">
         <div class="card-header d-flex justify-content-between">
-            <div class="header-title">
-                <h4 class="card-title">Studenci</h4>
-            </div>
-            {% if perms.crm.add_student %}
-                <a href="/student/new" class="btn btn-primary rounded-pill font-size-12 align-content-center d-inline-flex">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                         stroke="currentColor" class="w-6 h-6 mr-1"  width="18">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z"></path>
-                    </svg>
-                    Dodaj Studenta
-                </a>
-            {% endif %}
-
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/student"><i
+                            class="ri-home-4-line mr-1 float-left"></i>Studenci</a></li>
+                    <li class="breadcrumb-item"><a href="/student/{{ student.id }}?tab=Lessons"><i
+                            class="ri-home-4-line mr-1 float-left"></i>{{ student.get_full_name }}</a></li>
+                    <li class="breadcrumb-item active"
+                        aria-current="page">Serie Lekcji
+                    </li>
+                </ol>
+            </nav>
         </div>
 
         <div class="card-body">
@@ -26,19 +24,30 @@
                 <table id="datatable-students" class="table data-table table-striped table-bordered">
                     <thead>
                     <tr>
-                        <th>Imię Nazwisko</th>
-                        <th>Email</th>
-                        <th>Telefon</th>
+                        <th>Opis</th>
+                        <th>Godzina</th>
+                        <th>Data Rozpoczęcia Serii</th>
+                        <th>Data Zakończenia Serii</th>
+                        <th>Powtarzanie</th>
+                        <th>Nauczyciel</th>
+                        <th>Lokalizacja</th>
+                        <th></th>
                     </tr>
                     </thead>
                     <tbody>
-                    {% for student in students %}
+                    {% for lesson in lessons %}
                         <tr>
+                            <td>{{ lesson.description }}</td>
+                            <td>{{ lesson.start_time.time }} - {{ lesson.end_time.time }}</td>
+                            <td>{{ lesson.start_time.date }} ({{ lesson.start_time.date.weekday|get_weekday }})</td>
+                            <td>{{ lesson.series_end_date|default_if_none:"Brak" }}</td>
+                            <td>{% if lesson.is_series %}Co tydzień{% else %}Nigdy{% endif %}</td>
+                            <td>{{ lesson.teacher.get_full_name }}</td>
+                            <td>{{ lesson.location.get_full_name }}</td>
                             <td>
-                                <a href="/student/{{ student.id }}">{{ student.get_full_name }}</a>
+                                <button type="button" class="btn bg-primary-light p-0 px-1" onclick="window.location.href = '/lesson/edit/{{ lesson.id }}'">Edytuj</button>
+                                <button type="button" class="btn bg-danger-light p-0 px-1" onclick="window.location.href = '/delete/{{ lesson.id }}'">Usuń</button>
                             </td>
-                            <td>{{ student.email }}</td>
-                            <td>{{ student.phone|default_if_none:"" }}</td>
 
                         </tr>
                     {% endfor %}
@@ -46,9 +55,14 @@
                     </tbody>
                     <tfoot>
                     <tr>
-                        <th>Imię Nazwisko</th>
-                        <th>Email</th>
-                        <th>Telefon</th>
+{#                        <th>Opis</th>#}
+{#                        <th>Godzina</th>#}
+{#                        <th>Data Rozpoczęcia Serii</th>#}
+{#                        <th>Data Zakończenia Serii</th>#}
+{#                        <th>Powtarzanie</th>#}
+{#                        <th>Nauczyciel</th>#}
+{#                        <th>Lokalizacja</th>#}
+{#                        <th></th>#}
                     </tr>
                     </tfoot>
                 </table>
