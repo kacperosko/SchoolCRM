@@ -24,7 +24,7 @@ def user_login(request):
                 next_url = request.GET.get("next", "/student")
                 return redirect(next_url)
             else:
-                message = 'Nazwa użytkownika lub hasło są niepoprawne'
+                message = 'Nazwa u\u017Cytkownika lub has\u0142o s\u0105 niepoprawne'
                 print(message)
                 sleep(4)
         else:

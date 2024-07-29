@@ -4,7 +4,7 @@ from django.utils.safestring import mark_safe
 import calendar
 
 register = template.Library()
-WEEKDAYS_NAMES = ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota', 'Niedziela']
+WEEKDAYS_NAMES = ['Poniedzia\u0142ek', 'Wtorek', '\u015Aroda', 'Czwartek', 'Pi\u0105tek', 'Sobota', 'Niedziela']
 
 
 @register.filter
@@ -18,9 +18,9 @@ def get_weekday(index):
 
 
 MONTH_NAMES = [
-    "Styczeń", "Luty", "Marzec", "Kwiecień",
-    "Maj", "Czerwiec", "Lipiec", "Sierpień",
-    "Wrzesień", "Październik", "Listopad", "Grudzień"
+    "Stycze\u0144", "Luty", "Marzec", "Kwiecie\u0144",
+    "Maj", "Czerwiec", "Lipiec", "Sierpie\u0144",
+    "Wrzesie\u0144", "Pa\u017Adziernik", "Listopad", "Grudzie\u0144"
 ]
 
 

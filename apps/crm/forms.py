@@ -19,7 +19,7 @@ class PersonForm(forms.ModelForm):
         fields = "__all__"
         exclude = ('id',)
 
-    first_name = forms.CharField(label='Imię')
+    first_name = forms.CharField(label='Imi\u0119')
     last_name = forms.CharField(label='Nazwisko')
     email = forms.EmailField(required=False, label='Email')
     phone = forms.CharField(required=False, label='Telefon', max_length=16)
@@ -35,7 +35,7 @@ class StudentForm(forms.ModelForm):
         fields = "__all__"
         exclude = ('id', 'created_by', 'modified_by', 'created_date', 'modified_date')
 
-    first_name = forms.CharField(label='Imię')
+    first_name = forms.CharField(label='Imi\u0119')
     last_name = forms.CharField(label='Nazwisko')
     email = forms.EmailField(required=False, label='Email')
     phone = forms.CharField(required=False, label='Telefon', max_length=16)
@@ -127,20 +127,20 @@ class LessonForm(forms.ModelForm):
 
     @staticmethod
     def get_help_text():
-        return "Jeśli chcesz edytować datę lekcji w serii musisz ustawić datę zakończenia obecnej serii i utworzyć nową serię z inną datą"
+        return "Je\u015Bli chcesz edytowa\u0107 dat\u0119 lekcji w serii musisz ustawi\u0107 dat\u0119 zako\u0144czenia obecnej serii i utworzy\u0107 now\u0105 seri\u0119 z inn\u0105 dat\u0105"
 
     class Meta:
         model = Lesson
         fields = "__all__"
         exclude = ('id',)
 
-    start_time = forms.DateTimeField(label='Data rozpoczęcia', disabled=True,
+    start_time = forms.DateTimeField(label='Data rozpocz\u0119cia', disabled=True,
                                      widget=forms.DateInput(attrs={'type': 'datetime-local', 'class': 'mt--2'}))
-    end_time = forms.DateTimeField(label='Data zakończenia', disabled=True,
+    end_time = forms.DateTimeField(label='Data zako\u0144czenia', disabled=True,
                                    widget=forms.DateInput(attrs={'type': 'datetime-local', 'class': 'mt--2'}))
-    is_series = forms.BooleanField(label='Powtarzanie co tydzień', disabled=True, required=False)
+    is_series = forms.BooleanField(label='Powtarzanie co tydzie\u0144', disabled=True, required=False)
     description = forms.CharField(label='Opis')
-    series_end_date = forms.DateTimeField(label='Data zakończenia serii', required=False,
+    series_end_date = forms.DateTimeField(label='Data zako\u0144czenia serii', required=False,
                                           widget=forms.DateInput(attrs={'type': 'date', 'class': 'mt--2'}))
 
     def clean(self):
@@ -152,7 +152,7 @@ class LessonForm(forms.ModelForm):
 
 
         if series_end_date and end_time and series_end_date < end_time:
-            validation_errors['series_end_date'] = "Data zakończenia serii nie może być wcześniejsza niż data zakończenia"
+            validation_errors['series_end_date'] = "Data zako\u0144czenia serii nie mo\u017Ce by\u0107 wcze\u015Bniejsza ni\u017C data zako\u0144czenia"
 
         if len(validation_errors) > 0:
             raise ValidationError(validation_errors)
@@ -180,7 +180,7 @@ class UserForm(forms.ModelForm):
         exclude = ('id', 'password', 'is_active', 'is_staff', 'is_superuser', 'staff', 'admin', 'user_permissions', 'last_login', 'groups')
 
     email = forms.CharField(label='Email', disabled=True)
-    first_name = forms.CharField(label='Imię')
+    first_name = forms.CharField(label='Imi\u0119')
     last_name = forms.CharField(label='Nazwisko')
     phone = forms.CharField(label='Telefon', max_length=20, required=False)
     avatar_color = forms.CharField(label='Kolor awatara', widget=forms.TextInput(attrs={'type': 'color'}))

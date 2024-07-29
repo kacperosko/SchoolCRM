@@ -40,7 +40,7 @@
                             <td>{{ lesson.description }}</td>
                             <td>{{ lesson.start_time.time }} - {{ lesson.end_time.time }}</td>
                             <td>{{ lesson.start_time.date }} ({{ lesson.start_time.date.weekday|get_weekday }})</td>
-                            <td>{{ lesson.series_end_date|default_if_none:"Brak" }}</td>
+                            <td>{{ lesson.series_end_date|default:"Brak" }}</td>
                             <td>{% if lesson.is_series %}Co tydzień{% else %}Nigdy{% endif %}</td>
                             <td>{{ lesson.teacher.get_full_name }}</td>
                             <td>{{ lesson.location.get_full_name }}</td>

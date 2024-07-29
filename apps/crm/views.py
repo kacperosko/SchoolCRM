@@ -50,7 +50,7 @@ def check_permission(perm_name):
         @wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):
             if not request.user.has_perm(perm_name):
-                return custom_404(request, "Nie masz odpowiednich uprawnień")
+                return custom_404(request, "Nie masz odpowiednich uprawnie\u0144")
             return view_func(request, *args, **kwargs)
 
         return _wrapped_view
@@ -195,10 +195,10 @@ class StudentPage(View):
                     lesson_date = dj_timezone.make_aware(
                         datetime.combine(form.cleaned_data['lessonDate'], datetime.min.time()))
 
-                    messages.success(request, 'Zaktualizowano lekcje pomyślnie!')
+                    messages.success(request, 'Zaktualizowano lekcje pomy\u015Blnie!')
 
                 else:
-                    messages.error(request, f'Błąd podczas zapisywania: {form.errors}')
+                    messages.error(request, f'B\u0142\u0105d podczas zapisywania: {form.errors}')
                 return redirect(
                     f'/student/{student_id}?tab={tab_name}&opened_months={opened_months}&selected_year={selected_year}')
             elif 'create_lesson_form_submit' in request.POST:
@@ -226,13 +226,13 @@ class StudentPage(View):
                                                    description=description, series_end_date=end_series,
                                                    location_id=location_id)
                     lesson_msg = 'Seria lekcji' if is_series else 'Lekcja'
-                    messages.success(request, f'{lesson_msg} dodana pomyślnie!')
+                    messages.success(request, f'{lesson_msg} dodana pomy\u015Blnie!')
                 else:
-                    messages.error(request, f'Bład podczas zapisywania: {form.errors}')
+                    messages.error(request, f'B\u0142ad podczas zapisywania: {form.errors}')
                 return redirect(
                     f'/student/{student_id}?tab={tab_name}&opened_months={opened_months}&selected_year={selected_year}')
             else:
-                messages.error(request, f'Nieobsługiwany formularz: {request.POST}')
+                messages.error(request, f'Nieobs\u0142ugiwany formularz: {request.POST}')
                 return render(request, "crm/student-page.html", context)
 
     @staticmethod
@@ -374,7 +374,7 @@ def upsert_note(request):
         note_id = request.POST.get("note_id")
 
         if not content:
-            message = "Treść nie może być pusta"
+            message = "Tre\u015B\u0107 nie mo\u017Ce by\u0107 pusta"
             raise ValueError(message)
 
         if note_id:  # Update existing note
@@ -406,7 +406,7 @@ def upsert_note(request):
                     created_by=request.user
                 )
             except ContentType.DoesNotExist:
-                message = "Nie znaleziono typu zawartości"
+                message = "Nie znaleziono typu zawarto\u015Bci"
                 raise
             except Exception as e:
                 message = str(e)
@@ -436,14 +436,14 @@ def delete_note(request):
     try:
         note_id = request.POST.get("note_id")
         if not note_id:
-            message = "Nie można odczytać notatki"
+            message = "Nie mo\u017Cna odczyta\u0107 notatki"
             raise ValueError(message)
 
         try:
             note = Note.objects.get(id=note_id)
             note.delete()
             status = True
-            message = "Notatka została usunięta"
+            message = "Notatka zosta\u0142a usuni\u0119ta"
         except Note.DoesNotExist:
             message = "Notatka nie istnieje"
         except Exception as e:
@@ -530,7 +530,7 @@ def watch_record(request, mode, record_id):
 
     model_name = get_model_by_prefix(record_id[:3])
     if not model_name:
-        message = 'Ten rekord nie obsługuje tej funkcji'
+        message = 'Ten rekord nie obs\u0142uguje tej funkcji'
         return JsonResponse({'status': status, 'message': message})
 
     model_name = model_name.lower()
@@ -555,12 +555,12 @@ def watch_record(request, mode, record_id):
                 message = 'Rekord obserwacji nie istnieje'
                 return JsonResponse({'status': status, 'message': message})
         else:
-            message = 'Nieprawidłowy tryb'
+            message = 'Nieprawid\u0142owy tryb'
             return JsonResponse({'status': status, 'message': message})
 
         status = True
     except ContentType.DoesNotExist:
-        message = 'Nieprawidłowy typ zawartości'
+        message = 'Nieprawid\u0142owy typ zawarto\u015Bci'
     except Exception as e:
         message = str(e)
 
@@ -648,7 +648,7 @@ def delete_record(request, record_id):
     model_name = get_model_by_prefix(record_id[:3])
     if model_name is not None:
         if not request.user.has_perm(f'crm.delete_{model_name.lower()}'):
-            messages.error(request, 'Brak uprawnień do usunięcia rekordu')
+            messages.error(request, 'Brak uprawnie\u0144 do usuni\u0119cia rekordu')
             return redirect(f'/{model_name.lower()}/{record_id}')
 
         model_object = get_model_object_by_prefix(record_id[:3])
@@ -675,13 +675,13 @@ def delete_record(request, record_id):
 
         if request.method == 'POST':
             record.delete()
-            messages.success(request, 'Rekord usunięty')
+            messages.success(request, 'Rekord usuni\u0119ty')
             if redirect_url:
                 return redirect(redirect_url)
             else:
                 return redirect(f'/{model_name.lower()}')
     else:
-        return custom_404(request, "Nie można usunąć wybranego rekordu")
+        return custom_404(request, "Nie mo\u017Cna usun\u0105\u0107 wybranego rekordu")
 
 
 def upsert_record(request, model_name, record_id=None):
@@ -700,7 +700,7 @@ def upsert_record(request, model_name, record_id=None):
         form_class = get_form_class(form_name)
     except Exception as e:
         print("ERROR:", e)
-        messages.error(request, "Wystąpił błąd podczas ładowania formularza.")
+        messages.error(request, "Wyst\u0105pi\u0142 b\u0142\u0105d podczas \u0142adowania formularza.")
         return redirect(f'/{model_name.lower()}/{record_id}' if record_id else f'/{model_name.lower()}')
 
     context['title'] = form_class.get_name()
@@ -709,7 +709,7 @@ def upsert_record(request, model_name, record_id=None):
 
     if record_id:
         if not request.user.has_perm(f'crm.change_{model_name.lower()}'):
-            messages.error(request, 'Brak uprawnień do edytowania rekordu')
+            messages.error(request, 'Brak uprawnie\u0144 do edytowania rekordu')
             return redirect(f'/{model_name.lower()}/{record_id}')
 
         model_instance = get_model_object_by_prefix(record_id[:3])
@@ -720,7 +720,7 @@ def upsert_record(request, model_name, record_id=None):
             return redirect(f'/{model_name.lower()}')
     else:
         if not request.user.has_perm(f'crm.add_{model_name.lower()}'):
-            messages.error(request, 'Brak uprawnień do utworzenia rekordu')
+            messages.error(request, 'Brak uprawnie\u0144 do utworzenia rekordu')
             return redirect(f'/{model_name.lower()}')
 
     if request.method == 'GET':
@@ -734,7 +734,7 @@ def upsert_record(request, model_name, record_id=None):
         if form.is_valid():
             try:
                 saved_instance = form.save()
-                messages.success(request, 'Rekord zapisany pomyślnie')
+                messages.success(request, 'Rekord zapisany pomy\u015Blnie')
                 redirect_url = (
                     record.redirect_after_edit()
                     if record and callable(getattr(record, 'redirect_after_edit', None))
@@ -742,7 +742,7 @@ def upsert_record(request, model_name, record_id=None):
                 )
                 return redirect(redirect_url)
             except Exception as e:
-                messages.error(request, f'Wystąpił błąd podczas zapisywania rekordu: {e}')
+                messages.error(request, f'Wyst\u0105pi\u0142 b\u0142\u0105d podczas zapisywania rekordu: {e}')
         else:
             context['message'] = form.errors
 

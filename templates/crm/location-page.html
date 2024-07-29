@@ -80,23 +80,23 @@
                         <div class=" row align-items-center">
                             <div class="form-group col-sm-6">
                                 <label for="location_name">Nazwa:</label>
-                                <p class="pb-1 field">{{ record.name|default_if_none:"" }}</p>
+                                <p class="pb-1 field">{{ record.name|default:"-" }}</p>
                             </div>
                             <div class="form-group col-sm-6">
                                 <label for="location_country">Kraj:</label>
-                                <p class="pb-1 field">{{ record.country|default_if_none:"" }}</p>
+                                <p class="pb-1 field">{{ record.country|default:"-" }}</p>
                             </div>
                             <div class="form-group col-sm-6">
                                 <label for="location_city">Miasto:</label>
-                                <p class="pb-1 field">{{ record.city|default_if_none:"" }}</p>
+                                <p class="pb-1 field">{{ record.city|default:"-" }}</p>
                             </div>
                             <div class="form-group col-sm-6">
                                 <label for="location_street">Ulica:</label>
-                                <p class="pb-1 field">{{ record.street|default_if_none:"" }}</p>
+                                <p class="pb-1 field">{{ record.street|default:"-" }}</p>
                             </div>
                             <div class="form-group col-sm-6">
                                 <label for="location_postal_code">Kod pocztowy:</label>
-                                <p class="pb-1 field">{{ record.postal_code|default_if_none:"" }}</p>
+                                <p class="pb-1 field">{{ record.postal_code|default:"-" }}</p>
                             </div>
                         </div>
                     </form>

@@ -7,11 +7,11 @@ from django.db.models import Q
 
 class LessonHandler:
     week_days_pl = {
-        0: "Poniedziałek",
+        0: "Poniedzia\u0142ek",
         1: "Wtorek",
-        2: "Środa",
+        2: "\u015Aroda",
         3: "Czwartek",
-        4: "Piątek",
+        4: "Pi\u0105tek",
         5: "Sobota",
         6: "Niedziela"
     }
@@ -105,6 +105,7 @@ def get_lessons_for_teacher_in_months(teacher_id, year):
 
     return {'lessons': lessons, 'adjustments': adjustments}
 
+
 def get_lessons_for_location_in_months(location_id, year):
     lessons = Lesson.objects.filter(
         Q(location_id=location_id) &
@@ -143,7 +144,6 @@ def generate_lessons(lessons, adjustments, year):
     for month in all_months:
         lessons_count_in_months[month]
 
-    # Uwzględniamy lekcje serii
     for lesson in lessons:
         if lesson.is_series:
             current_date = lesson.start_time.date()
@@ -162,12 +162,7 @@ def generate_lessons(lessons, adjustments, year):
             else:
                 end_date = datetime(year, 12, 31).date()
 
-            print('current_date', current_date)
-            print('current_date_time', current_date_time)
-            print('end_date', end_date)
-            # Iterujemy po dniach od początku serii do końca roku
             while current_date <= end_date:
-                # Sprawdzamy, czy obecny dzień odpowiada dniu tygodnia lekcji
                 if current_date.weekday() == lesson.start_time.weekday():
                     month = current_date.month
                     status = Statutes.PLANNED
@@ -184,7 +179,7 @@ def generate_lessons(lessons, adjustments, year):
                         location=lesson.location.get_full_name()
                     )
 
-                # Przechodzimy do następnego tygodnia
+                # Przechodzimy do nast\u0119pnego tygodnia
                 current_date += timedelta(days=7)
                 current_date_time += timedelta(days=7)
         elif lesson.start_time.year == year:
@@ -222,11 +217,9 @@ def generate_lessons(lessons, adjustments, year):
         status = Statutes.PLANNED
 
         if adjustment.modified_start_time.year == year:
-            # if adjustment.status == Statutes.NIEOBECNOSC:
             lessons_count_in_months[month_modified_lesson][adjustment.status] += 1
             status = adjustment.status
-            # else:
-            #     lessons_count_in_months[month_modified_lesson][Statutes.PLANNED] += 1
+            
             lessons_count_in_months[month_modified_lesson]['Lessons'][
                 generate_lesson_dict_key(adjustment.modified_start_time, 'adj' + str(adjustment.id))] = LessonHandler(
                 start_date=adjustment.modified_start_time.date(),

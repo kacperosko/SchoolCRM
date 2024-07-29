@@ -24,7 +24,6 @@ SESSION_COOKIE_HTTPONLY = False
 SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
 
-# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_SSL_REDIRECT = False
 
 INSTALLED_APPS = [
@@ -38,7 +37,6 @@ INSTALLED_APPS = [
     # apps
     'apps.crm',
     'apps.authentication',
-    # 'rest_framework',
 ]
 
 AUTH_USER_MODEL = 'authentication.User'

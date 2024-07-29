@@ -38,8 +38,8 @@
                             <td>
                                 <a href="/person/{{ person.id }}">{{ person.get_full_name }}</a>
                             </td>
-                            <td>{{ person.email|default_if_none:"-" }}</td>
-                            <td>{{ person.phone|default_if_none:"-" }}</td>
+                            <td>{{ person.email|default:"-" }}</td>
+                            <td>{{ person.phone|default:"-" }}</td>
                             <td>{{ person.students }}</td>
 
                         </tr>

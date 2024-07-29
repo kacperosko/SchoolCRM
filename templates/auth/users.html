@@ -39,8 +39,8 @@
                                 <a href="/user/{{ user.id }}">{{ user.get_full_name }}</a>
                             </td>
                             <td>{{ user.email }}</td>
-                            <td>{{ user.phone|default_if_none:"-" }}</td>
-                            <td>{{ user.last_login|default_if_none:"-" }}</td>
+                            <td>{{ user.phone|default:"-" }}</td>
+                            <td>{{ user.last_login|default:"-" }}</td>
                         </tr>
                     {% endfor %}
 

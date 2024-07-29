@@ -37,8 +37,8 @@
                             <td>
                                 <a href="/student/{{ student.id }}">{{ student.get_full_name }}</a>
                             </td>
-                            <td>{{ student.email }}</td>
-                            <td>{{ student.phone|default_if_none:"" }}</td>
+                            <td>{{ student.email|default:"-" }}</td>
+                            <td>{{ student.phone|default:"-" }}</td>
 
                         </tr>
                     {% endfor %}

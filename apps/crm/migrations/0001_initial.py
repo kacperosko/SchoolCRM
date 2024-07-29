@@ -108,7 +108,7 @@ class Migration(migrations.Migration):
                 ('original_lesson_date', models.DateTimeField(default=django.utils.timezone.now)),
                 ('modified_start_time', models.DateTimeField()),
                 ('modified_end_time', models.DateTimeField()),
-                ('status', models.CharField(blank=True, choices=[('Zaplanowana', 'Zaplanowana'), ('Nieobecność', 'Nieobecność'), ('Odwołana - nauczyciel', 'Odwołana - nauczyciel'), ('Odwołana - 24h przed', 'Odwołana - 24h przed')], max_length=64, null=True)),
+                ('status', models.CharField(blank=True, choices=[('Zaplanowana', 'Zaplanowana'), ('Nieobecno\u015B\u0107', 'Nieobecno\u015B\u0107'), ('Odwo\u0142ana - nauczyciel', 'Odwo\u0142ana - nauczyciel'), ('Odwo\u0142ana - 24h przed', 'Odwo\u0142ana - 24h przed')], max_length=64, null=True)),
                 ('comments', models.CharField(blank=True, max_length=255, null=True)),
                 ('lesson', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='lesson_lesson_relationship', to='crm.lesson')),
             ],

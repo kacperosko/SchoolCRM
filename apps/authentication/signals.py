@@ -36,8 +36,8 @@ def record_password_change(sender, instance, created, **kwargs):
                     print("zmieniono haslo, leci mail")
                     send_mail(
                         subject="Twoje haslo zostalo zmienione",
-                        message=f"Hej {user.first_name}, dostajesz tego maila ponieważ"
-                                f" Twoje hasło na {SITE_URL} zostało zmienione.\nJeśli nie zmieniałeś/aś hasła niezwłocznie skontaktuj się z administratorem strony",
+                        message=f"Hej {user.first_name}, dostajesz tego maila poniewa\u017C"
+                                f" Twoje has\u0142o na {SITE_URL} zosta\u0142o zmienione.\nJe\u015Bli nie zmienia\u0142e\u015B/a\u015B has\u0142a niezw\u0142ocznie skontaktuj si\u0119 z administratorem strony",
                         from_email=EMAIL_HOST_USER,
                         recipient_list=[user.email],
                         fail_silently=False,

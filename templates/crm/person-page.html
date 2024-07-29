@@ -59,19 +59,19 @@
                         <div class=" row align-items-center">
                             <div class="form-group col-sm-6">
                                 <label for="student_first_name">Imię:</label>
-                                <p class="pb-1 field">{{ person.first_name|default_if_none:"" }}</p>
+                                <p class="pb-1 field">{{ person.first_name|default:"-" }}</p>
                             </div>
                             <div class="form-group col-sm-6">
                                 <label for="student_last_name">Nazwisko:</label>
-                                <p class="pb-1 field">{{ person.last_name|default_if_none:"" }}</p>
+                                <p class="pb-1 field">{{ person.last_name|default:"-" }}</p>
                             </div>
                             <div class="form-group col-sm-6">
                                 <label for="student_email">Email:</label>
-                                <p class="pb-1 field">{{ person.email|default_if_none:"" }}</p>
+                                <p class="pb-1 field">{{ person.email|default:"-" }}</p>
                             </div>
                             <div class="form-group col-sm-6">
                                 <label for="student_phone">Telefon:</label>
-                                <p class="pb-1 field">{{ person.phone|default_if_none:"" }}</p>
+                                <p class="pb-1 field">{{ person.phone|default:"-" }}</p>
                             </div>
                         </div>
                     </form>

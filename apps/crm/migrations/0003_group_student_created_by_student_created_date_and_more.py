@@ -48,7 +48,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='lessonadjustment',
             name='status',
-            field=models.CharField(blank=True, choices=[('Zaplanowana', 'Zaplanowana'), ('Nieobecnosc', 'Nieobecność'), ('Odwolana - nauczyciel', 'Odwołana - nauczyciel'), ('Odwolana - 24h przed', 'Odwołana - 24h przed')], max_length=64, null=True),
+            field=models.CharField(blank=True, choices=[('Zaplanowana', 'Zaplanowana'), ('Nieobecnosc', 'Nieobecno\u015B\u0107'), ('Odwolana - nauczyciel', 'Odwo\u0142ana - nauczyciel'), ('Odwolana - 24h przed', 'Odwo\u0142ana - 24h przed')], max_length=64, null=True),
         ),
         migrations.AlterField(
             model_name='student',

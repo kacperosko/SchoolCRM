@@ -282,9 +282,9 @@ class Statutes:
 
 LESSON_STATUTES = (
     ('Zaplanowana', 'Zaplanowana'),
-    ('Nieobecnosc', 'Nieobecność'),
-    ('Odwolana - nauczyciel', 'Odwołana - nauczyciel'),
-    ('Odwolana - 24h przed', 'Odwołana - 24h przed')
+    ('Nieobecnosc', 'Nieobecno\u015B\u0107'),
+    ('Odwolana - nauczyciel', 'Odwo\u0142ana - nauczyciel'),
+    ('Odwolana - 24h przed', 'Odwo\u0142ana - 24h przed')
 )
 
 

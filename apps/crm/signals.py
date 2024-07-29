@@ -39,7 +39,7 @@ def create_notifications(sender, instance, created, **kwargs):
             notifications.append(
                 Notification(
                     user=watch_record.user,
-                    message=f'{user.get_full_name()} zaktualizował/a notatkę dla {instance.content_object} : {instance.content[:16]}{dots}',
+                    message=f'{user.get_full_name()} zaktualizowa\u0142/a notatk\u0119 dla {instance.content_object} : {instance.content[:16]}{dots}',
                     content_object=watch_record.content_object,
                     object_id=watch_record.object_id
                 )
