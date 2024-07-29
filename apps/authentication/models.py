@@ -2,6 +2,33 @@ import datetime
 from random import random
 from django.db import models
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, Group, PermissionsMixin
+import uuid
+
+
+class PrefixedUUIDField(models.CharField):
+    def __init__(self, *args, **kwargs):
+        kwargs['max_length'] = kwargs.get('max_length', 39)  # 3 (prefix) + 29 (UUID) = 32
+        kwargs['unique'] = True
+        super().__init__(*args, **kwargs)
+
+    def contribute_to_class(self, cls, name, **kwargs):
+        super().contribute_to_class(cls, name, **kwargs)
+        self.model = cls
+        self.prefix = model_name_prefix(cls.__name__)
+
+    def pre_save(self, model_instance, add):
+        if add and not getattr(model_instance, self.attname):
+            value = f"{self.prefix}{uuid.uuid4()}"
+            setattr(model_instance, self.attname, value)
+            return value
+        return super().pre_save(model_instance, add)
+
+
+def model_name_prefix(model_name):
+    prefixes = {
+        'User': '0US',
+    }
+    return prefixes.get(model_name, '0EX')
 
 
 class UserManager(BaseUserManager):
@@ -50,6 +77,8 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
+    id = PrefixedUUIDField(primary_key=True)
+
     email = models.EmailField(verbose_name='email', max_length=255, unique=True)
 
     first_name = models.CharField(max_length=255, blank=True, null=True)
@@ -68,14 +97,14 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def get_full_name(self):
         # The user is identified by their email address
-        return self.first_name + " " + self.last_name
+        return str(self.first_name) + " " + str(self.last_name)
 
     def get_short_name(self):
         # The user is identified by their email address
         return self.email
 
     def __str__(self):
-        return self.first_name + " " + self.last_name
+        return str(self.first_name) + " " + str(self.last_name)
 
     def has_perm(self, perm, obj=None):
         """Does the user have a specific permission?"""

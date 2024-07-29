@@ -1,5 +1,5 @@
 {% extends 'base/base.html' %}
-{% block title %} Studenci {% endblock title %}
+{% block title %} Serie Lekcji {% endblock title %}
 {% load static %}
 {% load crm_tags %}
 
@@ -45,8 +45,12 @@
                             <td>{{ lesson.teacher.get_full_name }}</td>
                             <td>{{ lesson.location.get_full_name }}</td>
                             <td>
-                                <button type="button" class="btn bg-primary-light p-0 px-1" onclick="window.location.href = '/lesson/edit/{{ lesson.id }}'">Edytuj</button>
-                                <button type="button" class="btn bg-danger-light p-0 px-1" onclick="window.location.href = '/delete/{{ lesson.id }}'">Usuń</button>
+                                {% if perms.crm.change_lesson %}
+                                    <button type="button" class="btn bg-primary-light p-0 px-1" onclick="window.location.href = '/lesson/edit/{{ lesson.id }}'">Edytuj</button>
+                                {% endif %}
+                                {% if perms.crm.delete_lesson %}
+                                    <button type="button" class="btn bg-danger-light p-0 px-1" onclick="window.location.href = '/delete/{{ lesson.id }}'">Usuń</button>
+                                {% endif %}
                             </td>
 
                         </tr>

@@ -93,13 +93,12 @@ function generateTable(data) {
         row.appendChild(zaplanowaneCell);
 
 
-
         var odwolaneTeacherCell = document.createElement('td');
         odwolaneTeacherCell.classList.add('text-center');
         odwolaneTeacherCell.textContent = statutes['Odwolana - nauczyciel'];
         row.appendChild(odwolaneTeacherCell);
 
-         var odwolane24hCell = document.createElement('td');
+        var odwolane24hCell = document.createElement('td');
         odwolane24hCell.classList.add('text-center');
         odwolane24hCell.textContent = statutes["Odwolana - 24h przed"];
         row.appendChild(odwolane24hCell);
@@ -114,7 +113,7 @@ function generateTable(data) {
         // Dodanie szczeg\u00F3\u0142\u00F3w
         var detailsRow = document.createElement('tr');
         var detailsCell = document.createElement('td');
-        detailsCell.setAttribute('colspan', '5');
+        detailsCell.setAttribute('colspan', '7');
         detailsCell.classList.add("p-0");
 
         var detailsCollapse = document.createElement('div');
@@ -127,17 +126,16 @@ function generateTable(data) {
 
         var innerTbody = document.createElement('tbody');
 
-        // Generowanie lekcji
-        if (statutes['Lessons']) {
+        if (!jQuery.isEmptyObject(statutes['Lessons'])) {
             Object.entries(statutes['Lessons']).forEach(function ([key, lesson]) {
                 const lessonRow = document.createElement('tr');
 
                 const lessonDateCell = document.createElement('td');
                 lessonDateCell.textContent = lesson['start_date'] + ' (' + lesson['weekday'] + ')';
 
-                if (lesson['original_date'] !== lesson['start_date'] && lesson['is_adjustment']){
+                if (lesson['original_date'] !== lesson['start_date'] && lesson['is_adjustment']) {
                     lessonDateCell.textContent += ' (przeniesione z ' + lesson['original_date'] + ' ' + lesson['original_time'] + ')';
-                } else if (lesson['original_time'] !== lesson['start_time'] && lesson['is_adjustment'] ){
+                } else if (lesson['original_time'] !== lesson['start_time'] && lesson['is_adjustment']) {
                     lessonDateCell.textContent += ' (przeniesione z ' + lesson['original_time'] + ')';
                 }
 
@@ -150,10 +148,7 @@ function generateTable(data) {
                         lessonRow.classList.add("bg-orange-light");
                     }
                 }
-                //
-                // if (lesson['original_date']) {
-                //     lessonDateCell.textContent += ' (przeniesione z ' + lesson['original_date'] + ')';
-                // }
+
                 lessonRow.appendChild(lessonDateCell);
 
                 var lessonTimeCell = document.createElement('td');
@@ -192,6 +187,40 @@ function generateTable(data) {
                 teacherCell.append(lesson['teacher']);
                 lessonRow.appendChild(teacherCell);
 
+                const locationCell = document.createElement('td');
+
+                const locationSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                const locationPath1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                const locationPath2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+
+                locationSvg.setAttribute('width', '20px');
+                locationSvg.classList.add('svg-icon');
+                locationSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+                locationSvg.setAttribute('fill', 'none');
+                locationSvg.setAttribute('viewBox', '0 0 24 24');
+                locationSvg.setAttribute('stroke', 'currentColor');
+
+                locationPath1.setAttribute('stroke-linecap', 'round');
+                locationPath1.setAttribute('stroke-linejoin', 'round');
+                locationPath1.setAttribute('d', 'M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z');
+
+                locationPath2.setAttribute('stroke-linecap', 'round');
+                locationPath2.setAttribute('stroke-linejoin', 'round');
+                locationPath2.setAttribute('d', 'M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z');
+
+                locationSvg.appendChild(locationPath1);
+                locationSvg.appendChild(locationPath2);
+
+                locationSvg.setAttribute('data-content', lesson['location']);
+                locationSvg.setAttribute('data-placement', 'bottom');
+                locationSvg.setAttribute('data-trigger', 'hover');
+                locationSvg.setAttribute('data-toggle', 'popover');
+                locationSvg.setAttribute('data-html', 'true');
+                $(locationSvg).popover();
+
+                locationCell.append(locationSvg)
+                lessonRow.appendChild(locationCell);
+
                 var lessonStatusCell = document.createElement('td');
                 lessonStatusCell.textContent = lesson['status'];
                 lessonRow.appendChild(lessonStatusCell);
@@ -212,11 +241,9 @@ function generateTable(data) {
                 lessonRow.appendChild(editCell);
 
 
-
                 innerTbody.appendChild(lessonRow);
             });
         } else {
-            // Brak lekcji
             var noLessonsRow = document.createElement('tr');
             noLessonsRow.classList.add('bg-light', 'text-center');
 

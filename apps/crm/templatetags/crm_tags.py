@@ -4,11 +4,17 @@ from django.utils.safestring import mark_safe
 import calendar
 
 register = template.Library()
+WEEKDAYS_NAMES = ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota', 'Niedziela']
 
 
 @register.filter
 def weekdays(value):
-    return ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota', 'Niedziela']
+    return WEEKDAYS_NAMES
+
+
+@register.filter
+def get_weekday(index):
+    return WEEKDAYS_NAMES[index]
 
 
 MONTH_NAMES = [
@@ -81,4 +87,3 @@ def get_model_name(obj, language):
     if hasattr(obj, 'get_model_name'):
         return obj.get_model_name(language)
     return obj.__class__.__name__
-

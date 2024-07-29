@@ -13,14 +13,12 @@
             }
         {% endfor %}
 
-        #initial_{{ selected_teacher.id }}.initialspage:before {
-            background: {{ selected_teacher.avatar_color }} !important;
-            margin-left: -14px;
-        }
-
-        .teachers-selector:first-child {
-            margin-left: 1px !important;
-        }
+        {% if selected_record|get_model_name:'en' == 'User' %}
+            #initial_{{ selected_record.id }}.initialspage:before {
+                background: {{ selected_record.avatar_color }} !important;
+                margin-left: -14px;
+            }
+        {% endif %}
 
         .dropdown-toggle::after {
             position: absolute;
@@ -101,7 +99,7 @@
                                                   d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"></path>
                                             <path stroke-linecap="round" stroke-linejoin="round"
                                                   d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"></path>
-                                        </svg>
+                                    </svg>
                                 {% endif %}
                                 <span class="ml-2 font-size-16">{{ selected_record.get_full_name }}</span>
                             </span>
@@ -112,7 +110,7 @@
                             </a>
                             {% for teacher in teachers %}
                                 <a class="dropdown-item user-item"
-                                   onclick="showByTeacher('{{ teacher.id }}')">
+                                   onclick="showByRecord('{{ teacher.id }}')">
                                     <span id="initial_{{ teacher.id }}"
                                           data-letters="{{ teacher.get_full_name|initials }}"
                                           class="initialssmall initialspage mx-auto"></span>
@@ -124,7 +122,7 @@
                             </a>
                             {% for location in locations %}
                                 <a class="dropdown-item user-item pl-0"
-                                   onclick="showByLocation('{{ location.id }}')">
+                                   onclick="showByRecord('{{ location.id }}')">
                                     <span class="location_icon bg-skyblue-light">
                                         <svg width="20px" class="svg-icon" xmlns="http://www.w3.org/2000/svg"
                                              fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -144,13 +142,6 @@
             <div id="calendar-container" class="rm-weekly-schedule">
                 <div class="hour-labels">
                     <div class="hour-label" style="height: 50px;"></div>
-                    {#                    <div class="hour-label" style="height: 40px;">0:00</div>#}
-                    {#                    <div class="hour-label" style="height: 40px;">1:00</div>#}
-                    {#                    <div class="hour-label" style="height: 40px;">2:00</div>#}
-                    {#                    <div class="hour-label" style="height: 40px;">3:00</div>#}
-                    {#                    <div class="hour-label" style="height: 40px;">4:00</div>#}
-                    {#                    <div class="hour-label" style="height: 40px;">5:00</div>#}
-                    {#                    <div class="hour-label" style="height: 40px;">6:00</div>#}
                     <div class="hour-label" style="height: 40px;">7:00</div>
                     <div class="hour-label" style="height: 40px;">8:00</div>
                     <div class="hour-label" style="height: 40px;">9:00</div>
@@ -176,33 +167,14 @@
                             <div class="day-label bg-primary-light">{{ day }}</div>
                             <div class="slots">
                                 {% for foo in '9012345678921234'|make_list %} {# loop  24 times #}
-                                    {#                                    <div class="slot" onclick="addOnCalendar(event)" type="button"#}
-                                    {#                                         data-toggle="modal"#}
-                                    {#                                         data-target="#exampleModal"></div>#}
                                     <div class="slot"></div>
                                     <div class="slot"
                                          onclick=""></div>
                                     <div class="slot"></div>
                                     <div class="slot"
-                                         style="border-bottom-width: 1px; border-bottom-style: solid; border-bottom-color: rgb(208, 208, 208);"></div>
+                                         style="border-bottom-width: 1px; border-bottom-style: solid; border-bottom-color: rgb(208, 208, 208);">
+                                    </div>
                                 {% endfor %}
-
-                                {#                                <div class="event event-completed"#}
-                                {#                                     style="top: calc((12*60 + 20 )/15 * 10px); height: 69px; cursor: default;">#}
-                                {#                                    <div class="time">0:00—1:45</div>#}
-                                {#                                    Kamil pianino#}
-                                {##}
-                                {#                                    <div style="top: 0; right: 0; margin-right: 5px; margin-top: -5px;font-size: 20px; cursor: pointer"#}
-                                {#                                         class="position-absolute event-menu">#}
-                                {#                                         onclick="showHideMenu('menu_{{ day }}')">#}
-                                {#                                        ...#}
-                                {#                                        <div style="top: 0; right: 0; margin-right: 5px; margin-top: -5px; visibility: hidden"#}
-                                {#                                             class="position-absolute bg-white p-2 rounded-sm" id="menu_{{ day }}">#}
-                                {#                                            <a class="bg-red text-white p-1 rounded-sm">Cancel</a>#}
-                                {#                                        </div>#}
-                                {#                                    </div>#}
-                                {#                                </div>#}
-
                             </div>
                         </div>
                     {% endfor %}
@@ -359,7 +331,7 @@
 
         let selected_year;
         let startDate;
-        let selected_teacher;
+        let selected_record_id;
 
 
         function cancelEvent(lesson_schedule_id, startTime, endTime, lessonDate, studentName) {
@@ -397,7 +369,7 @@
             let urlParams = new URLSearchParams(window.location.search);
 
 
-            selected_teacher = urlParams.get('selected_teacher');
+            selected_record_id = urlParams.get('selected_record_id');
 
             selected_year = parseInt(urlParams.get('selected_year'));
 
@@ -409,9 +381,9 @@
                 startDate = adjustToNearestMonday(new Date(decodedDate));
             }
 
-            if (!selected_teacher) {
-                selected_teacher = '{{ request.user.id }}';
-                addParamToURL('selected_teacher', selected_teacher)
+            if (!selected_record_id) {
+                selected_record_id = '{{ request.GET.selected_record_id }}'
+                addParamToURL('selected_record_id', selected_record_id)
             }
             if (!selected_year) {
                 selected_year = new Date().getFullYear();
@@ -436,7 +408,7 @@
                     addParamToURL('selected_start_date', "");
                     addParamToURL('selected_year', today.getFullYear());
 
-                    location.reload();
+                    window.location = window.location;
                 }
 
                 console.log('TODAY: ' + today);
@@ -552,7 +524,15 @@
                     }
                     if (lesson.adjustments && lesson.adjustments.length > 0) {
                         lesson.adjustments.forEach(function (adjustment) {
-                            {#console.log('Processing adjustment:', adjustment);#}
+
+                            // Remove old lesson schedule element
+                            var oldLessonElementId = 'lesson_' + adjustment.lessonScheduleId + '_' + adjustment.originalLessonDate;
+                            var oldLessonElement = document.getElementById(oldLessonElementId);
+                            if (oldLessonElement) {
+                                oldLessonElement.remove();
+                                console.log('Removed old lesson:', oldLessonElementId);
+                            }
+
                             // Convert adjustment start and end time to minutes
                             var adjStartTime = adjustment.startTime.split(':');
                             var adjEndTime = adjustment.endTime.split(':');
@@ -571,12 +551,6 @@
                                 var adjustmentElement = document.createElement('div');
                                 adjustmentElement.classList.add('event');
                                 adjustmentElement.id = 'adjustment_' + adjustment.id + '_' + formatDate(adjustmentDate); // Set ID using adjustment ID and date from JSON
-                                {#var adjustedValue = Math.round((adjStartMinutes / 15) * 4.4);#}
-                                {#var roundedValue = Math.round(adjustedValue / 10) * 10;#}
-                                {#console.log('adjStartMinutes: ' + adjStartMinutes + ' calc: ' + roundedValue)#}
-                                {#adjustmentElement.style.top = 'calc(' + roundedValue + 'px)';#}
-
-                                console.log('adjStartMinutes: ' + adjStartMinutes)
                                 adjustmentElement.style.top = 'calc(' + (adjStartMinutes / 15) * 10 + 'px)';
                                 adjustmentElement.style.height = adjDurationMinutes / 15 * 10 + 'px';
                                 adjustmentElement.innerHTML = `<a class="" href="student/${lesson.student_id}">${lesson.student}</a>`;
@@ -586,6 +560,7 @@
                                 adjustmentElement.setAttribute('data-toggle', 'popover');
                                 adjustmentElement.setAttribute('data-html', 'true');
                                 $(adjustmentElement).popover();
+
                                 // Add the appropriate class based on the date
                                 console.log('changing adjusmnent bg -> ' + adjustment.status);
                                 switch (adjustment.status) {
@@ -617,14 +592,6 @@
                                 weekdayContainer.querySelector('.slots').appendChild(adjustmentElement);
 
                                 console.log('Added adjustment:', adjustment);
-
-                                // Remove old lesson schedule element
-                                var oldLessonElementId = 'lesson_' + adjustment.lessonScheduleId + '_' + adjustment.originalLessonDate;
-                                var oldLessonElement = document.getElementById(oldLessonElementId);
-                                if (oldLessonElement) {
-                                    oldLessonElement.remove();
-                                    console.log('Removed old lesson:', oldLessonElementId);
-                                }
                             }
                         });
                     }
@@ -662,7 +629,7 @@
 
                 if (startDate.getFullYear() !== selected_year) {
                     addParamToURL('selected_year', startDate.getFullYear());
-                    location.reload();
+                    window.location = window.location;
                 }
 
                 updateDates(startDate);
@@ -672,31 +639,18 @@
 
         });
 
-        function showByTeacher(teacherId) {
-            addParamToURL('selected_teacher', teacherId);
-            removeParamFromURL('selected_location');
-
-            showByRecord();
-        }
-
-        function showByLocation(locationId) {
-            addParamToURL('selected_location', locationId);
-            removeParamFromURL('selected_teacher');
-
-            showByRecord();
-        }
-
-        function showByRecord() {
+        function showByRecord(recordId) {
             addParamToURL('selected_start_date', startDate.toISOString());
             addParamToURL('selected_year', startDate.getFullYear());
+            addParamToURL('selected_record_id', recordId);
 
-            location.reload();
+            window.location = window.location;
         }
 
         function copyCalendarLink() {
             addParamToURL('selected_start_date', startDate.toISOString());
             addParamToURL('selected_year', startDate.getFullYear());
-            addParamToURL('selected_teacher', selected_teacher);
+            addParamToURL('selected_record_id', selected_record_id);
 
             navigator.clipboard.writeText(window.location.href);
             handleResponse({status: true, message: "Link skopiowany pomy\u015Blnie"});

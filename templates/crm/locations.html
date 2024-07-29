@@ -14,7 +14,7 @@
                      stroke="currentColor" class="w-6 h-6 mr-1" width="18">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"></path>
                 </svg>
-                Dodaj Lokalizacje
+                Utwórz Lokalizacje
             </a>
             {% endif %}
         </div>
@@ -34,7 +34,7 @@
                             <td>
                                 <a href="/location/{{ location.id }}">{{ location.name }}</a>
                             </td>
-                            <td>{{ location.get_full_address }}</td>
+                            <td>{{ location.get_full_name }}</td>
                         </tr>
                     {% endfor %}
 

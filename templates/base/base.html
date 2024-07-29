@@ -143,13 +143,10 @@
     function addParamToURL(key, value) {
         const currentURL = window.location.href;
         const searchParams = new URLSearchParams(window.location.search);
-        // Dodaj parametr tab_name
         searchParams.set(key, value);
 
-        // Utw\u00F3rz nowy URL z dodanym parametrem
         const newURL = currentURL.split('?')[0] + '?' + searchParams.toString();
 
-        // Zast\u0105p obecny URL nowym URL z dodanym parametrem
         window.history.replaceState({path: newURL}, '', newURL);
     }
 
@@ -159,6 +156,7 @@
         window.history.replaceState(null, '', url.toString());
     }
 </script>
+
 {% if messages %}
     <script>
         const jsonMessages = []
@@ -174,10 +172,9 @@
         jsonMessages.forEach((msgJSON) =>
             handleResponse(msgJSON)
         )
-
-
     </script>
 {% endif %}
+
 {% block javascript %}
 {% endblock javascript %}
 

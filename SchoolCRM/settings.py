@@ -62,12 +62,12 @@ ROOT_URLCONF = 'SchoolCRM.urls'
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 # EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 #
-DEFAULT_FROM_EMAIL = 'biuro@warsztat-crm.hmcloud.pl'
+DEFAULT_FROM_EMAIL = 'biuro@warsztat-muzyczny.kacperosko.hmcloud.pl'
 EMAIL_HOST = 'mx1.hitme.net.pl'
 EMAIL_HOST_PORT = 465
 EMAIL_USE_TLS = True
 # EMAIL_USE_SSL = True
-EMAIL_HOST_USER = 'biuro@warsztat-crm.hmcloud.pl'
+EMAIL_HOST_USER = 'biuro@warsztat-muzyczny.kacperosko.hmcloud.pl'
 EMAIL_HOST_PASSWORD = 'K@cper123!'
 # EMAIL_HOST_USER = 'warsztat6'
 # EMAIL_HOST_PASSWORD = 'SMdrt2t2CwCcBg'

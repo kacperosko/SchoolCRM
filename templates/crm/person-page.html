@@ -1,5 +1,5 @@
 {% extends 'base/base.html' %}
-{% block title %}{{ contact.get_full_name }}{% endblock title %}
+{% block title %}{{ person.get_full_name }}{% endblock title %}
 {% block style %}
     <style>
     </style>
@@ -14,13 +14,13 @@
                     <li class="breadcrumb-item"><a href="/person"><i
                             class="ri-home-4-line mr-1 float-left"></i>Kontakty</a></li>
                     <li class="breadcrumb-item active"
-                        aria-current="page">{{ contact.get_full_name }}
+                        aria-current="page">{{ person.get_full_name }}
                     </li>
                 </ol>
             </nav>
             <div>
                 {% if perms.crm.change_person %}
-                    <a href="/person/edit/{{ contact.id }}" class="btn btn-primary rounded-pill font-size-12">
+                    <a href="/person/edit/{{ person.id }}" class="btn btn-primary rounded-pill font-size-12">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1"
                              stroke="currentColor" class="w-6 h-6" width="18">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -30,7 +30,7 @@
                     </a>
                 {% endif %}
                 {% if perms.crm.delete_person %}
-                    <a href="/delete/{{ contact.id }}" class="btn btn-outline-danger rounded-pill font-size-12">
+                    <a href="/delete/{{ person.id }}" class="btn btn-outline-danger rounded-pill font-size-12">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1"
                              stroke="currentColor" class="w-6 h-6" width="18">
                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -59,19 +59,19 @@
                         <div class=" row align-items-center">
                             <div class="form-group col-sm-6">
                                 <label for="student_first_name">Imię:</label>
-                                <p class="pb-1 field">{{ contact.first_name|default_if_none:"" }}</p>
+                                <p class="pb-1 field">{{ person.first_name|default_if_none:"" }}</p>
                             </div>
                             <div class="form-group col-sm-6">
                                 <label for="student_last_name">Nazwisko:</label>
-                                <p class="pb-1 field">{{ contact.last_name|default_if_none:"" }}</p>
+                                <p class="pb-1 field">{{ person.last_name|default_if_none:"" }}</p>
                             </div>
                             <div class="form-group col-sm-6">
                                 <label for="student_email">Email:</label>
-                                <p class="pb-1 field">{{ contact.email|default_if_none:"" }}</p>
+                                <p class="pb-1 field">{{ person.email|default_if_none:"" }}</p>
                             </div>
                             <div class="form-group col-sm-6">
                                 <label for="student_phone">Telefon:</label>
-                                <p class="pb-1 field">{{ contact.phone|default_if_none:"" }}</p>
+                                <p class="pb-1 field">{{ person.phone|default_if_none:"" }}</p>
                             </div>
                         </div>
                     </form>

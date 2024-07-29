@@ -5,11 +5,11 @@
     <div class="card">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="/{{ model_name }}"><i
+                <li class="breadcrumb-item"><a href="{{ redirect_model_url }}"><i
                         class="ri-home-4-line mr-1 float-left"></i>{{ record|get_model_name:"pl" }}</a></li>
                 <li class="breadcrumb-item active"
                     aria-current="page"><a
-                        href="/{{ model_name }}/{{ record_id }}">{{ record }}</a>
+                        href="{{ redirect_url }}">{{ record }}</a>
                 </li>
                 <li class="breadcrumb-item active"
                     aria-current="page">Usuwanie rekordu</li>
@@ -27,7 +27,7 @@
                             <p>{{ record }}</p>
                         </div>
                     </div>
-                    <a href="/{{ model_name }}/{{ record_id }}"
+                    <a href="{{ redirect_url }}"
                        class="btn btn-outline-primary mr-2 mt-5">Anuluj</a>
                     <button name="delete_student_person" type="submit" class="btn btn-danger mt-5">Tak, usuń
                     </button>

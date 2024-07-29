@@ -12,8 +12,6 @@ from django.contrib.contenttypes.models import ContentType
 from datetime import date
 import uuid
 
-import uuid
-
 
 class PrefixedUUIDField(models.CharField):
     def __init__(self, *args, **kwargs):
@@ -45,6 +43,7 @@ def model_name_prefix(model_name):
         'Note': '0NT',
         'WatchRecord': '0WR',
         'Notification': '0NF',
+        'User': '0US',
     }
     return prefixes.get(model_name, '0EX')
 
@@ -60,6 +59,7 @@ def get_model_by_prefix(prefix):
         '0NT': 'Note',
         '0WR': 'WatchRecord',
         '0NF': 'Notification',
+        '0US': 'User',
     }
     return prefixes.get(prefix, None)
 
@@ -155,9 +155,11 @@ class Student(models.Model):
 
     notes = GenericRelation(Note)
 
-    created_by = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='Student_created_by')
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='Student_created_by', null=True,
+                                   blank=True)
     created_date = models.DateTimeField(auto_now_add=True)
-    modified_by = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='Student_modified_by')
+    modified_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='Student_modified_by', null=True,
+                                    blank=True)
     modified_date = models.DateTimeField(auto_now=True)
 
     def get_model_name(self, language):
@@ -181,6 +183,15 @@ class Student(models.Model):
         return self.first_name + " " + self.last_name
 
 
+RELATIONSHIPS = (
+    ('Matka', 'Matka'),
+    ('Ojciec', 'Ojciec'),
+    ('Babcia', 'Babcia'),
+    ('Dziadek', 'Dziadek'),
+    ('Inna', 'Inna'),
+)
+
+
 class StudentPerson(models.Model):
     id = PrefixedUUIDField(primary_key=True)
 
@@ -188,11 +199,22 @@ class StudentPerson(models.Model):
                                 related_name='student_student_relationship')
     person = models.ForeignKey(Person, on_delete=models.CASCADE, blank=False, null=False,
                                related_name='student_person_relationship')
-    relationship_type = models.CharField(max_length=100)
+    relationship_type = models.CharField(max_length=100, choices=RELATIONSHIPS)
 
-    def clean(self):
-        if self.student == self.person:
-            raise ValidationError("Student and parent cannot be the same person.")
+    def __str__(self):
+        return f"Relacja '{self.relationship_type}' {self.person} ze studentem {self.student}"
+
+    def get_model_name(self, language):
+        names = {
+            "pl": "Relacja ze Studentem"
+        }
+        return names.get(language, self.__class__.__name__)
+
+    def redirect_after_edit(self):
+        return f'/student/{self.student.id}'
+
+    def redirect_after_delete(self):
+        return f'/student/{self.student.id}'
 
 
 class Location(models.Model):
@@ -216,7 +238,7 @@ class Location(models.Model):
         return names.get(language, self.__class__.__name__)
 
     def __str__(self):
-        return self.name + ", adres: " + self.country + ", city: " + self.city + ", street: " + self.street + ", postal code: " + self.postal_code
+        return self.name + ", " + self.country + " " + self.city + " " + self.postal_code + ", ul. " + self.street
 
 
 class Lesson(models.Model):
@@ -229,9 +251,9 @@ class Lesson(models.Model):
     series_end_date = models.DateField(blank=True, null=True)
     student = models.ForeignKey(Student, on_delete=models.CASCADE, blank=False, null=False,
                                 related_name='lessonSchedule_student_student_relationship')
-    teacher = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=False, null=False,
+    teacher = models.ForeignKey(User, on_delete=models.SET_NULL, blank=False, null=True,
                                 related_name='lessonSchedule_teacher_user_relationship')
-    location = models.ForeignKey(Location, on_delete=models.DO_NOTHING, blank=False, null=False,
+    location = models.ForeignKey(Location, on_delete=models.SET_NULL, blank=False, null=True,
                                  related_name='lessonSchedule_location_relationship')
 
     def get_model_name(self, language):
@@ -239,6 +261,16 @@ class Lesson(models.Model):
             "pl": "Lekcja"
         }
         return names.get(language, self.__class__.__name__)
+
+    def __str__(self):
+        return self.description + " " + str(self.start_time.time())[:5] + " - " + str(self.end_time.time())[
+                                                                                  :5] + " " + self.location.get_full_name()
+
+    def redirect_after_delete(self):
+        return f'/student/{self.student.id}/lesson-series'
+
+    def redirect_after_edit(self):
+        return f'/student/{self.student.id}/lesson-series'
 
 
 class Statutes:
@@ -266,9 +298,9 @@ class LessonAdjustment(models.Model):
                                related_name='lesson_lesson_relationship')
     status = models.CharField(max_length=64, choices=LESSON_STATUTES, null=True, blank=True)
     comments = models.CharField(max_length=255, blank=True, null=True)
-    teacher = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=False, null=False,
+    teacher = models.ForeignKey(User, on_delete=models.SET_NULL, blank=False, null=True,
                                 related_name='lessonAdjustment_teacher_user_relationship')
-    location = models.ForeignKey(Location, on_delete=models.DO_NOTHING, blank=False, null=False,
+    location = models.ForeignKey(Location, on_delete=models.SET_NULL, blank=False, null=True,
                                  related_name='lessonAdjustment_location_relationship')
 
 
@@ -303,5 +335,6 @@ def get_model_object_by_prefix(prefix):
         '0NT': Note,
         '0WR': WatchRecord,
         '0NF': Notification,
+        '0US': User,
     }
     return prefixes.get(prefix, None)

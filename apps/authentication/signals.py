@@ -16,7 +16,7 @@ def record_password_change(sender, instance, created, **kwargs):
             try:
                 send_mail(
                     subject="Witaj w Warsztat CRM",
-                    message=f"Hej {user.first_name}, w systemie Warsztat CRM zostalo utworzone dla Ciebie konto. Aby sie zalogowac zresetuj haslo uzywajac ponizszego linku:\nwww.{SITE_URL}/password-reset/",
+                    message=f"Hej {user.first_name},\n\nw systemie Warsztat CRM zostalo utworzone dla Ciebie konto. Aby sie zalogowac zresetuj haslo uzywajac ponizszego linku:\nwww.{SITE_URL}/password-reset/ \n\n\nZespol Warsztat CRM",
                     from_email=EMAIL_HOST_USER,
                     recipient_list=[user.email],
                     fail_silently=False,
