@@ -219,7 +219,7 @@ def generate_lessons(lessons, adjustments, year):
         if adjustment.modified_start_time.year == year:
             lessons_count_in_months[month_modified_lesson][adjustment.status] += 1
             status = adjustment.status
-            
+
             lessons_count_in_months[month_modified_lesson]['Lessons'][
                 generate_lesson_dict_key(adjustment.modified_start_time, 'adj' + str(adjustment.id))] = LessonHandler(
                 start_date=adjustment.modified_start_time.date(),

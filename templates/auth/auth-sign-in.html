@@ -13,7 +13,7 @@
                                      class="img-fluid rounded-normal w-25 h-25" alt="logo">
                             </div>
                             <h2 class="mb-2 text-center">Logowanie</h2>
-                            <p class="text-center">Zaloguj się by kontynuować</p>
+                            <p class="text-center">Zaloguj si&#281;, by kontynuowa&#263;</p>
                             <p class="text-center text-danger py-3">{{ message }}</p>
                             <form method="POST">
                                 {% csrf_token %}
@@ -21,7 +21,7 @@
                                     <div class="col-lg-12">
                                         <div class="form-group">
                                             <label for="signin_username">Email</label>
-                                            <input id="signin_username" name="email" class="form-control" type="email"
+                                            <input value="{{ form.email.value|default_if_none:"" }}" id="signin_username" name="email" class="form-control" type="email"
                                                    placeholder="" required>
                                         </div>
                                     </div>
@@ -38,7 +38,7 @@
                                         <a href="/password-reset" class="text-primary float-right">
                                             Zapomniałeś hasła?</a>
                                     </div>
-                                    <button type="submit" class="btn btn-primary">Zaloguj się</button>
+                                    <button type="submit" class="btn btn-primary">Zaloguj si&#281;</button>
                                 </div>
                             </form>
                         </div>

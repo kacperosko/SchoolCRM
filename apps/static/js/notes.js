@@ -1,4 +1,3 @@
-// const empty_notes_info = $('#empty_notes_info')
 function createNote() {
     const recordId = $('#recordId_addNoteForm').val();
     const noteId = $('#notedId_upsertNoteForm').val();
@@ -48,11 +47,9 @@ function addNoteOnPage(note_data) {
     const notes_container = $('#note-full-container');
     const empty_notes_info = $('#empty-notes-info');
     if (empty_notes_info !== undefined) {
-        console.log('note'+ empty_notes_info);
         empty_notes_info.hide();
     }
 
-    // Tworzenie nowego elementu div
     const new_note = $(`
         <div class="col-lg-4 col-md-6" style="" id="note_${note_data.note_id}">
             <div class="card card-body">

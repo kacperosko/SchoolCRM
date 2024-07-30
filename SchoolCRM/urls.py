@@ -15,10 +15,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-# from apps.crm.forms import MySetPasswordForm
+from apps.authentication.forms import MySetPasswordForm
 from django.urls import path
 from django.conf.urls.static import static
 from django.conf import settings
+
 
 from django.contrib.auth.views import (
     PasswordResetView,
@@ -30,7 +31,7 @@ from django.contrib.auth.views import (
 urlpatterns = [
     path('password-reset/', PasswordResetView.as_view(template_name='auth/auth-recover-pwd.html'), name='password-reset'),
     path('password-reset/done/', PasswordResetDoneView.as_view(template_name='auth/auth-confirm-reset-password.html'), name='password_reset_done'),
-    path('password-reset-confirm/<uidb64>/<token>/', PasswordResetConfirmView.as_view(template_name='auth/auth-recover-reset-pwd.html'), name='password_reset_confirm'),
+    path('password-reset-confirm/<uidb64>/<token>/', PasswordResetConfirmView.as_view(template_name='auth/auth-recover-reset-pwd.html', form_class=MySetPasswordForm), name='password_reset_confirm'),
     path('password-reset-complete/', PasswordResetCompleteView.as_view(template_name='auth/auth-success-reset-password.html'), name='password_reset_complete'),
 
     path('warsztatownia/', admin.site.urls),

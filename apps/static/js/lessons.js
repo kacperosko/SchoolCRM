@@ -1,26 +1,18 @@
 const lessons_tbody = $("#lessons_tbody");
 let openedMonths = [];
-// document.addEventListener('DOMContentLoaded', function () {
-//
-// });
 
 
 function get_lessons(student_id) {
-    console.log('$$$ YEAR: ' + $('#selected-year').text());
     $.ajax({
         url: '/crm_api/get-lessons/' + student_id,
         type: 'GET',
         data: {
-            // csrfmiddlewaretoken: $(csrf_token).val(),
             selected_year: $('#selected-year').text(),
         },
         dataType: 'json',
         success: function (response) {
             if (response.status) {
-                response.message = "Pobrano lekcje pomyslne";
-                // handleResponse(response);
-                console.log("Pobrano lekcje pomyslne");
-                console.log(response.lessons);
+
                 const tableContainer = $('#table-container');
                 tableContainer.empty();
                 tableContainer.html(generateTable(response.lessons));
@@ -80,7 +72,6 @@ function generateTable(data) {
         monthLink.setAttribute('onclick', 'refreshOpenedMonths()');
         monthLink.setAttribute('id', 'collapser_' + month_number);
         monthLink.setAttribute('data-target', '#collaps_' + month_number);
-        // monthLink.setAttribute("onclick", `getMonthName();`);
 
         monthLink.textContent = getMonthName(month_number);
         monthCell.appendChild(monthLink);
@@ -110,7 +101,6 @@ function generateTable(data) {
 
         tbody.appendChild(row);
 
-        // Dodanie szczeg\u00F3\u0142\u00F3w
         var detailsRow = document.createElement('tr');
         var detailsCell = document.createElement('td');
         detailsCell.setAttribute('colspan', '7');
@@ -234,9 +224,7 @@ function generateTable(data) {
                 editLink.setAttribute('data-target', '#editEventModalCenter');
                 editLink.setAttribute("onclick", `modifyEvent(lesson_schedule_id='${lesson.lesson_id}', startTime='${lesson.start_time}', endTime='${lesson.end_time}', lessonDate='${lesson.start_date}', studentName='', status='${lesson.status}', isAdjustment=${lesson.is_adjustment});`);
 
-                // editLink.addEventListener('click', modifyEvent(lesson.lesson_id, lesson.start_time, lesson.end_time, lesson.start_date, lesson.get_full_name, lesson.status, lesson.is_adjustment));
-                // editLink.addEventListener('click', modifyEvent(lesson.lesson_id, lesson.start_time, lesson.end_time, lesson.start_date, lesson.get_full_name, lesson.status, lesson.is_adjustment));
-                // Add edit link
+
                 editCell.appendChild(editLink);
                 lessonRow.appendChild(editCell);
 
@@ -267,7 +255,6 @@ function generateTable(data) {
     return table;
 }
 
-// Funkcja pomocnicza do zmiany numeru miesi\u0105ca na jego nazw\u0119
 function getMonthName(monthNumber) {
     var months = [
         "Stycze\u0144", "Luty", "Marzec", "Kwiecie\u0144", "Maj", "Czerwiec",
@@ -276,7 +263,6 @@ function getMonthName(monthNumber) {
     return months[monthNumber - 1];
 }
 
-// Funkcja do zmiany widoczno\u015Bci szczeg\u00F3\u0142\u00F3w miesi\u0105ca
 function toggleDetails(element) {
     var targetId = element.children[0].getAttribute('data-target');
     var target = document.querySelector(targetId);
@@ -287,11 +273,9 @@ function open_months_url() {
     let urlParams = new URLSearchParams(window.location.search);
     openedMonths = urlParams.get('opened_months');
     if (openedMonths) {
-        console.log('listener openedMonths ' + openedMonths)
         openedMonths = openedMonths.split(',');
         openedMonths.forEach(function (monthNumber) {
             let collapsibleDiv = document.getElementById('collaps_' + monthNumber);
-            console.log('listener collapsibleDiv ' + collapsibleDiv)
             if (collapsibleDiv) {
                 collapsibleDiv.classList.add('show');
             }
@@ -300,18 +284,3 @@ function open_months_url() {
         openedMonths = [];
     }
 }
-
-// Generowanie tabeli i dodanie jej do elementu o id "table-container"
-//
-// <svg fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="1.5"
-//      className="mr-1" style="width: 18px;">
-//     <path
-//         d="MM17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-//         stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path>
-// </svg>
-//
-// <svg fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"  stroke="currentColor" stroke-width="1.5"
-//      class="mr-1" width="18px">
-//     <path stroke-linecap="round" stroke-linejoin="round"
-//           d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"></path>
-// </svg>

@@ -10,7 +10,6 @@ class UserAdmin(admin.ModelAdmin):
     form = UserForm
 
     model = User
-    # filter_horizontal = ('groups', 'user_permissions',)
 
     list_display = ('email', 'first_name', 'last_name',)
 

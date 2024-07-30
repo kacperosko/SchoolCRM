@@ -17,30 +17,20 @@ function handleResponse(response) {
         `;
     }
 
-    // Dodaj alert na wierzch stosu
     alertStack.push(alertHTML);
     renderAlerts();
 }
 
 function renderAlerts() {
     const alertContainer = document.getElementById('alertContainer');
-    alertContainer.innerHTML = ''; // Wyczy\u015B\u0107 kontener
+    alertContainer.innerHTML = '';
 
-    // Dodaj alerty w kolejno\u015Bci od najnowszego do najstarszego
     for (let i = alertStack.length - 1; i >= 0; i--) {
         alertContainer.innerHTML += alertStack[i];
     }
 
-    // Usu\u0144 alerty po 3 sekundach
     setTimeout(function () {
-        alertStack.shift(); // Usu\u0144 najstarszy alert ze stosu
-        renderAlerts(); // Od\u015Bwie\u017C widok alert\u00F3w
+        alertStack.shift();
+        renderAlerts();
     }, 6000);
 }
-
-// const jsonResponse1 = {
-//     "status": true,
-//     "message": "test  <b>primary</b> alert"
-// };
-//
-// handleResponse(jsonResponse1)

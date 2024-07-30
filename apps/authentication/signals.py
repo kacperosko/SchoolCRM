@@ -1,6 +1,6 @@
 from django.dispatch import receiver
 from django.db.models.signals import post_save
-from .models import User
+from django.contrib.auth.models import User
 from SchoolCRM.settings import SITE_URL, EMAIL_HOST_USER
 from django.core.mail import send_mail
 
@@ -8,15 +8,12 @@ from django.core.mail import send_mail
 @receiver(post_save, sender=User)
 def record_password_change(sender, instance, created, **kwargs):
     user = instance
-    print('start signal USER')
     if user:
-        print('user exist')
         if created:
-            print('user created')
             try:
                 send_mail(
                     subject="Witaj w Warsztat CRM",
-                    message=f"Hej {user.first_name},\n\nw systemie Warsztat CRM zostalo utworzone dla Ciebie konto. Aby sie zalogowac zresetuj haslo uzywajac ponizszego linku:\nwww.{SITE_URL}/password-reset/ \n\n\nZespol Warsztat CRM",
+                    message=f"Hej {user.first_name},\n\nw systemie Warsztat CRM zosta\u0142o utworzone dla Ciebie konto. Aby sie zalogowac zresetuj haslo uzywajac ponizszego linku:\nwww.{SITE_URL}/password-reset/ \n\n\nZespol Warsztat CRM",
                     from_email=EMAIL_HOST_USER,
                     recipient_list=[user.email],
                     fail_silently=False,
@@ -24,7 +21,6 @@ def record_password_change(sender, instance, created, **kwargs):
             except Exception as e:
                 print('Error sending create email record_password_change', e)
         else:
-            print('user updated')
             new_password = user.password
             try:
                 old_password = User.objects.get(pk=user.pk).password
