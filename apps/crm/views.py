@@ -28,7 +28,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from functools import wraps
 
 WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -472,37 +472,29 @@ def format_timesince(created_at):
 
 
 def get_notifications(request):
-    user = request.user
-    notifications_query = Notification.objects.filter(user=user).select_related('content_type').order_by('-created_at')
+    notifications_query = Notification.objects.filter(user=request.user).select_related('content_type').order_by(
+        '-created_at')
 
-    unread_notifications_count = notifications_query.filter(read=False).count()
+    unread_notifications_count = notifications_query.filter(read=False).aggregate(count=Count('id'))['count']
     all_notifications_count = notifications_query.count()
 
     paginator = Paginator(notifications_query, 10)
     page_number = request.GET.get('notification_page', 1)
-
-    try:
         notifications_page = paginator.page(page_number)
-    except PageNotAnInteger:
-        notifications_page = paginator.page(1)
-    except EmptyPage:
-        notifications_page = paginator.page(paginator.num_pages)
-
     notifications_data = notifications_page.object_list.values(
         'id', 'message', 'read', 'content_type__model', 'object_id', 'created_at'
     )
 
-    notifications_list = [
-        {
+    notifications_list = []
+    for notification in notifications_data:
+        notifications_list.append({
             'id': notification['id'],
             'message': notification['message'],
             'read': notification['read'],
             'model_name': notification['content_type__model'],
             'record_id': notification['object_id'],
             'created_at': timesince(notification['created_at'])
-        }
-        for notification in notifications_data
-    ]
+        })
 
     response_data = {
         'notifications': notifications_list,
