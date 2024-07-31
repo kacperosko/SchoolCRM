@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Person, Student, Lesson, LessonAdjustment, StudentPerson, Note, Location, Notification, WatchRecord
+from .models import Person, Student, Lesson, LessonAdjustment, StudentPerson, Note, Location, Notification, WatchRecord, Group, GroupStudent
 from django.contrib.contenttypes.admin import GenericTabularInline
 
 
@@ -67,9 +67,22 @@ class LocationAdmin(admin.ModelAdmin):
 class NotificationAdmin(admin.ModelAdmin):
     list_display = ('user', 'message')
 
+
 @admin.register(WatchRecord)
 class WatchRecordAdmin(admin.ModelAdmin):
     list_display = ('user', 'content_type', 'content_object')
+
+
+@admin.register(Group)
+class GroupdAdmin(admin.ModelAdmin):
+    list_display = ('name', 'created_by', 'modified_by')
+
+
+@admin.register(GroupStudent)
+class GroupStudentdAdmin(admin.ModelAdmin):
+    list_display = ('group', 'student')
+
+
 
 # Uncomment the following lines if you decide to use LessonException model
 # from .models import LessonException

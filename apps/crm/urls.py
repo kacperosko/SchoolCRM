@@ -22,9 +22,11 @@ urlpatterns = [
     path("calendar", crm_views.calendar, name="crm-calendar"),
 
     path("location", crm_views.all_locations, name="crm-locations"),
-    # path("location/new", crm_views.LocationCreate.as_view(), name="crm-LocationCreate"),
     path("<str:model_name>/new", crm_views.upsert_record, name="crm-LocationCreate"),
     path("location/<str:location_id>", crm_views.LocationPage.as_view(), name="crm-LocationPage"),
+
+    path("group", crm_views.all_groups, name="crm-GroupPage"),
+    path("group/<str:group_id>", crm_views.view_group, name="crm-GroupPage"),
 
 
 

@@ -37,6 +37,7 @@
             <div class="tab-content">
                 <div class="tab-pane fade show active" id="details" role="tabpanel" aria-labelledby="details-tab">
                     <form method="post">
+                        <div class="text-danger mb-4">{{ form.non_field_errors|striptags }}</div>
                         {% csrf_token %}
                         <div class=" row align-items-center">
                             {% for field in form %}

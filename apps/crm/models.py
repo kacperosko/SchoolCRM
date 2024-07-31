@@ -44,6 +44,8 @@ def model_name_prefix(model_name):
         'WatchRecord': '0WR',
         'Notification': '0NF',
         'User': '0US',
+        'Group': '0GR',
+        'GroupStudent': '0GS',
     }
     return prefixes.get(model_name, '0EX')
 
@@ -60,6 +62,8 @@ def get_model_by_prefix(prefix):
         '0WR': 'WatchRecord',
         '0NF': 'Notification',
         '0US': 'User',
+        '0GR': 'Group',
+        '0GS': 'GroupStudent',
     }
     return prefixes.get(prefix, None)
 
@@ -314,14 +318,40 @@ class Absense(models.Model):
 class Group(models.Model):
     id = PrefixedUUIDField(primary_key=True)
 
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=32)
+    notes = GenericRelation(Note)
+
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='group_created_by', null=True,
+                                   blank=True)
+    created_date = models.DateTimeField(auto_now_add=True)
+    modified_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='group_modified_by', null=True,
+                                    blank=True)
+    modified_date = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+    def get_full_name(self):
+        return self.name
 
 
 class GroupStudent(models.Model):
     id = PrefixedUUIDField(primary_key=True)
 
-    group = models.ForeignKey(Group, on_delete=models.CASCADE, blank=False, null=False, )
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, blank=False, null=False, )
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, blank=False, null=False, related_name='group_student_group_relationship')
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, blank=False, null=False, related_name='groupStudent_student_relationship')
+
+    class Meta:
+        unique_together = ('group', 'student')
+
+    def __str__(self):
+        return f"Student {self.student.get_full_name()} w grupie {self.group.get_full_name()}"
+
+    def redirect_after_delete(self):
+        return f'/group/{self.group.id}'
+
+    def redirect_after_edit(self):
+        return f'/group/{self.group.id}'
 
 
 def get_model_object_by_prefix(prefix):
@@ -336,5 +366,7 @@ def get_model_object_by_prefix(prefix):
         '0WR': WatchRecord,
         '0NF': Notification,
         '0US': User,
+        '0GR': Group,
+        '0GS': GroupStudent,
     }
     return prefixes.get(prefix, None)

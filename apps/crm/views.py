@@ -3,12 +3,12 @@ from django.http import Http404
 from django.shortcuts import render, redirect
 from django.views.generic import View, TemplateView
 from .models import Student, Lesson, LessonAdjustment, Person, StudentPerson, Note, Notification, WatchRecord, Location, \
-    Statutes, get_model_by_prefix, get_model_object_by_prefix
+    Statutes, get_model_by_prefix, get_model_object_by_prefix, Group, GroupStudent
 from django.core.serializers import serialize
 import json
 from django.contrib.auth import authenticate, login, logout
 from .forms import PersonForm, LessonModuleForm, LessonPlanForm, LessonCreateForm, \
-    StudentPersonAddForm, LocationForm, StudentForm, get_form_class, StudentpersonForm
+    StudentPersonAddForm, LocationForm, StudentForm, get_form_class, StudentpersonForm, GroupstudentForm
 from apps.authentication.models import User
 from datetime import datetime, timedelta, date, time
 from time import sleep
@@ -397,7 +397,7 @@ def upsert_note(request):
                     message = "Nie wspierany model"
                     raise ValueError(message)
 
-                content_type = ContentType.objects.get(model=model_name.lower())
+                content_type = ContentType.objects.get(model=model_name.lower(), app_label='crm')
 
                 note = Note.objects.create(
                     content=content,
@@ -457,7 +457,7 @@ def delete_note(request):
     return JsonResponse({'status': status, 'message': message})
 
 
-#TODO to delete
+# TODO to delete
 def format_timesince(created_at):
     # Calculate the dirrence beetwen now and created day
     timesince_value = timesince(created_at)
@@ -480,7 +480,7 @@ def get_notifications(request):
 
     paginator = Paginator(notifications_query, 10)
     page_number = request.GET.get('notification_page', 1)
-        notifications_page = paginator.page(page_number)
+    notifications_page = paginator.page(page_number)
     notifications_data = notifications_page.object_list.values(
         'id', 'message', 'read', 'content_type__model', 'object_id', 'created_at'
     )
@@ -527,7 +527,7 @@ def watch_record(request, mode, record_id):
 
     model_name = model_name.lower()
     try:
-        content_type = ContentType.objects.get(model=model_name)
+        content_type = ContentType.objects.get(model=model_name, app_label='crm')
 
         if mode == 'follow':
             WatchRecord.objects.get_or_create(
@@ -644,7 +644,11 @@ def delete_record(request, record_id):
             return redirect(f'/{model_name.lower()}/{record_id}')
 
         model_object = get_model_object_by_prefix(record_id[:3])
-        record = model_object.objects.get(id=record_id)
+        try:
+            record = model_object.objects.get(id=record_id)
+        except ObjectDoesNotExist:
+            # messages.error(f'Rekord z podanym id nie istnieje: {record_id}')
+            return custom_404(request, f'Rekord z podanym id nie istnieje: {record_id}')
         if callable(getattr(record, 'redirect_after_delete', None)):
             redirect_url = record.redirect_after_delete()
         if request.method == 'GET':
@@ -716,9 +720,16 @@ def upsert_record(request, model_name, record_id=None):
             return redirect(f'/{model_name.lower()}')
 
     if request.method == 'GET':
-        context['form'] = form_class(instance=record) if record else form_class()
+        form_instance = form_class(instance=record) if record else form_class()
+        data = request.GET.dict()
+        if form_instance and callable(getattr(form_instance, 'update_form', None)) and len(data) > 0:
+            form_instance.update_form(data=data)
+        context['form'] = form_instance
         if record and callable(getattr(record, 'redirect_after_edit', None)):
             context['redirect_url'] = record.redirect_after_edit()
+    
+    if 'discard_url' in request.GET:
+        context['redirect_url'] = request.GET.get('discard_url')
 
     if request.method == 'POST':
         form = form_class(request.POST, instance=record)
@@ -727,15 +738,74 @@ def upsert_record(request, model_name, record_id=None):
             try:
                 saved_instance = form.save()
                 messages.success(request, 'Rekord zapisany pomy\u015Blnie')
+
                 redirect_url = (
-                    record.redirect_after_edit()
-                    if record and callable(getattr(record, 'redirect_after_edit', None))
+                    saved_instance.redirect_after_edit()
+                    if saved_instance and callable(getattr(saved_instance, 'redirect_after_edit', None))
                     else f'/{get_model_by_prefix(saved_instance.id[:3]).lower()}/{saved_instance.id}'
                 )
                 return redirect(redirect_url)
             except Exception as e:
+                print('exception')
                 messages.error(request, f'Wyst\u0105pi\u0142 b\u0142\u0105d podczas zapisywania rekordu: {e}')
         else:
+            print('errors')
+            print(form.errors)
             context['message'] = form.errors
 
     return render(request, "crm/record-update-create.html", context)
+
+
+@check_permission('crm.view_group')
+def all_groups(request):
+    groups = Group.objects.annotate(student_count=Count('group_student_group_relationship'))
+
+    context = {"groups": groups}
+
+    return render(request, "crm/groups.html", context)
+
+
+@check_permission('crm.view_group')
+def view_group(request, group_id):
+    context = {}
+
+    tab_name = request.GET.get("tab", "Details")
+    opened_months = request.GET.get("opened_months", "")
+    selected_year = int(request.GET.get("selected_year", datetime.now().year))
+
+    request.GET = request.GET.copy()
+    request.GET.update({
+        'tab': tab_name,
+        'opened_months': opened_months,
+        'selected_year': selected_year,
+    })
+
+    try:
+        group = Group.objects.get(id=group_id)
+
+        model_name = get_model_by_prefix(group.id[:3])
+        user_watch_record = WatchRecord.objects.filter(
+            user=request.user, content_type__model=model_name.lower(), object_id=group.id
+        ).first()
+
+        group_students = GroupStudent.objects.filter(group=group)
+        print(group_students)
+
+        notes = group.notes.all()
+        context.update({
+            'record': group,
+            'group_students': group_students,
+            'notes': notes,
+            'watch_record': user_watch_record,
+            'users': User.objects.all(),
+            'locations': Location.objects.all(),
+            'user': request.user,
+        })
+    except Group.DoesNotExist as e:
+        messages.error(request, f'Nie znaleziono Grupy z id {student_id}')
+        return redirect('/group')
+    except Exception as e:
+        messages.error(request, f'view_group exception: {e}')
+        return custom_404(request, e)
+
+    return render(request, "crm/group-page.html", context)

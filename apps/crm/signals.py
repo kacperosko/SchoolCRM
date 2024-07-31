@@ -1,7 +1,7 @@
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.contrib.contenttypes.models import ContentType
-from .models import Note, WatchRecord, Notification, Student
+from .models import Note, WatchRecord, Notification, Student, Group
 from django.utils import timezone
 from apps.authentication.middleware.current_user_middleware import get_current_user
 
@@ -49,14 +49,21 @@ def create_notifications(sender, instance, created, **kwargs):
         Notification.objects.bulk_create(notifications)
 
 
-@receiver(pre_save, sender=Student)
-def set_created_by_modified_by(sender, instance, **kwargs):
+def set_created_by_modified_by(sender, instance):
+    print('signals set_created_by_modified_by')
     user = get_current_user()
     if not instance.pk:  # Check if the record is new
-        print('$$$ CREATE student', instance.first_name, 'user', user)
         instance.created_date = timezone.now()
         instance.created_by = user
-    else:
-        print('$$$ UPDATE student', instance.first_name, 'user', user)
     instance.modified_date = timezone.now()
     instance.modified_by = user
+
+
+@receiver(pre_save, sender=Student)
+def student_signal(sender, instance, **kwargs):
+    set_created_by_modified_by(sender, instance)
+
+
+@receiver(pre_save, sender=Group)
+def student_signal(sender, instance, **kwargs):
+    set_created_by_modified_by(sender, instance)

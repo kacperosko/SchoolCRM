@@ -4,7 +4,7 @@ from django.forms import ModelForm
 from django.test import override_settings
 from django.core.exceptions import ValidationError
 
-from .models import Location, Person, Student, Lesson, StudentPerson
+from .models import Location, Person, Student, Lesson, StudentPerson, GroupStudent, Group
 from apps.authentication.models import User
 import importlib
 
@@ -199,6 +199,47 @@ class UserForm(forms.ModelForm):
         else:
             # Ensure the 'student' field is not disabled
             self.fields['email'].disabled = False
+
+
+class GroupForm(forms.ModelForm):
+    @staticmethod
+    def get_name():
+        return "Grupa"
+
+    class Meta:
+        model = Group
+        fields = "__all__"
+        exclude = ('id', 'created_by', 'modified_by', 'created_date', 'modified_date')
+
+    name = forms.CharField(label='Nazwa')
+
+
+class GroupstudentForm(forms.ModelForm):
+    @staticmethod
+    def get_name():
+        return "Członek Grupy"
+
+    class Meta:
+        model = GroupStudent
+        fields = "__all__"
+        exclude = ('id',)
+
+
+    def update_form(self, data):
+        group_id = data.get('group')
+        print('updating group')
+        if group_id:
+            try:
+                group = Group.objects.get(pk=group_id)
+                self.fields['group'].initial = group
+            except Exception:
+                pass
+
+    def __init__(self, *args, **kwargs):
+        super(GroupstudentForm, self).__init__(*args, **kwargs)
+        self.fields['student'].label = 'Student'
+        self.fields['group'].disabled = False
+
 
 
 def get_form_class(form_name) -> forms:
