@@ -71,7 +71,7 @@ class Note(models.Model):
 
     # Fields for generic relation
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.CharField(max_length=32, null=True, blank=True)
+    object_id = models.CharField(max_length=39, null=True, blank=True)
     content_object = GenericForeignKey('content_type', 'object_id')
 
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
@@ -94,7 +94,7 @@ class WatchRecord(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, db_index=True)
 
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.CharField(max_length=32, null=True, blank=True)
+    object_id = models.CharField(max_length=39, null=True, blank=True)
     content_object = GenericForeignKey('content_type', 'object_id')
 
     def __str__(self):
@@ -110,7 +110,7 @@ class Notification(models.Model):
     read = models.BooleanField(default=False)
 
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True, blank=True)
-    object_id = models.CharField(max_length=32, null=True, blank=True)
+    object_id = models.CharField(max_length=39, null=True, blank=True)
     content_object = GenericForeignKey('content_type', 'object_id')
 
     def get_model_name(self, language):

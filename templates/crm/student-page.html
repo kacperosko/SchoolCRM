@@ -187,7 +187,7 @@
                                             </a>
                                         </th>
                                         <td class="text-center">{{ student_person.relationship_type }}</td>
-                                        <td class="text-center">{{ student_person.person.email }}</td>
+                                        <td class="text-center">{{ student_person.person.email|default:"-" }}</td>
                                         <td class="text-center">{{ student_person.person.phone|default:"-" }}</td>
                                         <td class="text-center">
                                             <a class="text-primary mr-2"

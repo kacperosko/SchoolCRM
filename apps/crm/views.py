@@ -480,7 +480,7 @@ def get_notifications(request):
 
     paginator = Paginator(notifications_query, 10)
     page_number = request.GET.get('notification_page', 1)
-        notifications_page = paginator.page(page_number)
+    notifications_page = paginator.page(page_number)
     notifications_data = notifications_page.object_list.values(
         'id', 'message', 'read', 'content_type__model', 'object_id', 'created_at'
     )

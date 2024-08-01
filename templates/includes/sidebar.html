@@ -46,7 +46,7 @@
                     </a>
                 </li>
             {% endif %}
-            {% if perms.crm.view_user %}
+            {% if perms.authentication.view_user %}
                 <li class="sidebar-layout {% if 'user' in request.path %}active{% endif %}">
                     <a href="/user" class="svg-icon">
                         <i class="">
