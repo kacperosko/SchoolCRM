@@ -4,7 +4,7 @@ let notification_page = 1;
 let max_pages;
 
 function fetchNotifications() {
-    if (notification_page === max_pages) {
+    if (notification_page >= max_pages) {
         notificationContainer.append('<p class="mx-auto pointer-event text-center py-2 bg-gray mb-0">Brak wi\u0119cej powiadomie\u0144</p>');
         notificationShowMore.remove();
         return
@@ -26,7 +26,7 @@ function fetchNotifications() {
                 notifications.forEach(function (notification) {
                     const notificationElement = `
                                 <li read="${notification.read}" class="dropdown-item-1 float-none p-3 mark-as-read d-flex" id="notification_${notification.id}"
-                                ${notification.model_name ? `onclick="location.href='/${notification.model_name}/${notification.record_id}?tab=Notes'"` : ''}>
+                                ${notification.model_name ? `notification-href="/${notification.model_name}/${notification.record_id}?tab=Notes"` : ''}>
                                     ${!notification.read ? `<div id="notificationRead_${notification.id}" class="my-auto bg-primary rounded-circle p-1"></div>` : ''}
                                     <div class="list-item d-flex justify-content-start align-items-start notification" >
                                       <div class="list-style-detail ml-2 mr-2">
@@ -51,9 +51,13 @@ function fetchNotifications() {
                 $('.mark-as-read').on('click', function () {
                     const notificationId = $(this).attr('id').split('_')[1];
                     const isRead = $(this).attr('read');
+                    const notificationHref = $(this).attr('notification-href');
                     $('#notificationRead_' + notificationId).hide();
                     if (isRead !== 'true') {
                         markNotificationAsRead(notificationId);
+                    }
+                    if (notificationHref){
+                        location.href = notificationHref;
                     }
                 });
 

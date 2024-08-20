@@ -33,7 +33,7 @@ urlpatterns = [
     path("crm_api/delete-note", crm_views.delete_note, name="crm-create_note"),
 
     path('crm_api/notifications/', crm_views.get_notifications, name='get_notifications'),
-    path('crm_api/notifications/read/<int:notification_id>/', crm_views.mark_notification_as_read, name='mark_notification_as_read'),
+    path('crm_api/notifications/read/<str:notification_id>/', crm_views.mark_notification_as_read, name='mark_notification_as_read'),
 
     path('crm_api/watch/<str:mode>/<str:record_id>/', crm_views.watch_record, name='watch_record'),
 

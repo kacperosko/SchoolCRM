@@ -66,6 +66,7 @@ class LocationAdmin(admin.ModelAdmin):
 @admin.register(Notification)
 class NotificationAdmin(admin.ModelAdmin):
     list_display = ('user', 'message')
+    exclude = ['id']
 
 @admin.register(WatchRecord)
 class WatchRecordAdmin(admin.ModelAdmin):
