@@ -13,7 +13,7 @@
         <div class="card-header d-flex justify-content-between">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="/student"><i
+                    <li class="breadcrumb-item"><a href="/group"><i
                             class="ri-home-4-line mr-1 float-left"></i>Grupy</a></li>
                     <li class="breadcrumb-item active"
                         aria-current="page">{{ record.get_full_name }}</li>
@@ -312,8 +312,8 @@
                                 </select>
                             </div>
                             <div class="form-group col-sm-6">
-                                <label for="studentForm_cancelForm">Student <span class="text-danger">*</span></label>
-                                <input class="form-control" id="studentForm_cancelForm" required readonly="">
+                                <label for="groupForm_cancelForm">Group <span class="text-danger">*</span></label>
+                                <input class="form-control" id="groupForm_cancelForm" required readonly="">
                             </div>
                             <div class="form-group col-sm-6">
                                 <label for="teacher_createLesson">Nauczyciel <span class="text-danger">*</span></label>
@@ -437,8 +437,8 @@
                                        style="line-height: 20px;" required>
                             </div>
                             <div class="form-group col-sm-6">
-                                <label for="studentForm_cancelForm">Student <span class="text-danger">*</span></label>
-                                <input class="form-control" id="studentForm_cancelForm"
+                                <label for="groupForm_cancelForm">Grupa <span class="text-danger">*</span></label>
+                                <input class="form-control" id="groupForm_cancelForm"
                                        value="{{ record.get_full_name }}" required readonly="">
                             </div>
 
@@ -525,7 +525,7 @@
             let lessonDate_form = document.getElementById('lessonDate_cancelForm');
             let originalDate_form = document.getElementById('originalDate_cancelForm');
             let lessonId_form = document.getElementById('lessonId_cancelForm');
-            let student_form = document.getElementById('studentForm_cancelForm');
+            let group_form = document.getElementById('groupForm_cancelForm');
             let status_form = document.getElementById('status_cancelForm');
             let btn_plan = document.getElementById('cancel_form_btn_plan');
             let btn_cancel = document.getElementById('cancel_form_btn_cancel');
@@ -554,7 +554,7 @@
             lessonDuration_form.value = calculateTimeDifference(startTime, endTime);
             lessonDate_form.value = year + '-' + month + '-' + day;
             lessonId_form.value = lesson_schedule_id;
-            student_form.value = '{{record.get_full_name}}';
+            group_form.value = '{{record.get_full_name}}';
             originalDate_form.value = year + '-' + month + '-' + day;
             status_form.value = status;
             isAdjustment_form.checked = isAdjustment;

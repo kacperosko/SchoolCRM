@@ -338,8 +338,10 @@ class Group(models.Model):
 class GroupStudent(models.Model):
     id = PrefixedUUIDField(primary_key=True)
 
-    group = models.ForeignKey(Group, on_delete=models.CASCADE, blank=False, null=False, related_name='group_student_group_relationship')
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, blank=False, null=False, related_name='groupStudent_student_relationship')
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, blank=False, null=False,
+                              related_name='group_student_group_relationship')
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, blank=False, null=False,
+                                related_name='groupStudent_student_relationship')
 
     class Meta:
         unique_together = ('group', 'student')
@@ -352,6 +354,32 @@ class GroupStudent(models.Model):
 
     def redirect_after_edit(self):
         return f'/group/{self.group.id}'
+
+
+class AttendanceList(models.Model):
+    id = PrefixedUUIDField(primary_key=True)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, blank=False, null=False,
+                              related_name='attendance_group_relationship')
+    lesson_date = models.DateTimeField()
+
+
+class AttendanceStatutes:
+    OBECNOSC = "Obecnosc"
+    NIEOBECNOSC = "Nieobecnosc"
+    SPOZNIENIE = "Spoznienie"
+
+
+ATTENDANCE_STATUTES = (
+    ('Obecnosc', 'Obecno\u015B\u0107'),
+    ('Nieobecnosc', 'Nieobecno\u015B\u0107'),
+    ('Spoznienie', 'Spoznienie'),
+)
+
+
+class AttendanceListStudent(models.Model):
+    id = PrefixedUUIDField(primary_key=True)
+    attendance_list = models.ForeignKey(AttendanceList, on_delete=models.CASCADE, blank=False, null=False, )
+    status = models.CharField(max_length=64, choices=ATTENDANCE_STATUTES, null=True, blank=True)
 
 
 def get_model_object_by_prefix(prefix):
