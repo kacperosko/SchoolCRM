@@ -5,6 +5,8 @@ from django.conf import settings
 from django.db import migrations, models
 import django.db.models.deletion
 
+import apps.service_helper
+
 
 class Migration(migrations.Migration):
 
@@ -35,17 +37,17 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='group',
             name='id',
-            field=apps.crm.models.PrefixedUUIDField(max_length=39, primary_key=True, serialize=False, unique=True),
+            field=apps.service_helper.PrefixedUUIDField(max_length=39, primary_key=True, serialize=False, unique=True),
         ),
         migrations.AlterField(
             model_name='groupstudent',
             name='id',
-            field=apps.crm.models.PrefixedUUIDField(max_length=39, primary_key=True, serialize=False, unique=True),
+            field=apps.service_helper.PrefixedUUIDField(max_length=39, primary_key=True, serialize=False, unique=True),
         ),
         migrations.AlterField(
             model_name='lesson',
             name='id',
-            field=apps.crm.models.PrefixedUUIDField(max_length=39, primary_key=True, serialize=False, unique=True),
+            field=apps.service_helper.PrefixedUUIDField(max_length=39, primary_key=True, serialize=False, unique=True),
         ),
         migrations.AlterField(
             model_name='lesson',
@@ -55,41 +57,41 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='lessonadjustment',
             name='id',
-            field=apps.crm.models.PrefixedUUIDField(max_length=39, primary_key=True, serialize=False, unique=True),
+            field=apps.service_helper.PrefixedUUIDField(max_length=39, primary_key=True, serialize=False, unique=True),
         ),
         migrations.AlterField(
             model_name='location',
             name='id',
-            field=apps.crm.models.PrefixedUUIDField(max_length=39, primary_key=True, serialize=False, unique=True),
+            field=apps.service_helper.PrefixedUUIDField(max_length=39, primary_key=True, serialize=False, unique=True),
         ),
         migrations.AlterField(
             model_name='note',
             name='id',
-            field=apps.crm.models.PrefixedUUIDField(max_length=39, primary_key=True, serialize=False, unique=True),
+            field=apps.service_helper.PrefixedUUIDField(max_length=39, primary_key=True, serialize=False, unique=True),
         ),
         migrations.AlterField(
             model_name='notification',
             name='id',
-            field=apps.crm.models.PrefixedUUIDField(max_length=39, primary_key=True, serialize=False, unique=True),
+            field=apps.service_helper.PrefixedUUIDField(max_length=39, primary_key=True, serialize=False, unique=True),
         ),
         migrations.AlterField(
             model_name='person',
             name='id',
-            field=apps.crm.models.PrefixedUUIDField(max_length=39, primary_key=True, serialize=False, unique=True),
+            field=apps.service_helper.PrefixedUUIDField(max_length=39, primary_key=True, serialize=False, unique=True),
         ),
         migrations.AlterField(
             model_name='student',
             name='id',
-            field=apps.crm.models.PrefixedUUIDField(max_length=39, primary_key=True, serialize=False, unique=True),
+            field=apps.service_helper.PrefixedUUIDField(max_length=39, primary_key=True, serialize=False, unique=True),
         ),
         migrations.AlterField(
             model_name='studentperson',
             name='id',
-            field=apps.crm.models.PrefixedUUIDField(max_length=39, primary_key=True, serialize=False, unique=True),
+            field=apps.service_helper.PrefixedUUIDField(max_length=39, primary_key=True, serialize=False, unique=True),
         ),
         migrations.AlterField(
             model_name='watchrecord',
             name='id',
-            field=apps.crm.models.PrefixedUUIDField(max_length=39, primary_key=True, serialize=False, unique=True),
+            field=apps.service_helper.PrefixedUUIDField(max_length=39, primary_key=True, serialize=False, unique=True),
         ),
     ]

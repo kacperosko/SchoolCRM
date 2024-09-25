@@ -2,9 +2,9 @@ const lessons_tbody = $("#lessons_tbody");
 let openedMonths = [];
 
 
-function get_lessons(student_id) {
+function get_lessons(record_id) {
     $.ajax({
-        url: '/crm_api/get-lessons/' + student_id,
+        url: '/crm_api/get-lessons/' + record_id,
         type: 'GET',
         data: {
             selected_year: $('#selected-year').text(),

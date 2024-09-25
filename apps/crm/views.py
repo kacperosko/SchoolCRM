@@ -3,7 +3,8 @@ from django.http import Http404
 from django.shortcuts import render, redirect
 from django.views.generic import View, TemplateView
 from .models import Student, Lesson, LessonAdjustment, Person, StudentPerson, Note, Notification, WatchRecord, Location, \
-    Statutes, get_model_by_prefix, get_model_object_by_prefix, Group, GroupStudent
+    Statutes, Group, GroupStudent
+from ..service_helper import get_model_object_by_prefix, get_model_by_prefix
 from django.core.serializers import serialize
 import json
 from django.contrib.auth import authenticate, login, logout
@@ -17,7 +18,7 @@ from calendar import monthrange
 from collections import defaultdict
 from django.utils import timezone as dj_timezone
 from .lesson_handler import count_lessons_for_student_in_months, create_lesson_adjustment, \
-    get_lessons_for_teacher_in_months, get_lessons_for_location_in_months
+    get_lessons_for_teacher_in_months, get_lessons_for_location_in_months, count_lessons_for_group_in_months
 from django.contrib import messages
 from django.http.response import JsonResponse
 from django.contrib.contenttypes.models import ContentType
@@ -613,11 +614,14 @@ class LocationPage(View):
         return render(request, 'crm/location-page.html', context)
 
 
-def get_student_lessons(request, student_id):
+def get_student_group_lessons(request, record_id):
     status = False
     selected_year = int(request.GET.get('selected_year', datetime.now().year))
 
-    lessons_count = count_lessons_for_student_in_months(student_id, selected_year)
+    if get_model_by_prefix(record_id[:3]) == 'Student':
+        lessons_count = count_lessons_for_student_in_months(record_id, selected_year)
+    elif get_model_by_prefix(record_id[:3]) == 'Group':
+        lessons_count = count_lessons_for_group_in_months(record_id, selected_year)
 
     lessons_count_serializable = {}
     for key, value in lessons_count.items():
@@ -765,47 +769,109 @@ def all_groups(request):
     return render(request, "crm/groups.html", context)
 
 
-@check_permission('crm.view_group')
-def view_group(request, group_id):
-    context = {}
+class GroupPage(View):
 
-    tab_name = request.GET.get("tab", "Details")
-    opened_months = request.GET.get("opened_months", "")
-    selected_year = int(request.GET.get("selected_year", datetime.now().year))
+    @staticmethod
+    @check_permission('crm.view_group')
+    def post(request, *args, **kwargs):
+        group_id = kwargs['group_id']
+        tab_name = request.GET.get("tab", "Details")
+        opened_months = request.GET.get("opened_months", "")
+        selected_year = request.GET.get("selected_year", datetime.now().year)
 
-    request.GET = request.GET.copy()
-    request.GET.update({
-        'tab': tab_name,
-        'opened_months': opened_months,
-        'selected_year': selected_year,
-    })
+        if request.method == 'POST':
+            if 'edit_form_submit' in request.POST:
+                print('edit_form_submit')
+                form = LessonModuleForm(request.POST)
+                if form.is_valid():
 
-    try:
-        group = Group.objects.get(id=group_id)
+                    create_lesson_adjustment(form, is_edit=form.cleaned_data['isAdjustment'])
 
-        model_name = get_model_by_prefix(group.id[:3])
-        user_watch_record = WatchRecord.objects.filter(
-            user=request.user, content_type__model=model_name.lower(), object_id=group.id
-        ).first()
+                    lesson_date = dj_timezone.make_aware(
+                        datetime.combine(form.cleaned_data['lessonDate'], datetime.min.time()))
 
-        group_students = GroupStudent.objects.filter(group=group)
-        print(group_students)
+                    messages.success(request, 'Zaktualizowano lekcje pomy\u015Blnie!')
 
-        notes = group.notes.all()
-        context.update({
-            'record': group,
-            'group_students': group_students,
-            'notes': notes,
-            'watch_record': user_watch_record,
-            'users': User.objects.all(),
-            'locations': Location.objects.all(),
-            'user': request.user,
+                else:
+                    messages.error(request, f'B\u0142\u0105d podczas zapisywania: {form.errors}')
+                return redirect(
+                    f'/group/{group_id}?tab={tab_name}&opened_months={opened_months}&selected_year={selected_year}')
+            elif 'create_lesson_form_submit' in request.POST:
+                print('create_form_submit')
+                form = LessonCreateForm(request.POST)
+                if form.is_valid():
+                    start_time = form.cleaned_data['startTime']
+                    lesson_duration = int(form.cleaned_data['lessonDuration'])
+                    lesson_date = form.cleaned_data['lessonDate']
+                    repeat = form.cleaned_data['repeat']
+                    is_series = repeat != 'never'
+                    description = form.cleaned_data['description']
+                    teacher_id = form.cleaned_data['teacher']
+                    location_id = form.cleaned_data['location']
+                    end_series = None
+                    if is_series:
+                        end_series = form.cleaned_data['end_series']
+
+                    start_datetime = datetime.combine(lesson_date, start_time)
+                    end_datetime = start_datetime + timedelta(minutes=lesson_duration)
+
+                    lesson = Lesson.objects.create(group_id=group_id, start_time=start_datetime,
+                                                   end_time=end_datetime,
+                                                   is_series=is_series, teacher_id=teacher_id,
+                                                   description=description, series_end_date=end_series,
+                                                   location_id=location_id)
+                    lesson_msg = 'Seria lekcji' if is_series else 'Lekcja'
+                    messages.success(request, f'{lesson_msg} dodana pomy\u015Blnie!')
+                else:
+                    messages.error(request, f'B\u0142ad podczas zapisywania: {form.errors}')
+                return redirect(
+                    f'/group/{group_id}?tab={tab_name}&opened_months={opened_months}&selected_year={selected_year}')
+            else:
+                messages.error(request, f'Nieobs\u0142ugiwany formularz: {request.POST}')
+                return render(request, "crm/student-page.html", context)
+    @staticmethod
+    @check_permission('crm.view_group')
+    def get(request, *args, **kwargs):
+        context = {}
+
+        group_id = kwargs.get('group_id')
+        tab_name = request.GET.get("tab", "Details")
+        opened_months = request.GET.get("opened_months", "")
+        selected_year = int(request.GET.get("selected_year", datetime.now().year))
+
+        request.GET = request.GET.copy()
+        request.GET.update({
+            'tab': tab_name,
+            'opened_months': opened_months,
+            'selected_year': selected_year,
         })
-    except Group.DoesNotExist as e:
-        messages.error(request, f'Nie znaleziono Grupy z id {student_id}')
-        return redirect('/group')
-    except Exception as e:
-        messages.error(request, f'view_group exception: {e}')
-        return custom_404(request, e)
 
-    return render(request, "crm/group-page.html", context)
+        try:
+            group = Group.objects.get(id=group_id)
+
+            model_name = get_model_by_prefix(group.id[:3])
+            user_watch_record = WatchRecord.objects.filter(
+                user=request.user, content_type__model=model_name.lower(), object_id=group.id
+            ).first()
+
+            group_students = GroupStudent.objects.filter(group=group)
+            print(group_students)
+
+            notes = group.notes.all()
+            context.update({
+                'record': group,
+                'group_students': group_students,
+                'notes': notes,
+                'watch_record': user_watch_record,
+                'users': User.objects.all(),
+                'locations': Location.objects.all(),
+                'user': request.user,
+            })
+        except Group.DoesNotExist as e:
+            messages.error(request, f'Nie znaleziono Grupy z id {student_id}')
+            return redirect('/group')
+        except Exception as e:
+            messages.error(request, f'view_group exception: {e}')
+            return custom_404(request, e)
+
+        return render(request, "crm/group-page.html", context)

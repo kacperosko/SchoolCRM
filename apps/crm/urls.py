@@ -26,11 +26,11 @@ urlpatterns = [
     path("location/<str:location_id>", crm_views.LocationPage.as_view(), name="crm-LocationPage"),
 
     path("group", crm_views.all_groups, name="crm-GroupPage"),
-    path("group/<str:group_id>", crm_views.view_group, name="crm-GroupPage"),
+    path("group/<str:group_id>", crm_views.GroupPage.as_view(), name="crm-GroupPage"),
 
 
 
-    path("crm_api/get-lessons/<str:student_id>", crm_views.get_student_lessons, name="crm-create_note"),
+    path("crm_api/get-lessons/<str:record_id>", crm_views.get_student_group_lessons, name="crm-get_student_group_lessons"),
     path("crm_api/create-note", crm_views.upsert_note, name="crm-create_note"),
     path("crm_api/delete-note", crm_views.delete_note, name="crm-create_note"),
 

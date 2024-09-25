@@ -84,6 +84,26 @@ def count_lessons_for_student_in_months(student_id, year):
 
     return generate_lessons(lessons, adjustments, year)
 
+def count_lessons_for_group_in_months(group_id, year):
+    lessons = Lesson.objects.filter(
+        Q(group_id=group_id) &
+        Q(start_time__year__lte=year) &
+        (
+            (Q(series_end_date__year__gte=year) |
+             Q(series_end_date=None))
+        )
+    )
+
+    adjustments = LessonAdjustment.objects.filter(
+        Q(lesson__group_id=group_id) &
+        (
+                Q(original_lesson_date__year=year) |
+                Q(modified_start_time__year=year)
+        )
+    )
+
+    return generate_lessons(lessons, adjustments, year)
+
 
 def get_lessons_for_teacher_in_months(teacher_id, year):
     lessons = Lesson.objects.filter(
