@@ -28,6 +28,7 @@ urlpatterns = [
     path("group", crm_views.all_groups, name="crm-GroupPage"),
     path("group/<str:group_id>", crm_views.GroupPage.as_view(), name="crm-GroupPage"),
 
+    path("attendance-list/<str:attendance_list_id>", crm_views.AttendanceListPage.as_view(), name="crm-attendance-list"),
 
 
     path("crm_api/get-lessons/<str:record_id>", crm_views.get_student_group_lessons, name="crm-get_student_group_lessons"),
@@ -35,7 +36,7 @@ urlpatterns = [
     path("crm_api/delete-note", crm_views.delete_note, name="crm-create_note"),
 
     path('crm_api/notifications/', crm_views.get_notifications, name='get_notifications'),
-    path('crm_api/notifications/read/<int:notification_id>/', crm_views.mark_notification_as_read, name='mark_notification_as_read'),
+    path('crm_api/notifications/read/<str:notification_id>/', crm_views.mark_notification_as_read, name='mark_notification_as_read'),
 
     path('crm_api/watch/<str:mode>/<str:record_id>/', crm_views.watch_record, name='watch_record'),
 

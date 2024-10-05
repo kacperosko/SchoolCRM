@@ -4,7 +4,7 @@ from django.forms import ModelForm
 from django.test import override_settings
 from django.core.exceptions import ValidationError
 
-from .models import Location, Person, Student, Lesson, StudentPerson, GroupStudent, Group
+from .models import Location, Person, Student, Lesson, StudentPerson, GroupStudent, Group, AttendanceList
 from apps.authentication.models import User
 import importlib
 
@@ -240,6 +240,36 @@ class GroupstudentForm(forms.ModelForm):
         self.fields['student'].label = 'Student'
         self.fields['group'].disabled = False
 
+
+
+class AttendancelistForm(forms.ModelForm):
+    @staticmethod
+    def get_name():
+        return "Lista Obecności"
+
+    class Meta:
+        model = AttendanceList
+        fields = "__all__"
+        exclude = ('id',)
+
+    lesson_date = forms.DateTimeField(label='Data lekcji', disabled=False,
+                                     widget=forms.DateInput(attrs={'type': 'datetime-local', 'class': 'mt--2'}))
+ 
+    def update_form(self, data):
+        group_id = data.get('group')
+        print('updating group')
+        if group_id:
+            try:
+                group = Group.objects.get(pk=group_id)
+                self.fields['group'].initial = group
+                self.fields['group'].disabled = True
+            except Exception:
+                pass
+
+    def __init__(self, *args, **kwargs):
+        super(AttendancelistForm, self).__init__(*args, **kwargs)
+        # self.fields['lesson_date'].label = 'Data Lekcji'
+        self.fields['group'].disabled = False
 
 
 def get_form_class(form_name) -> forms:

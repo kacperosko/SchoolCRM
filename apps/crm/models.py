@@ -193,6 +193,7 @@ class Group(models.Model):
     name = models.CharField(max_length=32)
     notes = GenericRelation(Note)
 
+
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='group_created_by', null=True,
                                    blank=True)
     created_date = models.DateTimeField(auto_now_add=True)
@@ -318,6 +319,9 @@ class AttendanceList(models.Model):
                               related_name='attendance_group_relationship')
     lesson_date = models.DateTimeField()
 
+    def __str__(self):
+        return f"Lista Obecności {self.lesson_date.strftime('%d-%m-%y %H:%M')}"
+
 
 class AttendanceStatutes:
     OBECNOSC = "Obecnosc"
@@ -334,7 +338,8 @@ ATTENDANCE_STATUTES = (
 
 class AttendanceListStudent(models.Model):
     id = PrefixedUUIDField(primary_key=True)
-    attendance_list = models.ForeignKey(AttendanceList, on_delete=models.CASCADE, blank=False, null=False, )
+    attendance_list = models.ForeignKey(AttendanceList, on_delete=models.CASCADE, blank=False, null=False, default="Obecnosc", related_name='attendance_list_student_group_relationship')
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, blank=False, null=False,)
     status = models.CharField(max_length=64, choices=ATTENDANCE_STATUTES, null=True, blank=True)
 
 

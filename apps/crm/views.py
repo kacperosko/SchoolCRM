@@ -3,13 +3,13 @@ from django.http import Http404
 from django.shortcuts import render, redirect
 from django.views.generic import View, TemplateView
 from .models import Student, Lesson, LessonAdjustment, Person, StudentPerson, Note, Notification, WatchRecord, Location, \
-    Statutes, Group, GroupStudent
+    Statutes, Group, GroupStudent, AttendanceList, AttendanceListStudent
 from ..service_helper import get_model_object_by_prefix, get_model_by_prefix
 from django.core.serializers import serialize
 import json
 from django.contrib.auth import authenticate, login, logout
 from .forms import PersonForm, LessonModuleForm, LessonPlanForm, LessonCreateForm, \
-    StudentPersonAddForm, LocationForm, StudentForm, get_form_class, StudentpersonForm, GroupstudentForm
+    StudentPersonAddForm, LocationForm, StudentForm, get_form_class, StudentpersonForm, GroupstudentForm, AttendancelistForm
 from apps.authentication.models import User
 from datetime import datetime, timedelta, date, time
 from time import sleep
@@ -31,6 +31,7 @@ from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from functools import wraps
+from django.db import transaction
 
 WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
@@ -792,6 +793,7 @@ class GroupPage(View):
 
                     messages.success(request, 'Zaktualizowano lekcje pomy\u015Blnie!')
 
+
                 else:
                     messages.error(request, f'B\u0142\u0105d podczas zapisywania: {form.errors}')
                 return redirect(
@@ -826,6 +828,28 @@ class GroupPage(View):
                     messages.error(request, f'B\u0142ad podczas zapisywania: {form.errors}')
                 return redirect(
                     f'/group/{group_id}?tab={tab_name}&opened_months={opened_months}&selected_year={selected_year}')
+            elif 'attendance_list_create' in request.POST:
+                print('attendance_list_create')
+                form = AttendancelistForm(request.POST)
+                try:
+                    attendance_list = AttendanceList.objects.create(group_id=group_id, lesson_date=dj_timezone.now())
+
+                    group_students = GroupStudent.objects.filter(group_id=group_id)
+                    attendances = []
+
+                    for group_student in group_students:
+                        attendances.append(AttendanceListStudent(attendance_list=attendance_list, student_id=group_student.student.id))
+
+                    AttendanceListStudent.objects.bulk_create(attendances)
+
+
+                    messages.success(request, 'Utworzono Listę Obecności!')
+                except Exception as e:
+                    messages.error(request, e)
+
+
+                return redirect(
+                    f'/group/{group_id}?tab={tab_name}&opened_months={opened_months}&selected_year={selected_year}')
             else:
                 messages.error(request, f'Nieobs\u0142ugiwany formularz: {request.POST}')
                 return render(request, "crm/student-page.html", context)
@@ -858,6 +882,14 @@ class GroupPage(View):
             print(group_students)
 
             notes = group.notes.all()
+
+            attendance_lists = group.attendance_group_relationship.all()
+
+            today = datetime.now().date()
+
+            today_attendance_list = next((attendance_list for attendance_list in attendance_lists if attendance_list.lesson_date.date() == today), None)
+
+
             context.update({
                 'record': group,
                 'group_students': group_students,
@@ -866,6 +898,8 @@ class GroupPage(View):
                 'users': User.objects.all(),
                 'locations': Location.objects.all(),
                 'user': request.user,
+                'attendance_lists': attendance_lists,
+                'today_attendance_list': today_attendance_list,
             })
         except Group.DoesNotExist as e:
             messages.error(request, f'Nie znaleziono Grupy z id {student_id}')
@@ -875,3 +909,38 @@ class GroupPage(View):
             return custom_404(request, e)
 
         return render(request, "crm/group-page.html", context)
+
+
+class AttendanceListPage(View):
+
+    @staticmethod
+    @check_permission('crm.change_attendance_list')
+    def post(request, *args, **kwargs):
+        pass
+
+    @staticmethod
+    @check_permission('crm.view_attendance_list')
+    def get(request, *args, **kwargs):
+        context = {}
+
+        attendance_list_id = kwargs.get('attendance_list_id')
+
+        request.GET = request.GET.copy()
+        request.GET.update({
+            'tab': "Details",
+        })
+
+        try:
+            attendance_list = AttendanceList.objects.get(id=attendance_list_id)
+            attendance_list_student = attendance_list.attendance_list_student_group_relationship.all()
+
+            context.update({
+                'record': attendance_list,
+                'attendances': attendance_list_student,
+            })
+
+        except AttendanceList.DoesNotExist as e:
+            messages.error(request, f"Nie znaleziono listy obecności z takim id: {attendance_list_id}")
+
+
+        return render(request, "crm/attendance-list-page.html", context)

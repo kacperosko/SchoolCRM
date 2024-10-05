@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Person, Student, Lesson, LessonAdjustment, StudentPerson, Note, Location, Notification, WatchRecord, Group, GroupStudent
+from .models import Person, Student, Lesson, LessonAdjustment, StudentPerson, Note, Location, Notification, WatchRecord, Group, GroupStudent, AttendanceList, AttendanceListStudent
 from django.contrib.contenttypes.admin import GenericTabularInline
 
 
@@ -82,6 +82,23 @@ class GroupdAdmin(admin.ModelAdmin):
 class GroupStudentdAdmin(admin.ModelAdmin):
     list_display = ('group', 'student')
 
+
+class AttendanceListStudent_ItemInline(admin.TabularInline):
+    model = AttendanceListStudent
+    extra = 0
+    can_delete = False
+    show_change_link = True
+    # readonly_fields = ['', ]
+
+
+@admin.register(AttendanceList)
+class AttendanceListAdmin(admin.ModelAdmin):
+    list_display = ('group', 'lesson_date')
+
+
+    inlines = [
+        AttendanceListStudent_ItemInline,
+    ]
 
 
 # Uncomment the following lines if you decide to use LessonException model
