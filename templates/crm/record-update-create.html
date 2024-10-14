@@ -1,17 +1,18 @@
 {% extends 'base/base.html' %}
 {% block style %}
     <style>
-    .choices[data-type*="select-one"] select.choices__input {
-    display: block !important;
-    opacity: 0;
-    pointer-events: none;
-    position: absolute;
-    left: 0;
-    bottom: 0;
-}
+        .choices[data-type*="select-one"] select.choices__input {
+            display: block !important;
+            opacity: 0;
+            pointer-events: none;
+            position: absolute;
+            left: 0;
+            bottom: 0;
+        }
     </style>
 {% endblock style %}
-{% block title %}{% if 'edit' in request.path %}Edytowanie{% else %}Dodawanie nowego{% endif %} rekordu: {{ title }}{% endblock title %}
+{% block title %}{% if 'edit' in request.path %}Edytowanie{% else %}Dodawanie nowego{% endif %} rekordu:
+    {{ title }}{% endblock title %}
 {% block content %}
     {% load crm_tags %}
 
@@ -36,7 +37,7 @@
         <div class="card-body">
             <div class="tab-content">
                 <div class="tab-pane fade show active" id="details" role="tabpanel" aria-labelledby="details-tab">
-                    <form method="post">
+                    <form method="post" enctype="multipart/form-data">
                         <div class="text-danger mb-4">{{ form.non_field_errors|striptags }}</div>
                         {% csrf_token %}
                         <div class=" row align-items-center">
@@ -49,9 +50,9 @@
                                         {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
                                     </label>
                                     {% if field.field.widget.input_type == 'select' %}
-                                        <select name="{{ field.name }}" class="form-control choicesjs"
+                                        <select name="{{ field.name }}" class="form-control select-form"
                                                 id="{{ field.name }}" {% if field.field.required %}required{% endif %}
-                                                {% if field.field.disabled %}disabled{% endif %}>
+                                                {% if field.field.disabled %}disabled=""{% endif %}>
                                             {% for value, key in field.field.choices %}
                                                 <option value="{{ value }}"
                                                         {% if field.value|stringformat:"s" == value|stringformat:"s" %}
@@ -62,10 +63,9 @@
                                         </select>
                                     {% else %}
                                         <input name="{{ field.name }}" type="{{ field.field.widget.input_type }}"
-                                               class="form-control"
-                                               style="{% if field.field.widget.input_type == 'date' or field.field.widget.input_type == 'datetime-local' %}line-height: 25px{% endif %}"
-                                               id="{{ field.name }}"
-                                               {% if field.field.widget.input_type == 'checkbox' %}{% if field.value %}checked{% endif %}{% else %} value="{% if field.field.widget.input_type == 'date' %}{{ field.value|date:"Y-m-d"|default:"-" }}{% elif field.field.widget.input_type == 'datetime-local' %}{{ field.value|date:"Y-m-d H:i"|default:"-" }}{% else %}{{ field.value|default_if_none:"" }}{% endif %}"{% endif %}
+                                               class="form-control" style="{% if field.field.widget.input_type == 'date' or field.field.widget.input_type == 'datetime-local' %}line-height: 25px{% endif %}" id="{{ field.name }}"
+                                               {% if field.field.widget.input_type == 'checkbox' %}{% if field.value %}checked{% endif %} {% else %}
+                                               value="{% if field.field.widget.input_type == 'date' %}{{ field.value|date:"Y-m-d"|default:"-" }}{% elif field.field.widget.input_type == 'datetime-local' %}{{ field.value|date:"Y-m-d H:i"|default:"-" }}{% else %}{{ field.value|default_if_none:"" }}{% endif %}"{% endif %}
                                                maxlength="{{ field.field.max_length }}"
                                                {% if field.field.required %}required{% endif %}
                                                {% if field.field.disabled %}disabled{% endif %}>
@@ -85,4 +85,19 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const selectElements = document.querySelectorAll('.select-form');
+            selectElements.forEach(function (selectElement) {
+                if (selectElement.choicesInstance) {
+                    selectElement.choicesInstance.destroy();
+                }
+                selectElement.choicesInstance = new Choices(selectElement, {
+                    shouldSort: false,
+                    removeItemButton: true
+                });
+            });
+        });
+    </script>
 {% endblock content %}

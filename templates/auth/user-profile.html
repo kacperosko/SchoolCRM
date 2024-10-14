@@ -1,9 +1,47 @@
 {% extends 'base/base.html' %}
 {% load crm_tags %}
 {% block style %}
+        <!-- Cropper.js CSS -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" rel="stylesheet">
     <style>
         [data-letters].initialspage:before {
             background: {{ user.avatar_color }} !important;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.6); /* Czarny przezroczysty kolor */
+            display: flex;
+            align-items: center; /* Wyrównanie w pionie */
+            justify-content: center; /* Wyrównanie w poziomie */
+            opacity: 0; /* Domyślnie ukryty */
+            transition: opacity 0.3s; /* Efekt przejścia */
+            width: 160px;
+            margin-left: auto;
+            margin-right: auto;
+            cursor: pointer;
+        }
+
+        .overlay:hover {
+            opacity: 1; /* Pokazuje overlay po najechaniu */
+        }
+
+        .overlay-text {
+            color: white; /* Kolor tekstu */
+            font-size: 16px; /* Rozmiar czcionki */
+            font-weight: bold; /* Pogrubienie czcionki */
+        }
+        .modal-body {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .cropper-view-box,
+        .cropper-face {
+            border-radius: 50%; /* Zaokrąglenie do kształtu koła */
         }
     </style>
 {% endblock style %}
@@ -14,12 +52,21 @@
 {% block content %}
     <div class="container-fluid">
         <div class="row">
-            <div class="col-lg-4">
+            <div class="col-lg-6">
                 <div class="card card-block p-card">
                     <div class="profile-box" style="padding-bottom: 170px;">
                         <div class="card bg-primary pt-4 rounded text-center">
-                            <span data-letters="{{ user.get_full_name|initials }}"
-                                  class="initialsbig initialspage mx-auto"></span>
+                            <div class="position-relative">
+                                {% if user.user_avatar %}
+                                    <img width="160px" id="user-avatar" class="user-avatar rounded-circle mx-auto" src="{{ user.user_avatar.url }}" alt="user avatar picture">
+                                {% else %}
+                                    <span id="user-avatar" data-letters="{{ user.get_full_name|initials }}" class="initialsbig initialspage mx-auto"></span>
+                                {% endif %}
+                                <div class="overlay text-center rounded-circle" onclick="document.getElementById('file-input').click()">
+                                    <span class="overlay-text">Zmień zdjęcie profilowe</span>
+                                </div>
+                                <input type="file" id="file-input" style="display: none;" accept="image/*" onchange="updateProfilePicture(event)">
+                            </div>
                             <h3 class="font-600 text-white text-center mb-0">{{ user.get_full_name }}</h3>
                             <p class="text-white text-center mb-5"></p>
                         </div>
@@ -53,7 +100,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-lg-8">
+            <div class="col-lg-6">
                 <div class="card card-block">
                     <div class="card-body">
                         <div>
@@ -75,5 +122,116 @@
         
         </div>
     </div>
+<!-- Modal do przycinania zdjęcia -->
+<div class="modal fade" id="cropModal" tabindex="-1" role="dialog" aria-labelledby="cropModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cropModalLabel">Przytnij zdjęcie</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Zamknij">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div>
+                    <img id="image-to-crop" style="max-width: 100%; display: block;" alt="image to crop">
+                </div>
+            </div>
+            <form method="post" id="uploadForm" enctype="multipart/form-data">
+            {% csrf_token %}
+                <input type="hidden" id="croppedImage" name="cropped_image">
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Anuluj</button>
+                    <button type="button" id="saveButton" class="btn btn-primary">Zapisz</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 {% endblock content %}
+
+{% block javascript %}
+
+<!-- Cropper.js JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+
+    <script>
+        let cropper;
+
+        document.getElementById('saveButton').addEventListener('click', function () {
+            if (cropper) {
+                // Pobierz przycięty obraz w formacie base64
+                const croppedCanvas = cropper.getCroppedCanvas({
+                    width: 300, // Rozmiar przyciętego obrazu
+                    height: 300,
+                });
+
+                // Konwertuj przycięty obraz do formatu base64
+                // Wstaw base64 do ukrytego pola formularza
+                document.getElementById('croppedImage').value = croppedCanvas.toDataURL('image/png');
+
+                // Wyślij formularz
+                document.getElementById('uploadForm').submit();
+            }
+        });
+
+        function updateProfilePicture(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imageElement = document.getElementById('image-to-crop');
+                    imageElement.src = e.target.result;
+
+                    // Pokaż modal
+                    $('#cropModal').modal('show');
+
+                    // Inicjuj Cropper.js po załadowaniu obrazu
+                    $('#cropModal').on('shown.bs.modal', function () {
+                        cropper = new Cropper(imageElement, {
+                            aspectRatio: 1, // Proporcja 1:1 dla kwadratu
+                            viewMode: 2,
+                            autoCropArea: 1,
+                        });
+                    });
+
+                    // Usuń cropper po zamknięciu modala
+                    $('#cropModal').on('hidden.bs.modal', function () {
+                        cropper.destroy();
+                        cropper = null;
+                    });
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function cropImage() {
+            // Pobierz przycięte dane obrazu
+            const canvas = cropper.getCroppedCanvas({
+                width: 300,
+                height: 300,
+            });
+
+            // Przekonwertuj na URL i zaktualizuj zdjęcie profilowe
+            const avatarElement = document.getElementById('user-avatar');
+            const croppedImageURL = canvas.toDataURL('image/png');
+
+            if (avatarElement.tagName === 'IMG') {
+                avatarElement.src = croppedImageURL;
+            } else if (avatarElement.tagName === 'SPAN') {
+                // Tworzenie nowego obrazu <img> i zamiana z <span>
+                const newImage = document.createElement('img');
+                newImage.src = croppedImageURL;
+                newImage.width = 160;
+                newImage.className = 'user-avatar rounded-circle mx-auto';
+                newImage.alt = 'user avatar picture';
+                avatarElement.parentNode.replaceChild(newImage, avatarElement);
+            }
+
+            // Zamknij modal
+            $('#cropModal').modal('hide');
+        }
+
+    </script>
+{% endblock javascript %}

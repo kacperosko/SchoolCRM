@@ -4,9 +4,11 @@ from django.forms import ModelForm
 from django.test import override_settings
 from django.core.exceptions import ValidationError
 
-from .models import Location, Person, Student, Lesson, StudentPerson, GroupStudent, Group, AttendanceList
+from .models import Location, Person, Student, Lesson, StudentPerson, GroupStudent, Group, AttendanceList, Invoice
 from apps.authentication.models import User
 import importlib
+from django.utils import timezone as dj_timezone
+import datetime
 
 
 class PersonForm(forms.ModelForm):
@@ -127,7 +129,7 @@ class LessonForm(forms.ModelForm):
 
     @staticmethod
     def get_help_text():
-        return "Je\u015Bli chcesz edytowa\u0107 dat\u0119 lekcji w serii musisz ustawi\u0107 dat\u0119 zako\u0144czenia obecnej serii i utworzy\u0107 now\u0105 seri\u0119 z inn\u0105 dat\u0105"
+        return "Je\u015Bli chcesz edytowa\u0107 dat\u0119 lekcji w serii musisz ustawi\u0107 dat\u0119 zako\u0144czenia obecnej serii i utworzy\u0107 now\u0105 seri\u0119 z inn\u0105 dat\u0105. Ostatnia lekcja odbędzie się w datę zakończenia serii lub przed nią jeśli dotyczy innego dnia tygodnia."
 
     class Meta:
         model = Lesson
@@ -163,7 +165,10 @@ class LessonForm(forms.ModelForm):
         # user = kwargs.pop('user','')
         super(LessonForm, self).__init__(*args, **kwargs)
         self.fields['student'].label = 'Student'
-        self.fields['student'].disabled = True
+        if self.fields['student'].initial:
+            self.fields['student'].disabled = True
+        else:
+            self.fields['group'].disabled = True
         self.fields['teacher'].label = 'Nauczyciel'
         self.fields['location'].label = 'Lokalizacja'
 
@@ -177,7 +182,7 @@ class UserForm(forms.ModelForm):
     class Meta:
         model = User
         fields = "__all__"
-        exclude = ('id', 'password', 'is_active', 'is_staff', 'is_superuser', 'staff', 'admin', 'user_permissions', 'last_login', 'groups')
+        exclude = ('id', 'password', 'is_active', 'is_staff', 'is_superuser', 'staff', 'admin', 'user_permissions', 'last_login', 'user_avatar')
 
     email = forms.CharField(label='Email', disabled=True)
     first_name = forms.CharField(label='Imi\u0119')
@@ -269,7 +274,7 @@ class AttendancelistForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(AttendancelistForm, self).__init__(*args, **kwargs)
         # self.fields['lesson_date'].label = 'Data Lekcji'
-        self.fields['group'].disabled = False
+        self.fields['group'].disabled = True
 
 
 def get_form_class(form_name) -> forms:
@@ -286,3 +291,56 @@ def get_form_class(form_name) -> forms:
         raise ValueError(f"Form class '{form_name}' not found.")
 
     return form_class
+
+
+class InvoiceForm(forms.ModelForm):
+    @staticmethod
+    def get_name():
+        return "Faktura"
+
+    class Meta:
+        model = Invoice
+        fields = "__all__"
+        exclude = ('id', )
+
+    MONTHS = (
+        (1, "Styczeń"),
+        (2, "Luty"),
+        (3, "Marzec"),
+        (4, "Kwiecień"),
+        (5, "Maj"),
+        (6, "Czerwiec"),
+        (7, "Lipiec"),
+        (8, "Sierpień"),
+        (9, "Wrzesień"),
+        (10, "Październik"),
+        (11, "Listopad"),
+        (12, "Grudzień"),
+    )
+
+    month = forms.ChoiceField(label='Miesiąc', choices=MONTHS, initial=MONTHS[dj_timezone.now().month-1][0])
+    year = forms.IntegerField(label='Rok', initial=dj_timezone.now().year, min_value=2020)
+    field_order = ['student', 'name', 'month', 'year']
+
+    def update_form(self, data):
+        student_id = data.get('student')
+        if student_id:
+            try:
+                student = Student.objects.get(pk=student_id)
+                self.fields['student'].initial = student
+            except Exception:
+                pass
+
+    def save(self, commit=True):
+        instance = super(InvoiceForm, self).save(commit=False)
+        instance.invoice_date = datetime.date(int(self.cleaned_data['year']), int(self.cleaned_data['month']), 1)
+        if commit:
+            instance.save()
+        return instance
+
+    def __init__(self, *args, **kwargs):
+        super(InvoiceForm, self).__init__(*args, **kwargs)
+        self.fields['name'].label = 'Nr Faktury'
+        self.fields.pop('invoice_date')
+        self.fields['is_paid'].label = 'Czy zapłacone?'
+        self.fields['is_sent'].label = 'Czy wysłane?'

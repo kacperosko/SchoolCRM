@@ -46,7 +46,11 @@ function fetchNotifications() {
                             `;
                     notificationContainer.append(notificationElement);
                 });
-                notification_page++; // increase to go on the next page of notifications
+                if (max_pages === 1){
+                    notificationShowMore.remove();
+                }else{
+                    notification_page++; // increase to go on the next page of notifications
+                }
 
                 $('.mark-as-read').on('click', function () {
                     const notificationId = $(this).attr('id').split('_')[1];

@@ -1,6 +1,10 @@
 const lessons_tbody = $("#lessons_tbody");
 let openedMonths = [];
 
+function isGroupPage() {
+    const pathSegments = window.location.pathname.split('/').filter(Boolean);  // Podziel URL na fragmenty
+    return pathSegments[0] === 'group';  // Sprawdź, czy pierwszy fragment to 'group'
+}
 
 function get_lessons(record_id) {
     $.ajax({
@@ -18,14 +22,22 @@ function get_lessons(record_id) {
                 tableContainer.html(generateTable(response.lessons));
 
                 open_months_url();
+
+                if (isGroupPage()) {
+                    modifyTable();
+                }
             } else {
                 handleResponse(response);
             }
+            return 0;
         },
         error: function (error) {
             console.error('B\u0142\u0105d pobierania lekcji', error);
+            return 0;
+
         }
     });
+    return 0;
 }
 
 
@@ -33,6 +45,7 @@ function generateTable(data) {
     // Creating table
     var table = document.createElement('table');
     table.classList.add('table', 'table-bordered', 'table-striped');
+    table.id = "lesson_table";
 
     var thead = document.createElement('thead');
     var headerRow = document.createElement('tr');
@@ -90,12 +103,12 @@ function generateTable(data) {
         row.appendChild(odwolaneTeacherCell);
 
         var odwolane24hCell = document.createElement('td');
-        odwolane24hCell.classList.add('text-center');
+        odwolane24hCell.classList.add('text-center', 'cancelled-24h-cells');
         odwolane24hCell.textContent = statutes["Odwolana - 24h przed"];
         row.appendChild(odwolane24hCell);
 
         var canceledeCell = document.createElement('td');
-        canceledeCell.classList.add('text-warning', 'text-center');
+        canceledeCell.classList.add('text-warning', 'text-center', 'cancelled-cell');
         canceledeCell.textContent = statutes['Nieobecnosc'];
         row.appendChild(canceledeCell);
 

@@ -3,7 +3,7 @@ from django.http import Http404
 from django.shortcuts import render, redirect
 from django.views.generic import View, TemplateView
 from .models import Student, Lesson, LessonAdjustment, Person, StudentPerson, Note, Notification, WatchRecord, Location, \
-    Statutes, Group, GroupStudent, AttendanceList, AttendanceListStudent
+    Statutes, Group, GroupStudent, AttendanceList, AttendanceListStudent, Invoice, InvoiceItem
 from ..service_helper import get_model_object_by_prefix, get_model_by_prefix
 from django.core.serializers import serialize
 import json
@@ -17,8 +17,8 @@ from django.db.models import Q, Count
 from calendar import monthrange
 from collections import defaultdict
 from django.utils import timezone as dj_timezone
-from .lesson_handler import count_lessons_for_student_in_months, create_lesson_adjustment, \
-    get_lessons_for_teacher_in_months, get_lessons_for_location_in_months, count_lessons_for_group_in_months
+from .lesson_handler import count_lessons_for_student_in_year, create_lesson_adjustment, \
+    get_lessons_for_teacher_in_year, get_lessons_for_location_in_year, count_lessons_for_group_in_year, count_lessons_for_student_in_month, count_lessons_for_teacher_in_day
 from django.contrib import messages
 from django.http.response import JsonResponse
 from django.contrib.contenttypes.models import ContentType
@@ -32,6 +32,7 @@ from django.http import HttpResponse
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from functools import wraps
 from django.db import transaction
+from django.contrib.admin.models import LogEntry
 
 WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
@@ -60,16 +61,29 @@ def check_permission(perm_name):
     return decorator
 
 
+def check_is_admin(func):
+    @wraps(func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_admin:
+            return custom_404(request, "Nie masz odpowiednich uprawnień")
+        return func(request, *args, **kwargs)
+    return wrapper
+
+
 def crmHomePage(request):
-    return render(request, "crm/index.html", {})
-    # return redirect("/student")
+    today = dj_timezone.now()
+    lessons_today = count_lessons_for_teacher_in_day(request.user.id, today.year, today.month, today.day)['Lessons']
+
+    logs = LogEntry.objects.filter(user=request.user).select_related('content_type').order_by('-action_time')[:10]
+
+
+    return render(request, "crm/index.html", {'lessons': lessons_today, 'today': today, 'logs': logs})
 
 
 @check_permission('crm.view_student')
 def all_students(request):
     students_list = Student.objects.all().order_by("-last_name").order_by("-first_name")
     context = {'students': students_list}
-    print(request.user.get_session_auth_hash())
     return render(request, "crm/students.html", context)
 
 
@@ -112,12 +126,12 @@ def calendar(request):
 
     if model_name == 'Location':
         selected_record = Location.objects.get(id=selected_record_id)
-        lesson_result = get_lessons_for_location_in_months(selected_record_id, selected_year)
+        lesson_result = get_lessons_for_location_in_year(selected_record_id, selected_year)
         locations = locations.exclude(id=selected_record_id)
 
     else:
         selected_record = User.objects.get(id=selected_record_id)
-        lesson_result = get_lessons_for_teacher_in_months(selected_record_id, selected_year)
+        lesson_result = get_lessons_for_teacher_in_year(selected_record_id, selected_year)
         teachers = teachers.exclude(id=selected_record_id)
 
     lessons = lesson_result['lessons']
@@ -152,8 +166,8 @@ def calendar(request):
             'endTime': lesson.end_time.strftime('%H:%M'),
             'startDate': str(lesson.start_time.date()),
             'endDate': str(lesson.series_end_date) if lesson.series_end_date else None,
-            'student': lesson.student.get_full_name(),
-            'student_id': lesson.student.id,
+            'student': lesson.student.get_full_name() if lesson.student else "[G] " + lesson.group.get_full_name(),
+            'student_id': lesson.student.id if lesson.student else lesson.group.id,
             'teacher': lesson.teacher.get_full_name(),
             'adjustments': lesson_adjustments_for_lesson,
             'description': lesson.description,
@@ -219,7 +233,7 @@ class StudentPage(View):
                     if is_series:
                         end_series = form.cleaned_data['end_series']
 
-                    start_datetime = datetime.combine(lesson_date, start_time)
+                    start_datetime = dj_timezone.make_aware(datetime.combine(lesson_date, start_time), dj_timezone.get_current_timezone())
                     end_datetime = start_datetime + timedelta(minutes=lesson_duration)
 
                     lesson = Lesson.objects.create(student_id=student_id, start_time=start_datetime,
@@ -246,6 +260,7 @@ class StudentPage(View):
         tab_name = request.GET.get("tab", "Details")
         opened_months = request.GET.get("opened_months", "")
         selected_year = int(request.GET.get("selected_year", datetime.now().year))
+        print("opened_months", opened_months)
 
         request.GET = request.GET.copy()
         request.GET.update({
@@ -264,7 +279,9 @@ class StudentPage(View):
                 user=request.user, content_type__model=model_name.lower(), object_id=student_id
             ).first()
 
-            notes = student.notes.all()
+            invoices = Invoice.objects.filter(student_id=student_id).order_by('-invoice_date')[:10]
+
+            notes = student.notes.all().order_by('-created_at')
             context.update({
                 'record': student,
                 'notes': notes,
@@ -273,6 +290,7 @@ class StudentPage(View):
                 'users': User.objects.all(),
                 'locations': Location.objects.all(),
                 'user': request.user,
+                'invoices': invoices,
             })
         except Student.DoesNotExist as e:
             print('StudentPage exception', e)
@@ -338,13 +356,21 @@ class StudentPersonCreate(View):
 
 
 @check_permission('crm.view_lesson')
-def view_student_lesson_series(request, student_id):
+def view_lesson_series(request, record_id):
+    model_name = get_model_by_prefix(record_id[:3])
+    if model_name == "Student":
+        lessons = Lesson.objects.filter(student_id=record_id).order_by('start_time')
+        record = Student.objects.get(id=record_id)
+    elif model_name == "Group":
+        lessons = Lesson.objects.filter(group_id=record_id).order_by('start_time')
+        record = Group.objects.get(id=record_id)
     context = {
-        'lessons': Lesson.objects.filter(student_id=student_id).order_by('start_time'),
-        'student': Student.objects.get(id=student_id)
+        'lessons': lessons,
+        'record': record,
+        'model_name': model_name
     }
 
-    return render(request, "crm/student-lesson-series.html", context)
+    return render(request, "crm/record-lesson-series.html", context)
 
 
 @check_permission('crm.view_person')
@@ -620,9 +646,9 @@ def get_student_group_lessons(request, record_id):
     selected_year = int(request.GET.get('selected_year', datetime.now().year))
 
     if get_model_by_prefix(record_id[:3]) == 'Student':
-        lessons_count = count_lessons_for_student_in_months(record_id, selected_year)
+        lessons_count = count_lessons_for_student_in_year(record_id, selected_year)
     elif get_model_by_prefix(record_id[:3]) == 'Group':
-        lessons_count = count_lessons_for_group_in_months(record_id, selected_year)
+        lessons_count = count_lessons_for_group_in_year(record_id, selected_year)
 
     lessons_count_serializable = {}
     for key, value in lessons_count.items():
@@ -665,7 +691,7 @@ def delete_record(request, record_id):
             else:
                 context['redirect_url'] = f'/{model_name.lower()}/{record.id}'
 
-            exception_model_url = ['lesson', 'studentperson']
+            exception_model_url = ['lesson', 'studentperson', 'attendancelist', 'invoice']
             if model_name.lower() in exception_model_url:
                 context['redirect_model_url'] = record.redirect_after_edit()
             else:
@@ -709,11 +735,12 @@ def upsert_record(request, model_name, record_id=None):
     record = None
 
     if record_id:
+        model_instance = get_model_object_by_prefix(record_id[:3])
+
         if not request.user.has_perm(f'crm.change_{model_name.lower()}'):
             messages.error(request, 'Brak uprawnie\u0144 do edytowania rekordu')
             return redirect(f'/{model_name.lower()}/{record_id}')
 
-        model_instance = get_model_object_by_prefix(record_id[:3])
         try:
             record = model_instance.objects.get(id=record_id)
         except model_instance.DoesNotExist:
@@ -737,11 +764,14 @@ def upsert_record(request, model_name, record_id=None):
         context['redirect_url'] = request.GET.get('discard_url')
 
     if request.method == 'POST':
-        form = form_class(request.POST, instance=record)
+        form = form_class(request.POST, request.FILES, instance=record)
         context['form'] = form
         if form.is_valid():
             try:
-                saved_instance = form.save()
+                print("===================")
+                print(form.cleaned_data)
+                saved_instance = form.save(commit=True)
+
                 messages.success(request, 'Rekord zapisany pomy\u015Blnie')
 
                 redirect_url = (
@@ -814,7 +844,7 @@ class GroupPage(View):
                     if is_series:
                         end_series = form.cleaned_data['end_series']
 
-                    start_datetime = datetime.combine(lesson_date, start_time)
+                    start_datetime = dj_timezone.make_aware(datetime.combine(lesson_date, start_time), dj_timezone.get_current_timezone())
                     end_datetime = start_datetime + timedelta(minutes=lesson_duration)
 
                     lesson = Lesson.objects.create(group_id=group_id, start_time=start_datetime,
@@ -883,12 +913,25 @@ class GroupPage(View):
 
             notes = group.notes.all()
 
-            attendance_lists = group.attendance_group_relationship.all()
+            attendance_lists = list(group.attendance_group_relationship.all().order_by('-lesson_date'))
+            attendance_lists_students = AttendanceListStudent.objects.filter(attendance_list__in=attendance_lists)
+            attendance_students = {}
+            for att_student in attendance_lists_students:
+                if att_student.student.id not in attendance_students:
+                    months = {str(month): 0 for month in range(1, 13)}
+
+                    attendance_students[att_student.student.id] = {
+                        "name": att_student.student.get_full_name(),
+                        **months
+                    }
+
 
             today = datetime.now().date()
 
             today_attendance_list = next((attendance_list for attendance_list in attendance_lists if attendance_list.lesson_date.date() == today), None)
 
+            if today_attendance_list is not None:
+                attendance_lists.remove(today_attendance_list)
 
             context.update({
                 'record': group,
@@ -914,12 +957,12 @@ class GroupPage(View):
 class AttendanceListPage(View):
 
     @staticmethod
-    @check_permission('crm.change_attendance_list')
+    @check_permission('crm.change_attendancelist')
     def post(request, *args, **kwargs):
         pass
 
     @staticmethod
-    @check_permission('crm.view_attendance_list')
+    @check_permission('crm.view_attendancelist')
     def get(request, *args, **kwargs):
         context = {}
 
@@ -940,7 +983,87 @@ class AttendanceListPage(View):
             })
 
         except AttendanceList.DoesNotExist as e:
-            messages.error(request, f"Nie znaleziono listy obecności z takim id: {attendance_list_id}")
+            return custom_404(request, f"Nie znaleziono listy obecności z takim id: {attendance_list_id}")
 
 
         return render(request, "crm/attendance-list-page.html", context)
+
+
+def save_attendance_list_student(request):
+    status = False
+    message = ""
+
+    try:
+        attendance_list_students = request.POST.get("attendance_list_students")
+        attendance_list_id = request.POST.get("attendance_list_id", None)
+
+        if not attendance_list_students:
+            message = "Lista nie może być pusta"
+            raise ValueError(message)
+        elif not attendance_list_id:
+            message = "Id Listy obecności nie może być puste"
+            raise ValueError(message)
+        else:
+            attendance_list_students = json.loads(attendance_list_students)
+
+            attendance_list_students_to_update = AttendanceListStudent.objects.filter(attendance_list_id=attendance_list_id)
+
+            records_to_update = []
+            for attendance_student in attendance_list_students:
+                attendance_student_record = attendance_list_students_to_update.filter(id=attendance_student['attendance_list_student_id']).first()
+
+                if attendance_student_record:
+                    attendance_student_record.attendance_status = attendance_student['status']
+
+                    records_to_update.append(attendance_student_record)
+
+            if records_to_update:
+                AttendanceListStudent.objects.bulk_update(records_to_update, ['attendance_status'])
+
+        message = "Lista zapisana pomyślnie"
+        status = True
+
+    except Exception as e:
+        print('Update Attendance List Student error:', e)
+        if not message:
+            message = str(e)
+
+    return JsonResponse({'status': status, 'message': message})
+
+
+@check_is_admin
+def view_reports(request):
+    return render(request, "crm/reports.html")
+
+
+@check_is_admin
+def view_student_report(request):
+    if not request.user.is_admin:
+        return custom_404(request, "Nie masz uprawnień do tej strony")
+    month = request.GET.get('month')
+    year = request.GET.get('year')
+    context = {"students": None}
+    if year is not None and month is not None:
+        request.GET = request.GET.copy()
+        request.GET.update({
+            'month': month,
+            'year': year,
+        })
+
+        students = Student.objects.all().order_by('first_name')
+        students_report = []
+
+
+        for student in students:
+            students_report.append({
+                "id": student.id,
+                "name": student.get_full_name(),
+                **count_lessons_for_student_in_month(student.id, int(year), int(month))
+            })
+
+        print(students_report)
+        context['students'] = students_report
+        context['month'] = month
+        context['year'] = year
+
+    return render(request, "crm/report-student-month.html", context)

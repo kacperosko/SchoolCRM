@@ -40,6 +40,11 @@ class LoginForm(forms.Form):
     password = forms.CharField(widget=forms.PasswordInput)
 
 
+class UserAvatarForm(forms.Form):
+    user_avatar_new = forms.ImageField()
+    user_id = forms.CharField()
+
+
 class UserForm(ModelForm):
     class Meta:
         model = User

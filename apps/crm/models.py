@@ -248,9 +248,13 @@ class Lesson(models.Model):
                                                                                   :5] + " " + self.location.get_full_name()
 
     def redirect_after_delete(self):
+        if self.student is None:
+            return f'/group/{self.group.id}/lesson-series'
         return f'/student/{self.student.id}/lesson-series'
 
     def redirect_after_edit(self):
+        if self.student is None:
+            return f'/group/{self.group.id}/lesson-series'
         return f'/student/{self.student.id}/lesson-series'
 
 
@@ -319,9 +323,21 @@ class AttendanceList(models.Model):
                               related_name='attendance_group_relationship')
     lesson_date = models.DateTimeField()
 
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='attenndancelist_createdby', null=True,
+                                   blank=True)
+    created_date = models.DateTimeField(auto_now_add=True)
+    modified_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='attenndancelist_modified_by', null=True,
+                                    blank=True)
+    modified_date = models.DateTimeField(auto_now=True)
+
     def __str__(self):
         return f"Lista Obecności {self.lesson_date.strftime('%d-%m-%y %H:%M')}"
 
+    def redirect_after_edit(self):
+        return f'/attendancelist/{self.id}'
+
+    def redirect_after_delete(self):
+        return f'/group/{self.group.id}?tab=Attendance'
 
 class AttendanceStatutes:
     OBECNOSC = "Obecnosc"
@@ -332,14 +348,52 @@ class AttendanceStatutes:
 ATTENDANCE_STATUTES = (
     ('Obecnosc', 'Obecno\u015B\u0107'),
     ('Nieobecnosc', 'Nieobecno\u015B\u0107'),
-    ('Spoznienie', 'Spoznienie'),
+    ('Spoznienie', 'Spóźnienie'),
 )
 
 
 class AttendanceListStudent(models.Model):
     id = PrefixedUUIDField(primary_key=True)
-    attendance_list = models.ForeignKey(AttendanceList, on_delete=models.CASCADE, blank=False, null=False, default="Obecnosc", related_name='attendance_list_student_group_relationship')
+    attendance_list = models.ForeignKey(AttendanceList, on_delete=models.CASCADE, blank=False, null=False, related_name='attendance_list_student_group_relationship')
     student = models.ForeignKey(Student, on_delete=models.CASCADE, blank=False, null=False,)
-    status = models.CharField(max_length=64, choices=ATTENDANCE_STATUTES, null=True, blank=True)
+    attendance_status = models.CharField(max_length=64, choices=ATTENDANCE_STATUTES, null=True, blank=True, default="Obecnosc")
+
+
+class Invoice(models.Model):
+    id = PrefixedUUIDField(primary_key=True)
+    name = models.CharField(max_length=64, blank=False, null=False)
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, blank=False, null=False,)
+    invoice_date = models.DateField()
+    is_paid = models.BooleanField(default=False)
+    is_sent = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.name + " " + self.invoice_date.strftime("%d-%m-%y")
+
+    def get_total_amount(self):
+        total = sum(item.amount * item.quantity for item in self.invoiceitem_set.all())
+        return total
+
+    def redirect_after_edit(self):
+        return f'/student/{self.student.id}?tab=Invoices'
+
+    def redirect_after_delete(self):
+        return f'/student/{self.student.id}?tab=Invoices'
+
+    def get_model_name(self, language):
+        names = {
+            "pl": "Faktura"
+        }
+        return names.get(language, self.__class__.__name__)
+
+
+class InvoiceItem(models.Model):
+    id = PrefixedUUIDField(primary_key=True)
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, blank=False, null=False,)
+    name = models.CharField(max_length=255)
+    amount = models.IntegerField()
+    quantity = models.IntegerField()
+
+
 
 

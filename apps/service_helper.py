@@ -7,7 +7,7 @@ from apps.authentication.models import User
 
 def get_model_object_by_prefix(prefix):
     from apps.crm.models import Person, Student, StudentPerson, Lesson, LessonAdjustment, Location, Note, WatchRecord, \
-        Notification, Group, GroupStudent
+        Notification, Group, GroupStudent, AttendanceList, Invoice
 
 
     prefixes = {
@@ -23,6 +23,8 @@ def get_model_object_by_prefix(prefix):
         '0US': User,
         '0GR': Group,
         '0GS': GroupStudent,
+        '0AS': AttendanceList,
+        '0IV': Invoice,
     }
     return prefixes.get(prefix, None)
 
@@ -41,11 +43,13 @@ def get_model_by_prefix(prefix):
         '0US': 'User',
         '0GR': 'Group',
         '0GS': 'GroupStudent',
+        '0AS': 'AttendanceList',
+        '0IV': 'Invoice'
     }
     return prefixes.get(prefix, None)
 
 
-def model_name_prefix(model_name):
+def get_prefix_by_model(model_name):
     prefixes = {
         'Person': '0PR',
         'Student': '0ST',
@@ -59,6 +63,8 @@ def model_name_prefix(model_name):
         'User': '0US',
         'Group': '0GR',
         'GroupStudent': '0GS',
+        'AttendanceList': '0AS',
+        'Invoice': '0IV',
     }
     return prefixes.get(model_name, '0EX')
 
@@ -72,7 +78,7 @@ class PrefixedUUIDField(models.CharField):
     def contribute_to_class(self, cls, name, **kwargs):
         super().contribute_to_class(cls, name, **kwargs)
         self.model = cls
-        self.prefix = model_name_prefix(cls.__name__)
+        self.prefix = get_prefix_by_model(cls.__name__)
 
     def pre_save(self, model_instance, add):
         if add and not getattr(model_instance, self.attname):

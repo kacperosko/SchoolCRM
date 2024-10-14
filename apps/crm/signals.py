@@ -1,7 +1,7 @@
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.contrib.contenttypes.models import ContentType
-from .models import Note, WatchRecord, Notification, Student, Group
+from .models import Note, WatchRecord, Notification, Student, Group, AttendanceList
 from django.utils import timezone
 from apps.authentication.middleware.current_user_middleware import get_current_user
 
@@ -65,5 +65,10 @@ def student_signal(sender, instance, **kwargs):
 
 
 @receiver(pre_save, sender=Group)
-def student_signal(sender, instance, **kwargs):
+def group_signal(sender, instance, **kwargs):
+    set_created_by_modified_by(sender, instance)
+
+
+@receiver(pre_save, sender=AttendanceList)
+def attendance_list_signal(sender, instance, **kwargs):
     set_created_by_modified_by(sender, instance)

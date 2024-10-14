@@ -15,7 +15,7 @@ urlpatterns = [
     path("student", crm_views.all_students, name="crm-students"),
     path("student/<str:student_id>", crm_views.StudentPage.as_view(), name="crm-students"),
     path("student/<str:student_id>/student-person/add", crm_views.StudentPersonCreate.as_view(), name="crm-student-person-delete"),
-    path("student/<str:student_id>/lesson-series", crm_views.view_student_lesson_series, name="crm-student-view_student_lesson_series"),
+    path("student/<str:record_id>/lesson-series", crm_views.view_lesson_series, name="crm-student-view_student_lesson_series"),
 
     path("person", crm_views.view_contacts, name="crm-contacts"),
     path("person/<str:person_id>", crm_views.view_person, name="crm-contacts-page"),
@@ -27,8 +27,12 @@ urlpatterns = [
 
     path("group", crm_views.all_groups, name="crm-GroupPage"),
     path("group/<str:group_id>", crm_views.GroupPage.as_view(), name="crm-GroupPage"),
+    path("group/<str:record_id>/lesson-series", crm_views.view_lesson_series, name="crm-student-view_student_lesson_series"),
 
-    path("attendance-list/<str:attendance_list_id>", crm_views.AttendanceListPage.as_view(), name="crm-attendance-list"),
+    path("attendancelist/<str:attendance_list_id>", crm_views.AttendanceListPage.as_view(), name="crm-attendance-list"),
+
+    path("report", crm_views.view_reports, name="crm-reports"),
+    path("report/paid-student-lessons-month", crm_views.view_student_report, name="crm-student-report"),
 
 
     path("crm_api/get-lessons/<str:record_id>", crm_views.get_student_group_lessons, name="crm-get_student_group_lessons"),
@@ -39,6 +43,9 @@ urlpatterns = [
     path('crm_api/notifications/read/<str:notification_id>/', crm_views.mark_notification_as_read, name='mark_notification_as_read'),
 
     path('crm_api/watch/<str:mode>/<str:record_id>/', crm_views.watch_record, name='watch_record'),
+
+
+    path('crm_api/save-attendance-list/', crm_views.save_attendance_list_student, name='save_attendance_list_student'),
 
 
     # path("<path:path>", crm_views.DynamicHTMLView.as_view(), name="dynamic-html"),

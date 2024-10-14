@@ -1,0 +1,173 @@
+{% extends 'base/base.html' %}
+{% block title %} Raporty {% endblock title %}
+{% load static %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header d-flex justify-content-between">
+
+            <div class="header-title">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/report"><i
+                                class="ri-home-4-line mr-1 float-left"></i>Raporty</a></li>
+                        <li class="breadcrumb-item active"
+                            aria-current="page">Raport płatnych lekcji studentów w miesiącu
+                        </li>
+                    </ol>
+                </nav>
+                <div class="mt-3 d-flex align-content-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                         stroke="currentColor" class="size-6" width="20px">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"></path>
+                    </svg>
+                    <p class="my-auto ml-1">Raport zlicza lekcje ze statusem "Zaplanowana" oraz "Nieobecność" dla
+                        każdego studenta w systemie w podanym miesiącu i roku</p>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="d-flex flex-wrap mb-3">
+                <div class="form-group col-sm-4">
+                    <label for="monthInput">Miesiąc<span class="text-danger">*</span></label>
+                    <select name="month" class="form-control select-form" id="monthInput" required>
+                        <option value="" disabled selected>Wybierz miesiąc</option>
+                        <option value="1">Styczeń</option>
+                        <option value="2">Luty</option>
+                        <option value="3">Marzec</option>
+                        <option value="4">Kwiecień</option>
+                        <option value="5">Maj</option>
+                        <option value="6">Czerwiec</option>
+                        <option value="7">Lipiec</option>
+                        <option value="8">Sierpień</option>
+                        <option value="9">Wrzesień</option>
+                        <option value="10">Październik</option>
+                        <option value="11">Listopad</option>
+                        <option value="12">Grudzień</option>
+                    </select>
+                </div>
+
+                <div class="form-group col-sm-3">
+                    <label for="yearInput">Rok<span class="text-danger">*</span></label>
+                    <input type="number" name="year" class="form-control" id="yearInput" required min="2020"
+                           placeholder="Wprowadź rok">
+                </div>
+
+                <div class="col-sm-3 align-items-center d-flex">
+                    <button class="btn btn-primary" id="generateButton">Wygeneruj Raport</button>
+                </div>
+            </div>
+
+            {% if students %}
+                <div class="d-flex align-items-center mb-1" style="gap: 2rem">
+                    <h5 style="width: fit-content" class="text-primary">Raport wygenerowany
+                        dla {{ month }}.{{ year }}</h5>
+                    <button class="btn btn-outline-primary" id="downloadExcel">Pobierz jako Excel</button>
+                </div>
+            {% endif %}
+            <table class="table table-bordered table-striped" id="generatedTable">
+                <thead>
+                <tr>
+                    <th scope="col" class="text-center">Imię Nazwisko</th>
+                    <th scope="col" class="text-center">30 min</th>
+                    <th scope="col" class="text-center">45 min</th>
+                    <th scope="col" class="text-center">60 min</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% if not students %}
+                    <tr>
+                        <td colspan="4" class="text-center py-3 bg-light-light">Podaj miesiąc i rok do wygenerowania
+                            raportu
+                        </td>
+                    </tr>
+                {% endif %}
+                {% for student in students %}
+                    <tr>
+                        <th scope="row" class="text-center"
+                            onclick="toggleDetails(this)">
+                            <a type="button" href="/student/{{ student.id }}"
+                               class="">{{ student.name }}
+                            </a>
+                        </th>
+                        <td class="text-center">{{ student.30min }}</td>
+                        <td class="text-center">{{ student.45min }}</td>
+                        <td class="text-center">{{ student.60min }}</td>
+
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+
+
+        </div>
+    </div>
+{% endblock content %}
+
+{% block javascript %}
+    <script>
+        {% if request.GET.year %}
+            const currentYear = {{ request.GET.year }};
+        {% else %}
+            const currentYear = new Date().getFullYear();
+        {% endif %}
+
+        const month = {{ request.GET.month|default:-1 }};
+
+        const yearInput = document.getElementById('yearInput');
+        yearInput.value = currentYear;
+
+        const monthInput = document.getElementById('monthInput');
+        if (month > -1){
+            monthInput.value = month;
+        }
+
+        // Funkcja do sprawdzania stanu przycisku
+        function checkButtonState() {
+            const monthInput = document.getElementById('monthInput');
+            const yearInput = document.getElementById('yearInput');
+            const generateButton = document.getElementById('generateButton');
+
+            // Sprawdzanie, czy oba pola są wypełnione
+            generateButton.disabled = !(monthInput.value && yearInput.value);
+        }
+
+        // Dodawanie nasłuchiwaczy zdarzeń do inputów
+        document.getElementById('monthInput').addEventListener('change', checkButtonState);
+        document.getElementById('yearInput').addEventListener('input', checkButtonState);
+
+        // Dodawanie zdarzenia kliknięcia do przycisku
+        document.getElementById('generateButton').addEventListener('click', function () {
+            const month = document.getElementById('monthInput').value;
+            const year = document.getElementById('yearInput').value;
+
+            // Przekierowanie do odpowiedniej strony
+            window.location.href = `/report/paid-student-lessons-month?month=${month}&year=${year}`;
+        });
+        document.addEventListener('DOMContentLoaded', function () {
+            const selectElements = document.querySelectorAll('.select-form');
+            selectElements.forEach(function (selectElement) {
+                if (selectElement.choicesInstance) {
+                    selectElement.choicesInstance.destroy();
+                }
+                selectElement.choicesInstance = new Choices(selectElement, {
+                    shouldSort: false,
+                    removeItemButton: true
+                });
+            });
+            checkButtonState();
+        });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <script>
+        document.getElementById('downloadExcel').addEventListener('click', function () {
+            const table = document.getElementById('generatedTable');
+            const workbook = XLSX.utils.table_to_book(table, {sheet: 'Raport'});
+            const xlsxData = XLSX.writeFile(workbook, 'raport_platnych_lekcji_studentow_{{ month }}_{{ year }}.xlsx');
+        });
+    </script>
+{% endblock %}

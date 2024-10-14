@@ -98,13 +98,13 @@
 
                     <div class=" row align-items-center">
                         <div class="form-group col-sm-6">
-                            <label for="student_first_name" class="text-muted">Nazwa:</label>
+                            <label class="text-muted">Nazwa:</label>
                             <p class="pb-1 field">{{ record.name }}</p>
                         </div>
                         <div class="form-group col-sm-6"></div>
 
                         <div class="form-group col-sm-6">
-                            <label for="student_phone" class="text-muted">Utworzono:</label>
+                            <label class="text-muted">Utworzono:</label>
                             <p class="pb-1 field">{{ record.created_date|default:"-" }}
                                 {% if record.created_by %}
                                     <a href="/user/{{ record.created_by.id }}">
@@ -123,7 +123,7 @@
                         </div>
 
                         <div class="form-group col-sm-6">
-                            <label for="student_phone" class="text-muted">Ostatnio zmodyfikowano:</label>
+                            <label class="text-muted">Ostatnio zmodyfikowano:</label>
                             <p class="pb-1 field">{{ record.modified_date|default:"-" }}
                                 {% if record.modified_by %}
                                     <a href="/user/{{ record.modified_by.id }}">
@@ -173,7 +173,7 @@
                                     <tr>
                                         <th scope="row" class="text-center"
                                             onclick="toggleDetails(this)">
-                                            <a type="button" href="/person/{{ group_student.student.id }}"
+                                            <a type="button" href="/student/{{ group_student.student.id }}"
                                                class="">{{ group_student.student.get_full_name }}
                                             </a>
                                         </th>
@@ -244,7 +244,7 @@
                         <div class="d-flex">
                             <button type="button"
                                     class="btn btn-outline-primary rounded-pill mt-2 mb-3 mr-2 d-flex align-content-center font-size-12"
-                                    onclick="window.location.href = '/student/{{ record.id }}/lesson-series'">
+                                    onclick="window.location.href = '/group/{{ record.id }}/lesson-series'">
                                 Zobacz serie lekcji
                             </button>
 
@@ -271,26 +271,61 @@
                 </div>
 
 
-                <div class="tab-pane fade {% if request.GET.tab == 'Attendance' %}show active{% endif %}" id="attendance"
+                <div class="tab-pane fade {% if request.GET.tab == 'Attendance' %}show active{% endif %}"
+                     id="attendance"
                      role="tabpanel" aria-labelledby="details-tab">
 
                     <div class="p-2 align-items-center">
-                        <h6>Dzisiejsza lista:</h6>
-                        {% if not today_attendance_list %}
-                            <div class="mt-2 bg-light-light card-block row p-3 rounded-lg w-25">
-                                Brak dzisiejszej listy
-                                <button data-toggle="modal" data-target="#attendanceListCreateModalCenter" href="" class="btn btn-primary py-1 px-2 rounded-pill align-content-center d-inline-flex mt-1">
-                                    + Wygeneruj listę
-                                </button>
+                        <h6 class="mb-2">Dzisiejsza lista:</h6>
+                        <div class="container">
+                            <div class="row">
+                                {% if not today_attendance_list %}
+                                   <div class="col-12 col-sm-6 col-md-4 col-lg-4">
+                                        <div class="bg-light-light card-block p-3 rounded-lg">
+                                            Brak dzisiejszej listy
+                                            <button data-toggle="modal" data-target="#attendanceListCreateModalCenter" href=""
+                                                    class="btn btn-primary py-1 px-2 rounded-pill align-content-center d-inline-flex mt-1">
+                                                + Wygeneruj listę
+                                            </button>
+                                        </div>
+                                   </div>
+                                {% else %}
+                                    <div class="col-12 col-sm-6 col-md-4 col-lg-4">
+                                        <div onclick="window,location.href = '/attendancelist/{{ today_attendance_list.id }}'"
+                                             class="attendance_list bg-primary-light card-block p-3 rounded-lg h-100"
+                                             style="cursor: pointer">
+                                            <div class="font-weight-600">Lekcja:</div>
+                                            {{ today_attendance_list.lesson_date }}
+            
+                                        </div>
+                                    </div>
+                                {% endif %}
                             </div>
-                        {% else %}
-                            <div onclick="window,location.href = '/attendance-list/{{ today_attendance_list.id }}'" class="attendance_list mt-2 bg-primary-light card-block row p-3 rounded-lg w-25"
-                            style="cursor: pointer">
-                                <div class="font-weight-600">Lekcja:</div>
-                                {{ today_attendance_list.lesson_date }}
+                        </div>
 
+                        <h6 class="my-3">Pozostałe listy:</h6>
+                        <div class="container">
+                            <div class="row">
+                                {% if attendance_lists %}
+                                    {% for list in attendance_lists %}
+                                        <div class="col-12 col-sm-6 col-md-4 col-lg-4 mb-4">
+                                            <div onclick="window.location.href = '/attendancelist/{{ list.id }}'"
+                                                 class="attendance_list bg-primary-light card-block p-3 rounded-lg h-100"
+                                                 style="cursor: pointer;">
+                                                <div class="font-weight-bold">Lekcja:</div>
+                                                <div>{{ list.lesson_date }}</div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="col-12">
+                                        <div class="bg-light-light card-block p-3 rounded-lg">
+                                            Brak pozostałych list
+                                        </div>
+                                    </div>
+                                {% endif %}
                             </div>
-                        {% endif %}
+                        </div>
                     </div>
 
 
@@ -302,23 +337,24 @@
     </div>
     <div class="modal fade" id="attendanceListCreateModalCenter" tabindex="-1" role="dialog"
          aria-labelledby="attendanceListCreateModalTitle" aria-hidden="true">
-         <div class="modal-dialog modal-dialog-centered" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                    <h5 class="modal-title" id="attendanceListModalCenterTitle">Czy chcesz utworzyć Listę Obecności z dzisiejszą datą?</h5>
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="attendanceListModalCenterTitle">Czy chcesz utworzyć Listę Obecności z
+                        dzisiejszą datą?</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
-                    </div>
-                    <form method="post" name="attendance_list_form" id="attendance_list_create_form" class="p-2">
-                    {% csrf_token %}
-                        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Anuluj</button>
-                        <button name="attendance_list_create" id="attendance_list_create" type="submit"
-                                class="btn btn-primary">Utwórz Liste Obecności
-                        </button>
-                    </form>
                 </div>
-         </div>
+                <form method="post" name="attendance_list_form" id="attendance_list_create_form" class="p-2">
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Anuluj</button>
+                    <button name="attendance_list_create" id="attendance_list_create" type="submit"
+                            class="btn btn-primary">Utwórz Liste Obecności
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
     <div class="modal fade" id="editEventModalCenter" tabindex="-1" role="dialog"
          aria-labelledby="cancelModalCenterTitle" aria-hidden="true">
@@ -365,8 +401,7 @@
                                 <select name="status" class="form-control" id="status_cancelForm" required>
                                     <option>Zaplanowana</option>
                                     <option value="Nieobecnosc">Nieobecność</option>
-                                    <option value="Odwolana - nauczyciel">Odwołana - nauczyciel</option>
-                                    <option value="Odwolana - 24h przed">Odwołana - 24h przed</option>
+                                    <option value="Odwolana - nauczyciel">Odwołana</option>
                                 </select>
                             </div>
                             <div class="form-group col-sm-6">
@@ -538,14 +573,39 @@
     <script src="{% static '/js/watchRecord.js' %}"></script>
     <script src="{% static '/js/lessons.js' %}"></script>
     <script>
-        {#const csrf_token = '{% csrf_token %}';#}
-        let student_first_name = document.getElementById("student_first_name");
-        let student_last_name = document.getElementById("student_last_name");
-        let student_email = document.getElementById("student_email");
-        let student_phone = document.getElementById("student_phone");
-        {#let student_edit = document.getElementById("student_btn_edit");#}
-        let student_cancel = document.getElementById("student_btn_cancel");
-        let student_submit = document.getElementById("student_btn_submit");
+
+        function modifyTable() {
+            // Pobranie tabeli
+            var table = document.getElementById("lesson_table");
+
+            if (!table) {
+                console.error("Tabela nie została znaleziona!");
+                return;
+            }
+
+            var columnsToRemove = [4, 3]; // Indeksy kolumn: 4 = 'Nieobecne', 3 = 'Odwolane - 24h przed'
+
+            var header = table.querySelector("thead tr");
+            columnsToRemove.forEach(function (colIndex) {
+                if (header.children[colIndex]) {
+                    header.removeChild(header.children[colIndex]);
+                }
+            });
+
+            var rows = table.querySelectorAll("tbody tr");
+            rows.forEach(function (row) {
+                columnsToRemove.forEach(function (colIndex) {
+                    if (row.children[colIndex]) {
+                        row.removeChild(row.children[colIndex]);
+                    }
+                });
+            });
+
+            if (header.children[2]) {
+                header.children[2].textContent = "Odwołane";
+            }
+        }
+
 
         let selected_year_div = document.getElementById("selected-year");
         let nextYearBTn = document.getElementById("nextYearBTn");
@@ -565,9 +625,7 @@
             const differenceInMilliseconds = end - start;
 
             // Konwersja milisekund na minuty
-            const differenceInMinutes = differenceInMilliseconds / (1000 * 60);
-
-            return differenceInMinutes;
+            return differenceInMilliseconds / (1000 * 60);
         }
 
         function modifyEvent(lesson_schedule_id, startTime, endTime, lessonDate, studentName, status, isAdjustment, is_edit = false) {
@@ -618,7 +676,7 @@
 
         function generate_lessons() {
             if (!lessonsLoaded) {
-                get_lessons('{{ record.id }}')
+                get_lessons('{{ record.id }}');
                 lessonsLoaded = true;
             }
         }
