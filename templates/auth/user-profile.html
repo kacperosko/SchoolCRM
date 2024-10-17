@@ -58,7 +58,7 @@
                         <div class="card bg-primary pt-4 rounded text-center">
                             <div class="position-relative">
                                 {% if user.user_avatar %}
-                                    <img width="160px" id="user-avatar" class="user-avatar rounded-circle mx-auto" src="/media/{{ user.user_avatar.url }}" alt="user avatar picture">
+                                    <img width="160px" id="user-avatar" class="user-avatar rounded-circle mx-auto" src="/media{{ user.user_avatar.url }}" alt="user avatar picture">
                                 {% else %}
                                     <span id="user-avatar" data-letters="{{ user.get_full_name|initials }}" class="initialsbig initialspage mx-auto"></span>
                                 {% endif %}
