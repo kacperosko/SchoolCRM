@@ -198,7 +198,6 @@ class UserForm(forms.ModelForm):
         super(UserForm, self).__init__(*args, **kwargs)
 
         # Check if 'initial' is provided or if an 'instance' is provided
-        self.fields['is_superuser'].initial = False
         if initial or instance:
             # Disable the 'student' field
             self.fields['email'].disabled = True
