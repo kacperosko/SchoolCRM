@@ -261,8 +261,6 @@ def generate_lessons(lessons, adjustments, year):
 
     # get current server date
     current_datetime = datetime.now().astimezone(current_timezone)
-    print('current_timezone', current_timezone)
-    print('current_datetime', current_datetime)
 
     lessons_count_in_months = defaultdict(
         lambda: {Statutes.PLANNED: 0, Statutes.NIEOBECNOSC: 0, Statutes.ODWOLANA_NAUCZYCIEL: 0,
@@ -280,9 +278,7 @@ def generate_lessons(lessons, adjustments, year):
             if year != lesson.start_time.year:
                 current_date_time = datetime.combine(date(year, 1, 1), lesson.start_time.time())
                 if current_date_time.weekday() != lesson.start_time.weekday():
-                    print('weekdays not equal')
                     weekday_difference = lesson.start_time.weekday() - current_date_time.weekday()
-                    print('weekday_difference ->', weekday_difference)
                     current_date_time += timedelta(days=weekday_difference)
                 current_date = current_date_time.date()
 
@@ -340,11 +336,8 @@ def generate_lessons(lessons, adjustments, year):
             lessons_count_in_months[month_original_lesson][Statutes.PLANNED] -= 1
         origan_lesson_key_dict = generate_lesson_dict_key(original_lesson_datetime, adjustment.lesson.id)
         if origan_lesson_key_dict in lessons_count_in_months[month_original_lesson]['Lessons']:
-            print("key", origan_lesson_key_dict, "in Lesson")
             del lessons_count_in_months[month_original_lesson]['Lessons'][
                 generate_lesson_dict_key(original_lesson_datetime, adjustment.lesson.id)]
-        else:
-            print("key", origan_lesson_key_dict, "NOT IN in Lesson ----")
         status = Statutes.PLANNED
 
         if adjustment.modified_start_time.year == year:

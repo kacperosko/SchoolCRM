@@ -28,7 +28,6 @@ from django.utils.timezone import now
 from django.shortcuts import get_object_or_404, redirect
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from django.contrib.auth.decorators import permission_required
-from django.http import HttpResponse
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from functools import wraps
 from django.db import transaction
@@ -74,10 +73,7 @@ def crmHomePage(request):
     today = dj_timezone.now()
     lessons_today = count_lessons_for_teacher_in_day(request.user.id, today.year, today.month, today.day)['Lessons']
 
-    logs = LogEntry.objects.filter(user=request.user).select_related('content_type').order_by('-action_time')[:10]
-
-
-    return render(request, "crm/index.html", {'lessons': lessons_today, 'today': today, 'logs': logs})
+    return render(request, "crm/index.html", {'lessons': lessons_today, 'today': today})
 
 
 @check_permission('crm.view_student')
@@ -293,11 +289,9 @@ class StudentPage(View):
                 'invoices': invoices,
             })
         except Student.DoesNotExist as e:
-            print('StudentPage exception', e)
             messages.error(request, f'Nie znaleziono Studenta z id {student_id}')
             return redirect('/student')
         except Exception as e:
-            print('StudentPage exception', e)
             messages.error(request, f'StudentPage exception: {e}')
             return custom_404(request, e)
 
@@ -358,12 +352,18 @@ class StudentPersonCreate(View):
 @check_permission('crm.view_lesson')
 def view_lesson_series(request, record_id):
     model_name = get_model_by_prefix(record_id[:3])
-    if model_name == "Student":
-        lessons = Lesson.objects.filter(student_id=record_id).order_by('start_time')
-        record = Student.objects.get(id=record_id)
-    elif model_name == "Group":
-        lessons = Lesson.objects.filter(group_id=record_id).order_by('start_time')
-        record = Group.objects.get(id=record_id)
+    try:
+        if model_name == "Student":
+            lessons = Lesson.objects.filter(student_id=record_id).order_by('start_time')
+            record = Student.objects.get(id=record_id)
+        elif model_name == "Group":
+            lessons = Lesson.objects.filter(group_id=record_id).order_by('start_time')
+            record = Group.objects.get(id=record_id)
+    except ObjectDoesNotExist as e:
+        return custom_404(request, "Nie znaleziono lekcji powiązanych z id: {id}".format(id=record_id))
+    except Exception as e:
+        return custom_404(request, e)
+
     context = {
         'lessons': lessons,
         'record': record,
@@ -382,11 +382,12 @@ def view_person(request, person_id):
     request.GET['tab'] = tab_name
 
     try:
-        person = get_object_or_404(Person, id=person_id)
+        person = Person.objects.get(id=person_id)
         context['person'] = person
+    except ObjectDoesNotExist as e:
+        return custom_404(request, "Kontakt z takim id nie istnieje: {id}".format(id=person_id))
     except Exception as e:
-        print(e)
-        return HttpResponse(status=404)
+        return custom_404(request, e)
 
     return render(request, 'crm/person-page.html', context)
 
@@ -945,7 +946,7 @@ class GroupPage(View):
                 'today_attendance_list': today_attendance_list,
             })
         except Group.DoesNotExist as e:
-            messages.error(request, f'Nie znaleziono Grupy z id {student_id}')
+            messages.error(request, f'Nie znaleziono Grupy z id {group_id}')
             return redirect('/group')
         except Exception as e:
             messages.error(request, f'view_group exception: {e}')

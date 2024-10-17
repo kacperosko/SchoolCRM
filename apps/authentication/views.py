@@ -66,9 +66,9 @@ class UserPage(View):
             students = Student.objects.filter(id__in=student_ids)
             context['students'] = students
 
-
         except Exception as e:
-            print(e)
+            messages.error(request, 'Wystąpił błąd: {e}'.format(e=e))
+            return redirect("/user")
         return render(request, 'auth/user-profile.html', context)
 
     @staticmethod

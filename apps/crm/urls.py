@@ -46,9 +46,5 @@ urlpatterns = [
 
 
     path('crm_api/save-attendance-list/', crm_views.save_attendance_list_student, name='save_attendance_list_student'),
-
-
-    # path("<path:path>", crm_views.DynamicHTMLView.as_view(), name="dynamic-html"),
-    # defaults.page_not_found(request, exception, template_name='404.html')
 ]
 

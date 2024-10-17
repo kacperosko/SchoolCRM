@@ -320,7 +320,7 @@ class InvoiceForm(forms.ModelForm):
 
     month = forms.ChoiceField(label='Miesiąc', choices=MONTHS, initial=MONTHS[dj_timezone.now().month-1][0])
     year = forms.IntegerField(label='Rok', initial=dj_timezone.now().year, min_value=2020)
-    field_order = ['student', 'name', 'month', 'year']
+    field_order = ['student', 'name', 'month', 'year', 'is_sent']
 
     def update_form(self, data):
         student_id = data.get('student')
