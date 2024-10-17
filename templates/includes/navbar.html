@@ -65,7 +65,7 @@
                                id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
                                aria-expanded="false">
                                 {% if request.user.user_avatar %}
-                                    <img src="{{ request.user.user_avatar.url }}" class="avatar-rounded">
+                                    <img src="/media/{{ request.user.user_avatar.url }}" class="avatar-rounded">
                                 {% else %}
                                     <svg xmlns="http://www.w3.org/2000/svg" width="45" height="45"
                                      class="text-secondary" fill="none" viewBox="0 0 24 24">

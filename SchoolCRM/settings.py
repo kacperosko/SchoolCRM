@@ -123,6 +123,7 @@ LOGIN_URL = '/login'
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
 
 LANGUAGE_CODE = 'pl'
+DEFAULT_CHARSET = 'utf-8'
 
 TIME_ZONE = 'Europe/Warsaw'
 USE_TZ = True
@@ -134,6 +135,8 @@ USE_I18N = True
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 STATIC_URL = '/static/'
 STATIC_ROOT = '/home/warsztat6/domains/warsztat-muzyczny.kacperosko.hmcloud.pl/warsztat-crm/static'
+MEDIA_ROOT = '/home/warsztat6/domains/warsztat-muzyczny.kacperosko.hmcloud.pl/warsztat-crm//media'
+
 
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'apps/static'),
