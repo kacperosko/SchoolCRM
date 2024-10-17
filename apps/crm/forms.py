@@ -255,7 +255,7 @@ class AttendancelistForm(forms.ModelForm):
     class Meta:
         model = AttendanceList
         fields = "__all__"
-        exclude = ('id',)
+        exclude = ('id', 'created_by', 'modified_by', 'created_date', 'modified_date')
 
     lesson_date = forms.DateTimeField(label='Data lekcji', disabled=False,
                                      widget=forms.DateInput(attrs={'type': 'datetime-local', 'class': 'mt--2'}))
