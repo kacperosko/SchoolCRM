@@ -39,5 +39,8 @@ urlpatterns = [
     path("", include("apps.crm.urls")),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
 handler404 = 'apps.crm.views.custom_404'
 handler500 = 'apps.crm.views.custom_500'

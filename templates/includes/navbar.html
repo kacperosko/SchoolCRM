@@ -21,32 +21,6 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                     <ul class="navbar-nav ml-auto navbar-list align-items-center">
-                        <li class="nav-item nav-icon search-content">
-                            <a href="#" class="search-toggle rounded" id="dropdownSearch" data-toggle="dropdown"
-                               aria-haspopup="true" aria-expanded="false">
-                                <svg class="svg-icon text-secondary" id="h-suns" height="25" width="25"
-                                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                     stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                                </svg>
-                            </a>
-                            <div class="iq-search-bar iq-sub-dropdown dropdown-menu" aria-labelledby="dropdownSearch">
-                                <form action="#" class="searchbox p-2">
-                                    <div class="form-group mb-0 position-relative">
-                                        <input type="text" class="text search-input font-size-12"
-                                               placeholder="type here to search...">
-                                        <a href="#" class="search-link">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="" width="20" fill="none"
-                                                 viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                                            </svg>
-                                        </a>
-                                    </div>
-                                </form>
-                            </div>
-                        </li>
                         <li class="nav-item nav-icon dropdown">
                             <a href="#" class="search-toggle dropdown-toggle" id="notification-dropdown"
                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -86,13 +60,26 @@
                                 </div>
                             </div>
                         </li>
-                        <li class="nav-item nav-icon dropdown">
+                        <li class="nav-item nav-icon dropdown ">
                             <a href="#" class="nav-item nav-icon dropdown-toggle pr-0 search-toggle"
                                id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
                                aria-expanded="false">
-                                <span data-letters="{{ request.user.get_full_name|initials }}"
-                                      class="mb-0 ml-2 user-name">{{ request.user.get_full_name }}
-                                      </span>
+                                {% if request.user.user_avatar %}
+                                    <img src="{{ request.user.user_avatar.url }}" class="avatar-rounded">
+                                {% else %}
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="45" height="45"
+                                     class="text-secondary" fill="none" viewBox="0 0 24 24">
+                                        <circle cx="12" cy="12" r="10" fill="{{ request.user.avatar_color }}"></circle>
+                                        <text x="50%" y="50%" text-anchor="middle" fill="white" font-size="10"
+                                              font-weight="bold" dy=".3em">
+                                            {{ request.user.get_full_name|initials }}
+                                        </text>
+                                    </svg>
+                                {% endif %} 
+                                
+                                <span class="d-none d-lg-inline-block ml-2 user-name">
+                                    {{ request.user.get_full_name }}
+                                </span>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton">
                                 <li class="dropdown-item d-flex svg-icon">

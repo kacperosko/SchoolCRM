@@ -15,7 +15,7 @@ class UserAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Details', {
-            'fields': ('email', 'first_name', 'last_name', 'phone', 'avatar_color')
+            'fields': ('email', 'first_name', 'last_name', 'phone', 'avatar_color', 'user_avatar')
         }),
 
         ('Permissions', {

@@ -31,7 +31,7 @@ class LoginRequiredMiddleware:
 
         if request.user.is_authenticated:
             if request.path == '/login/':
-                return redirect("/student")
+                return redirect("/")
             return
 
         return login_required(view_func)(request, *view_args, **view_kwargs)

@@ -1,0 +1,52 @@
+{% extends 'base/base.html' %}
+{% block title %} Grupy {% endblock title %}
+{% load static %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header d-flex justify-content-between">
+            <div class="header-title">
+                <h4 class="card-title">Grupy</h4>
+            </div>
+            {% if perms.crm.add_group %}
+            <a href="/group/new" class="btn btn-primary rounded-pill font-size-12 align-content-center d-inline-flex">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                     stroke="currentColor" class="w-6 h-6 mr-1" width="18">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"></path>
+                </svg>
+                Utwórz Grupę
+            </a>
+            {% endif %}
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="datatable-students" class="table data-table table-striped table-bordered">
+                    <thead>
+                    <tr>
+                        <th>Nazwa</th>
+                        <th>Ilość studentów</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for group in groups %}
+                        <tr>
+                            <td>
+                                <a href="/group/{{ group.id }}">{{ group.name }}</a>
+                            </td>
+                            <td>{{ group.student_count }}</td>
+                        </tr>
+                    {% endfor %}
+
+                    </tbody>
+                    <tfoot>
+                    <tr>
+                        <th>Nazwa</th>
+                        <th>Ilość studentów</th>
+                    </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

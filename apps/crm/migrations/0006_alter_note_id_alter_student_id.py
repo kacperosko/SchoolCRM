@@ -3,6 +3,8 @@
 import apps.crm.models
 from django.db import migrations
 
+import apps.service_helper
+
 
 class Migration(migrations.Migration):
 
@@ -14,11 +16,11 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='note',
             name='id',
-            field=apps.crm.models.PrefixedUUIDField(max_length=29, primary_key=True, serialize=False, unique=True),
+            field=apps.service_helper.PrefixedUUIDField(max_length=29, primary_key=True, serialize=False, unique=True),
         ),
         migrations.AlterField(
             model_name='student',
             name='id',
-            field=apps.crm.models.PrefixedUUIDField(max_length=29, primary_key=True, serialize=False, unique=True),
+            field=apps.service_helper.PrefixedUUIDField(max_length=29, primary_key=True, serialize=False, unique=True),
         ),
     ]

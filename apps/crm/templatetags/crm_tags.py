@@ -2,6 +2,7 @@ from django import template
 import json
 from django.utils.safestring import mark_safe
 import calendar
+from apps.service_helper import get_model_by_prefix
 
 register = template.Library()
 WEEKDAYS_NAMES = ['Poniedzia\u0142ek', 'Wtorek', '\u015Aroda', 'Czwartek', 'Pi\u0105tek', 'Sobota', 'Niedziela']
@@ -78,8 +79,8 @@ def initials(full_name):
         return ""
 
     names = full_name.split()
-    initials = ''.join([name[0].upper() for name in names])
-    return initials
+    initials_formatted = ''.join([name[0].upper() for name in names])
+    return initials_formatted
 
 
 @register.filter(name='get_model_name')
@@ -87,3 +88,19 @@ def get_model_name(obj, language):
     if hasattr(obj, 'get_model_name'):
         return obj.get_model_name(language)
     return obj.__class__.__name__
+
+
+@register.filter(name='yes_no')
+def yes_no(value):
+    return "Tak" if value else "Nie"
+
+
+@register.filter(name='get_model_name_by_id')
+def get_model_name_by_id(model_id):
+    return get_model_by_prefix(model_id[:3])
+
+
+@register.filter
+def get_first_segment(value):
+    segments = value.split('/')
+    return segments[1] if len(segments) > 1 else ''

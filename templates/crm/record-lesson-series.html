@@ -8,13 +8,23 @@
         <div class="card-header d-flex justify-content-between">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="/student"><i
-                            class="ri-home-4-line mr-1 float-left"></i>Studenci</a></li>
-                    <li class="breadcrumb-item"><a href="/student/{{ student.id }}?tab=Lessons"><i
-                            class="ri-home-4-line mr-1 float-left"></i>{{ student.get_full_name }}</a></li>
-                    <li class="breadcrumb-item active"
-                        aria-current="page">Serie Lekcji
-                    </li>
+                    {% if model_name == "Student" %}
+                        <li class="breadcrumb-item"><a href="/student"><i
+                                class="ri-home-4-line mr-1 float-left"></i>Studenci </a></li>
+                        <li class="breadcrumb-item"><a href="/student/{{ record.id }}?tab=Lessons"><i
+                                class="ri-home-4-line mr-1 float-left"></i>{{ record.get_full_name }}</a></li>
+                        <li class="breadcrumb-item active"
+                            aria-current="page">Serie Lekcji
+                        </li>
+                    {% else %}
+                        <li class="breadcrumb-item"><a href="/group"><i
+                                class="ri-home-4-line mr-1 float-left"></i>Grupy</a></li>
+                        <li class="breadcrumb-item"><a href="/group/{{ record.id }}?tab=Lessons"><i
+                                class="ri-home-4-line mr-1 float-left"></i>{{ record.get_full_name }}</a></li>
+                        <li class="breadcrumb-item active"
+                            aria-current="page">Serie Lekcji
+                        </li>
+                    {% endif %}
                 </ol>
             </nav>
         </div>

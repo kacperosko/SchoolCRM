@@ -1,67 +1,13 @@
-from smtplib import SMTPException
-
 from django.db import models
 
 from apps.authentication.models import User
 from django.utils.timezone import now
 from django.core.exceptions import ValidationError
-from django.core.mail import send_mail
-from SchoolCRM.settings import EMAIL_HOST_USER, SITE_URL
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from datetime import date
-import uuid
 
-
-class PrefixedUUIDField(models.CharField):
-    def __init__(self, *args, **kwargs):
-        kwargs['max_length'] = kwargs.get('max_length', 39)  # 3 (prefix) + 29 (UUID) = 32
-        kwargs['unique'] = True
-        super().__init__(*args, **kwargs)
-
-    def contribute_to_class(self, cls, name, **kwargs):
-        super().contribute_to_class(cls, name, **kwargs)
-        self.model = cls
-        self.prefix = model_name_prefix(cls.__name__)
-
-    def pre_save(self, model_instance, add):
-        if add and not getattr(model_instance, self.attname):
-            value = f"{self.prefix}{uuid.uuid4()}"
-            setattr(model_instance, self.attname, value)
-            return value
-        return super().pre_save(model_instance, add)
-
-
-def model_name_prefix(model_name):
-    prefixes = {
-        'Person': '0PR',
-        'Student': '0ST',
-        'StudentPerson': '0SP',
-        'Lesson': '0LS',
-        'LessonAdjustment': '0LA',
-        'Location': '0LC',
-        'Note': '0NT',
-        'WatchRecord': '0WR',
-        'Notification': '0NF',
-        'User': '0US',
-    }
-    return prefixes.get(model_name, '0EX')
-
-
-def get_model_by_prefix(prefix):
-    prefixes = {
-        '0PR': 'Person',
-        '0ST': 'Student',
-        '0SP': 'StudentPerson',
-        '0LS': 'Lesson',
-        '0LA': 'LessonAdjustment',
-        '0LC': 'Location',
-        '0NT': 'Note',
-        '0WR': 'WatchRecord',
-        '0NF': 'Notification',
-        '0US': 'User',
-    }
-    return prefixes.get(prefix, None)
+from ..service_helper import PrefixedUUIDField
 
 
 class Note(models.Model):
@@ -241,6 +187,27 @@ class Location(models.Model):
         return self.name + ", " + self.country + " " + self.city + " " + self.postal_code + ", ul. " + self.street
 
 
+class Group(models.Model):
+    id = PrefixedUUIDField(primary_key=True)
+
+    name = models.CharField(max_length=32)
+    notes = GenericRelation(Note)
+
+
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='group_created_by', null=True,
+                                   blank=True)
+    created_date = models.DateTimeField(auto_now_add=True)
+    modified_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='group_modified_by', null=True,
+                                    blank=True)
+    modified_date = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+    def get_full_name(self):
+        return self.name
+
+
 class Lesson(models.Model):
     id = PrefixedUUIDField(primary_key=True)
 
@@ -249,12 +216,26 @@ class Lesson(models.Model):
     is_series = models.BooleanField(default=False)
     description = models.CharField(max_length=120, blank=True, null=True)
     series_end_date = models.DateField(blank=True, null=True)
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, blank=False, null=False,
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, blank=True, null=True,
                                 related_name='lessonSchedule_student_student_relationship')
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, blank=True, null=True,
+                              related_name='lessonSchedule_lesson_group_relationship')
     teacher = models.ForeignKey(User, on_delete=models.SET_NULL, blank=False, null=True,
                                 related_name='lessonSchedule_teacher_user_relationship')
     location = models.ForeignKey(Location, on_delete=models.SET_NULL, blank=False, null=True,
                                  related_name='lessonSchedule_location_relationship')
+
+    def clean(self):
+        # Ensure either student or group is set, but not both
+        if self.student and self.group:
+            raise ValidationError('You can only assign a lesson to either a student or a group, not both.')
+        if not self.student and not self.group:
+            raise ValidationError('A lesson must be assigned to either a student or a group.')
+
+    def save(self, *args, **kwargs):
+        # Call clean before saving to ensure validation is applied
+        self.clean()
+        super().save(*args, **kwargs)
 
     def get_model_name(self, language):
         names = {
@@ -267,9 +248,13 @@ class Lesson(models.Model):
                                                                                   :5] + " " + self.location.get_full_name()
 
     def redirect_after_delete(self):
+        if self.student is None:
+            return f'/group/{self.group.id}/lesson-series'
         return f'/student/{self.student.id}/lesson-series'
 
     def redirect_after_edit(self):
+        if self.student is None:
+            return f'/group/{self.group.id}/lesson-series'
         return f'/student/{self.student.id}/lesson-series'
 
 
@@ -311,30 +296,104 @@ class Absense(models.Model):
     end_time = models.DateTimeField()
 
 
-class Group(models.Model):
-    id = PrefixedUUIDField(primary_key=True)
-
-    name = models.CharField(max_length=100)
-
-
 class GroupStudent(models.Model):
     id = PrefixedUUIDField(primary_key=True)
 
-    group = models.ForeignKey(Group, on_delete=models.CASCADE, blank=False, null=False, )
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, blank=False, null=False, )
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, blank=False, null=False,
+                              related_name='group_student_group_relationship')
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, blank=False, null=False,
+                                related_name='groupStudent_student_relationship')
+
+    class Meta:
+        unique_together = ('group', 'student')
+
+    def __str__(self):
+        return f"Student {self.student.get_full_name()} w grupie {self.group.get_full_name()}"
+
+    def redirect_after_delete(self):
+        return f'/group/{self.group.id}'
+
+    def redirect_after_edit(self):
+        return f'/group/{self.group.id}'
 
 
-def get_model_object_by_prefix(prefix):
-    prefixes = {
-        '0PR': Person,
-        '0ST': Student,
-        '0SP': StudentPerson,
-        '0LS': Lesson,
-        '0LA': LessonAdjustment,
-        '0LC': Location,
-        '0NT': Note,
-        '0WR': WatchRecord,
-        '0NF': Notification,
-        '0US': User,
-    }
-    return prefixes.get(prefix, None)
+class AttendanceList(models.Model):
+    id = PrefixedUUIDField(primary_key=True)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, blank=False, null=False,
+                              related_name='attendance_group_relationship')
+    lesson_date = models.DateTimeField()
+
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='attenndancelist_createdby', null=True,
+                                   blank=True)
+    created_date = models.DateTimeField(auto_now_add=True)
+    modified_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='attenndancelist_modified_by', null=True,
+                                    blank=True)
+    modified_date = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Lista Obecności {self.lesson_date.strftime('%d-%m-%y %H:%M')}"
+
+    def redirect_after_edit(self):
+        return f'/attendancelist/{self.id}'
+
+    def redirect_after_delete(self):
+        return f'/group/{self.group.id}?tab=Attendance'
+
+class AttendanceStatutes:
+    OBECNOSC = "Obecnosc"
+    NIEOBECNOSC = "Nieobecnosc"
+    SPOZNIENIE = "Spoznienie"
+
+
+ATTENDANCE_STATUTES = (
+    ('Obecnosc', 'Obecno\u015B\u0107'),
+    ('Nieobecnosc', 'Nieobecno\u015B\u0107'),
+    ('Spoznienie', 'Spóźnienie'),
+)
+
+
+class AttendanceListStudent(models.Model):
+    id = PrefixedUUIDField(primary_key=True)
+    attendance_list = models.ForeignKey(AttendanceList, on_delete=models.CASCADE, blank=False, null=False, related_name='attendance_list_student_group_relationship')
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, blank=False, null=False,)
+    attendance_status = models.CharField(max_length=64, choices=ATTENDANCE_STATUTES, null=True, blank=True, default="Obecnosc")
+
+
+class Invoice(models.Model):
+    id = PrefixedUUIDField(primary_key=True)
+    name = models.CharField(max_length=64, blank=False, null=False)
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, blank=False, null=False,)
+    invoice_date = models.DateField()
+    is_paid = models.BooleanField(default=False)
+    is_sent = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.name + " " + self.invoice_date.strftime("%d-%m-%y")
+
+    def get_total_amount(self):
+        total = sum(item.amount * item.quantity for item in self.invoiceitem_set.all())
+        return total
+
+    def redirect_after_edit(self):
+        return f'/student/{self.student.id}?tab=Invoices'
+
+    def redirect_after_delete(self):
+        return f'/student/{self.student.id}?tab=Invoices'
+
+    def get_model_name(self, language):
+        names = {
+            "pl": "Faktura"
+        }
+        return names.get(language, self.__class__.__name__)
+
+
+class InvoiceItem(models.Model):
+    id = PrefixedUUIDField(primary_key=True)
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, blank=False, null=False,)
+    name = models.CharField(max_length=255)
+    amount = models.IntegerField()
+    quantity = models.IntegerField()
+
+
+
+

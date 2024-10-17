@@ -3,6 +3,9 @@ from random import random
 from django.db import models
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, Group, PermissionsMixin
 import uuid
+from PIL import Image
+import io
+from django.core.files.base import ContentFile
 
 
 class PrefixedUUIDField(models.CharField):
@@ -86,9 +89,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     phone = models.CharField(max_length=20, blank=True, null=True)
 
     avatar_color = models.CharField(max_length=7, default='#000000')
+    user_avatar = models.ImageField(upload_to='avatars', blank=True)
+
 
     is_active = models.BooleanField(default=True)
-    is_superuser = models.BooleanField(default=True)
+    is_superuser = models.BooleanField(default=False)
     staff = models.BooleanField(default=False)
     admin = models.BooleanField(default=False)
 
@@ -133,4 +138,28 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name_plural = "Users"
 
 
+    def crop_image(self, image, size=(300, 300)):
+        # Otwórz obrazek za pomocą Pillow
+        img = Image.open(image)
+
+        # Sprawdź, czy obraz jest większy niż 300x300
+        if img.size[0] > size[0] or img.size[1] > size[1]:
+            # Przytnij obraz do kwadratu
+            min_side = min(img.size)  # Wybierz mniejszy bok
+            left = (img.size[0] - min_side) / 2
+            top = (img.size[1] - min_side) / 2
+            right = (img.size[0] + min_side) / 2
+            bottom = (img.size[1] + min_side) / 2
+
+            img = img.crop((left, top, right, bottom))
+
+            # Zmiana rozmiaru do 300x300
+            img = img.resize(size, Image.ANTIALIAS)
+
+        # Zapisz obraz do pamięci
+        img_io = io.BytesIO()
+        img.save(img_io, format='JPEG')  # lub format 'PNG', jeśli obrazek jest w tym formacie
+        img_file = ContentFile(img_io.getvalue(), name=image.name)
+
+        return img_file
     objects = UserManager()
