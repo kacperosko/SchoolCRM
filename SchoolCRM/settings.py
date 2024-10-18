@@ -15,7 +15,7 @@ SECRET_KEY = 'django-insecure-uta=i!_i25%tc1y*h!!w1r$o+s7tj354vg30hlf8!w42d0mz+%
 DEBUG = False
 
 ALLOWED_HOSTS = ['*']
-SITE_URL = 'warsztat-crm.hmcloud.pl'
+SITE_URL = 'warsztat-muzyczny.kacperosko.hmcloud.pl'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 SESSION_COOKIE_AGE = 60 * 60  # (60 * 60 seconds = 60 minutes)
 SESSION_SAVE_EVERY_REQUEST = True
