@@ -89,9 +89,12 @@ WSGI_APPLICATION = 'SchoolCRM.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-        'TIME_ZONE': 'Europe/Warsaw',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'warsztat6_warsztat_muzyczny',
+        'USER': 'warsztat6_warsztat_muzyczny',
+        'PASSWORD': 'fygdeX-8worwu-tifdov',
+        'HOST': 'localhost',
+        'PORT': '',
     }
 }
 
