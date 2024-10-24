@@ -32,7 +32,7 @@ from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from functools import wraps
 from django.db import transaction
 from django.contrib.admin.models import LogEntry
-
+import os
 WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
 
@@ -1050,3 +1050,36 @@ def view_student_report(request):
         context['year'] = year
 
     return render(request, "crm/report-student-month.html", context)
+
+
+IMPORT_FILES = {
+    'student': 'student_import_szablon.xlsx'
+}
+
+
+def import_records(request, model_name):
+    context = {}
+    if model_name not in IMPORT_FILES:
+        messages.error(request, f"Nie znaleziono opcji importu dla tego obiektu: {model_name}")
+        return redirect(f"/{model_name}")
+
+    template_file = IMPORT_FILES[model_name]
+    template_file_path = os.path.join(settings.MEDIA_ROOT, template_file)
+    context['template_file'] = template_file
+
+    # Obsługa pobierania pliku szablonu
+    if 'download' in request.GET:
+        if os.path.exists(template_file_path):
+            # Zwracanie pliku jako odpowiedzi FileResponse
+            return FileResponse(open(template_file_path, 'rb'), as_attachment=True, filename=template_file)
+        else:
+            messages.error(request, "Plik szablonu nie został znaleziony.")
+            return redirect(f"/{model_name}")
+
+    # Renderowanie strony import-records.html z kontekstem
+    return render(request, "crm/import-records.html", context)
+
+
+def download_template(request):
+    file_path = os.path.join(settings.MEDIA_ROOT, 'your_template.xlsx')
+    return FileResponse(open(file_path, 'rb'), as_attachment=True, filename='template.xlsx')
