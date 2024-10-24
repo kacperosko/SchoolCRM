@@ -23,8 +23,8 @@ urlpatterns = [
     path('warsztatownia/', admin.site.urls),
     path("", include("apps.authentication.urls")),
     path("", include("apps.crm.urls")),
-    re_path(r'^media/(?P<path>.*)$', serve,{'document_root': settings.MEDIA_ROOT}),
-    re_path(r'^static/(?P<path>.*)$', serve,{'document_root': settings.STATIC_ROOT}),
+    # re_path(r'^media/(?P<path>.*)$', serve,{'document_root': settings.MEDIA_ROOT}),
+    # re_path(r'^static/(?P<path>.*)$', serve,{'document_root': settings.STATIC_ROOT}),
 ]
 
 if settings.DEBUG:

@@ -34,6 +34,8 @@ urlpatterns = [
     path("report", crm_views.view_reports, name="crm-reports"),
     path("report/paid-student-lessons-month", crm_views.view_student_report, name="crm-student-report"),
 
+    path("import/<str:model_name>", crm_views.import_records, name="crm-import-records"),
+
 
     path("crm_api/get-lessons/<str:record_id>", crm_views.get_student_group_lessons, name="crm-get_student_group_lessons"),
     path("crm_api/create-note", crm_views.upsert_note, name="crm-create_note"),

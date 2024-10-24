@@ -12,7 +12,7 @@ CORE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'django-insecure-uta=i!_i25%tc1y*h!!w1r$o+s7tj354vg30hlf8!w42d0mz+%'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 SITE_URL = 'warsztat-muzyczny.kacperosko.hmcloud.pl'
@@ -131,9 +131,10 @@ USE_I18N = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 STATIC_URL = '/static/'
-STATIC_ROOT = '/home/warsztat6/domains/warsztat-muzyczny.kacperosko.hmcloud.pl/warsztat-crm/static'
-MEDIA_ROOT = '/home/warsztat6/domains/warsztat-muzyczny.kacperosko.hmcloud.pl/warsztat-crm//media'
-
+# STATIC_ROOT = '/home/warsztat6/domains/warsztat-muzyczny.kacperosko.hmcloud.pl/warsztat-crm/static'
+# MEDIA_ROOT = '/home/warsztat6/domains/warsztat-muzyczny.kacperosko.hmcloud.pl/warsztat-crm//media'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'apps/static'),
