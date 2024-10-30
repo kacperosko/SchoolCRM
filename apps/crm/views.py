@@ -1,5 +1,6 @@
 import time
 from django.http import Http404
+from django.apps import apps
 from django.shortcuts import render, redirect
 from django.views.generic import View, TemplateView
 from .models import Student, Lesson, LessonAdjustment, Person, StudentPerson, Note, Notification, WatchRecord, Location, \
@@ -1083,3 +1084,106 @@ def import_records(request, model_name):
 def download_template(request):
     file_path = os.path.join(settings.MEDIA_ROOT, 'your_template.xlsx')
     return FileResponse(open(file_path, 'rb'), as_attachment=True, filename='template.xlsx')
+
+
+VIEW_ALL_MODELS = {
+    'student': {
+        'fields': {
+            'first_name': 'Imię',
+            'last_name': 'Nazwisko',
+            'email': 'Email',
+            'phone': 'Telefon',
+        }
+    },
+    'group': {
+        'fields': {
+            'name': 'Nazwa',
+        }
+    },
+    'person': {
+        'fields': {
+            'first_name': 'Imię',
+            'last_name': 'Nazwisko',
+            'email': 'Email',
+            'phone': 'Telefon',
+        }
+    },
+    'location': {
+        'fields': {
+            'name': 'Nazwa',
+            'city': 'Miasto',
+            'street': 'Ulica',
+            'postal_code': 'Kod pocztowy',
+        }
+    }
+}
+
+
+def view_all(request, model_name):
+    if model_name not in VIEW_ALL_MODELS:
+        return custom_404(request, "Nie znaleziono takiej strony")
+    try:
+        model = apps.get_model(app_label='crm', model_name=model_name)
+    except LookupError:
+        raise custom_404(request, "Nie znaleziono takiego modelu")
+
+    fields_with_labels = VIEW_ALL_MODELS[model_name]['fields']
+    fields = list(fields_with_labels.keys())
+    labels = list(fields_with_labels.values())
+
+    context = {
+        'model_name': model_name,
+        'model_label_plural': model._meta.verbose_name_plural,
+        'model_label': model._meta.verbose_name,
+        'fields': fields_with_labels,
+        'order_field': list(fields_with_labels.keys())[0],
+    }
+
+    return render(request, 'crm/list-all.html', context)
+
+
+def get_all_records(request):
+    model_name = request.GET.get('model_name')
+    if model_name not in VIEW_ALL_MODELS:
+        return JsonResponse({'success': False, 'message': f'Nie znaleziono takiego obiektu {model_name}'}, status=404)
+
+    fields_with_labels = VIEW_ALL_MODELS[model_name]['fields']
+    fields = list(fields_with_labels.keys())
+    labels = list(fields_with_labels.values())
+
+    try:
+        model = apps.get_model(app_label='crm', model_name=model_name)
+    except LookupError:
+        raise custom_404(request, "Nie znaleziono takiego modelu")
+    order_field = request.GET.get('order_field', fields[0])
+    user_input = request.GET.get('query', '')
+
+    if user_input:
+        # Tworzenie dynamicznego zapytania
+        query = Q()
+        for field in fields:
+            query |= Q(**{f"{field}__icontains": user_input})
+
+        records_query = model.objects.filter(query).values(*fields, 'id').order_by(order_field)
+    else:
+        records_query = model.objects.all().values(*fields, 'id').order_by(order_field)
+
+    # Paginacja wyników
+    paginator = Paginator(records_query, 10)
+    page_number = request.GET.get('page', 1)
+    try:
+        records_page = paginator.page(page_number)
+    except EmptyPage:
+        records_page = paginator.page(paginator.num_pages)
+
+    # Przekazanie danych do szablonu
+    context = {
+        'records': [record for record in records_page],
+        'records_number': records_page.number,
+        'has_previous': records_page.has_previous(),
+        'has_next': records_page.has_next(),
+        'num_pages': records_page.paginator.num_pages,
+    }
+
+    return JsonResponse({'success': True, **context}, status=200)
+

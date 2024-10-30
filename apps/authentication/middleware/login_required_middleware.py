@@ -23,6 +23,9 @@ class LoginRequiredMiddleware:
         if request.path.startswith(settings.STATIC_URL):
             return
 
+        if request.path == '/login':
+            return redirect('/login/')
+
         if request.path in self.password_reset_urls or request.path.startswith('/password-reset-confirm/'):
             return
 
