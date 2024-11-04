@@ -90,7 +90,7 @@
                             <span class="user-display pr-2">
                                 {% if selected_record|get_model_name:'en' == "User" %}
                                     {% if selected_record.user_avatar %}
-                                        <img src="{{ selected_record.user_avatar.url }}" class="rounded-circle" width="48px" style="margin-left: -14px" alt="user avatar">
+                                        <img src="/media{{ selected_record.user_avatar.url }}" class="rounded-circle" width="48px" style="margin-left: -14px" alt="user avatar">
                                     {% else %}
                                     <span id="initial_{{ selected_record.id }}"
                                           data-letters="{{ selected_record.get_full_name|initials }}"
@@ -116,7 +116,7 @@
                                 <a class="dropdown-item user-item"
                                    onclick="showByRecord('{{ teacher.id }}')">
                                     {% if teacher.user_avatar %}
-                                        <img src="{{ teacher.user_avatar.url }}" class="rounded-circle mr-0" width="48px" style="margin-left: -14px" alt="user avatar">
+                                        <img src="/media{{ teacher.user_avatar.url }}" class="rounded-circle mr-0" width="48px" style="margin-left: -14px" alt="user avatar">
                                         <span class="ml-2">{{ teacher.get_full_name }}</span>
                                     {% else %}
                                         <span id="initial_{{ teacher.id }}"

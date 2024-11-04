@@ -12,19 +12,23 @@ CORE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'django-insecure-uta=i!_i25%tc1y*h!!w1r$o+s7tj354vg30hlf8!w42d0mz+%'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
-SITE_URL = 'warsztat-crm.hmcloud.pl'
+SITE_URL = 'warsztat-muzyczny.kacperosko.hmcloud.pl'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 SESSION_COOKIE_AGE = 60 * 60  # (60 * 60 seconds = 60 minutes)
 SESSION_SAVE_EVERY_REQUEST = True
 
-SESSION_COOKIE_HTTPONLY = False
-SESSION_COOKIE_SECURE = False
-CSRF_COOKIE_SECURE = False
+# SESSION_COOKIE_HTTPONLY = False
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
 
-SECURE_SSL_REDIRECT = False
+SECURE_HSTS_SECONDS = 31536000  # 1 year
+SECURE_SSL_REDIRECT = True
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -58,17 +62,14 @@ ROOT_URLCONF = 'SchoolCRM.urls'
 
 # Email sending configuration
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-# EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-#
+
 DEFAULT_FROM_EMAIL = 'biuro@warsztat-muzyczny.kacperosko.hmcloud.pl'
 EMAIL_HOST = 'mx1.hitme.net.pl'
 EMAIL_HOST_PORT = 465
 EMAIL_USE_TLS = True
-# EMAIL_USE_SSL = True
 EMAIL_HOST_USER = 'biuro@warsztat-muzyczny.kacperosko.hmcloud.pl'
 EMAIL_HOST_PASSWORD = 'K@cper123!'
-# EMAIL_HOST_USER = 'warsztat6'
-# EMAIL_HOST_PASSWORD = 'SMdrt2t2CwCcBg'
+
 
 TEMPLATE_DIR = os.path.join(CORE_DIR, "templates")  # ROOT dir for _templates
 
@@ -90,28 +91,16 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'SchoolCRM.wsgi.application'
 
-# Database
-# https://docs.djangoproject.com/en/4.1/ref/settings/#databases
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-        'TIME_ZONE': 'Europe/Warsaw',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'warsztat6_warsztat_muzyczny',
+        'USER': 'warsztat6_warsztat_muzyczny',
+        'PASSWORD': 'fygdeX-8worwu-tifdov',
+        'HOST': 'localhost',
+        'PORT': '',
     }
 }
-
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'warsztat6_warsztat_muzyczny',
-#         'USER': 'warsztat6_warsztat_muzyczny',
-#         'PASSWORD': 'fygdeX-8worwu-tifdov',
-#         'HOST': 'localhost',
-#         'PORT': '',
-#     }
-# }
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -131,7 +120,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# LOGIN_REDIRECT_URL = "/login"
 LOGOUT_REDIRECT_URL = "/login"
 LOGIN_URL = '/login'
 
@@ -139,6 +127,7 @@ LOGIN_URL = '/login'
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
 
 LANGUAGE_CODE = 'pl'
+DEFAULT_CHARSET = 'utf-8'
 
 TIME_ZONE = 'Europe/Warsaw'
 USE_TZ = True
@@ -148,13 +137,10 @@ USE_I18N = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
-
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
-# STATIC_ROOT = '/Users/kacperosko/SchoolCRM/static'
+STATIC_ROOT = '/home/warsztat6/domains/warsztat-muzyczny.kacperosko.hmcloud.pl/warsztat-crm/static'
+MEDIA_ROOT = '/home/warsztat6/domains/warsztat-muzyczny.kacperosko.hmcloud.pl/warsztat-crm//media'
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-MEDIA_URL = '/media/'
 
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'apps/static'),
@@ -164,4 +150,3 @@ STATICFILES_DIRS = (
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-# DEFAULT_AUTO_FIELD = 'django.db.models.UUIDField'

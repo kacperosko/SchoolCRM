@@ -198,7 +198,6 @@ class UserForm(forms.ModelForm):
         super(UserForm, self).__init__(*args, **kwargs)
 
         # Check if 'initial' is provided or if an 'instance' is provided
-        self.fields['is_superuser'].initial = False
         if initial or instance:
             # Disable the 'student' field
             self.fields['email'].disabled = True
@@ -256,7 +255,7 @@ class AttendancelistForm(forms.ModelForm):
     class Meta:
         model = AttendanceList
         fields = "__all__"
-        exclude = ('id',)
+        exclude = ('id', 'created_by', 'modified_by', 'created_date', 'modified_date')
 
     lesson_date = forms.DateTimeField(label='Data lekcji', disabled=False,
                                      widget=forms.DateInput(attrs={'type': 'datetime-local', 'class': 'mt--2'}))

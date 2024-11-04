@@ -192,7 +192,7 @@ def get_lessons_for_teacher_in_year(teacher_id, year):
 
 
 def count_lessons_for_teacher_in_day(teacher_id, year, month, day):
-    day_of_month = date(year, month, day)
+    day_of_month = dj_timezone.make_aware(dj_timezone.datetime(year, month, day))
 
     lessons = Lesson.objects.filter(
         Q(teacher_id=teacher_id) &

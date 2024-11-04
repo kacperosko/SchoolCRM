@@ -138,28 +138,4 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name_plural = "Users"
 
 
-    def crop_image(self, image, size=(300, 300)):
-        # Otwórz obrazek za pomocą Pillow
-        img = Image.open(image)
-
-        # Sprawdź, czy obraz jest większy niż 300x300
-        if img.size[0] > size[0] or img.size[1] > size[1]:
-            # Przytnij obraz do kwadratu
-            min_side = min(img.size)  # Wybierz mniejszy bok
-            left = (img.size[0] - min_side) / 2
-            top = (img.size[1] - min_side) / 2
-            right = (img.size[0] + min_side) / 2
-            bottom = (img.size[1] + min_side) / 2
-
-            img = img.crop((left, top, right, bottom))
-
-            # Zmiana rozmiaru do 300x300
-            img = img.resize(size, Image.ANTIALIAS)
-
-        # Zapisz obraz do pamięci
-        img_io = io.BytesIO()
-        img.save(img_io, format='JPEG')  # lub format 'PNG', jeśli obrazek jest w tym formacie
-        img_file = ContentFile(img_io.getvalue(), name=image.name)
-
-        return img_file
     objects = UserManager()

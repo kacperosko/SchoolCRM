@@ -32,18 +32,16 @@ from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from functools import wraps
 from django.db import transaction
 from django.contrib.admin.models import LogEntry
-
+import os
 WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
 
 def custom_404(request, exception):
-    print("custom 404", request.path, exception)
     messages.error(request, exception)
     return render(request, 'auth/404.html', status=404)
 
 
 def custom_500(request):
-    print("custom 505", request.path)
     return render(request, 'auth/404.html', status=505)
 
 
@@ -198,7 +196,6 @@ class StudentPage(View):
         selected_year = request.GET.get("selected_year", datetime.now().year)
         if request.method == 'POST':
             if 'edit_form_submit' in request.POST:
-                print('edit_form_submit')
                 form = LessonModuleForm(request.POST)
                 if form.is_valid():
 
@@ -214,7 +211,6 @@ class StudentPage(View):
                 return redirect(
                     f'/student/{student_id}?tab={tab_name}&opened_months={opened_months}&selected_year={selected_year}')
             elif 'create_lesson_form_submit' in request.POST:
-                print('create_form_submit')
                 form = LessonCreateForm(request.POST)
                 if form.is_valid():
                     start_time = form.cleaned_data['startTime']
@@ -256,7 +252,6 @@ class StudentPage(View):
         tab_name = request.GET.get("tab", "Details")
         opened_months = request.GET.get("opened_months", "")
         selected_year = int(request.GET.get("selected_year", datetime.now().year))
-        print("opened_months", opened_months)
 
         request.GET = request.GET.copy()
         request.GET.update({
@@ -323,7 +318,6 @@ class StudentPersonCreate(View):
                                                               student_id=student_id)
                 messages.success(request, f'Relacja z {student_person.person.get_full_name()} utworzona')
             except Exception as e:
-                print(e)
                 messages.error(request, f'Error podczas tworzenia relacji: {e}')
                 return redirect(f'/student/{student_id}')
 
@@ -451,7 +445,6 @@ def upsert_note(request):
         status = True
 
     except Exception as e:
-        print('Create note error:', e)
         if not message:
             message = str(e)
 
@@ -727,7 +720,6 @@ def upsert_record(request, model_name, record_id=None):
     try:
         form_class = get_form_class(form_name)
     except Exception as e:
-        print("ERROR:", e)
         messages.error(request, "Wyst\u0105pi\u0142 b\u0142\u0105d podczas \u0142adowania formularza.")
         return redirect(f'/{model_name.lower()}/{record_id}' if record_id else f'/{model_name.lower()}')
 
@@ -769,8 +761,6 @@ def upsert_record(request, model_name, record_id=None):
         context['form'] = form
         if form.is_valid():
             try:
-                print("===================")
-                print(form.cleaned_data)
                 saved_instance = form.save(commit=True)
 
                 messages.success(request, 'Rekord zapisany pomy\u015Blnie')
@@ -782,11 +772,9 @@ def upsert_record(request, model_name, record_id=None):
                 )
                 return redirect(redirect_url)
             except Exception as e:
-                print('exception')
                 messages.error(request, f'Wyst\u0105pi\u0142 b\u0142\u0105d podczas zapisywania rekordu: {e}')
         else:
-            print('errors')
-            print(form.errors)
+
             context['message'] = form.errors
 
     return render(request, "crm/record-update-create.html", context)
@@ -813,7 +801,6 @@ class GroupPage(View):
 
         if request.method == 'POST':
             if 'edit_form_submit' in request.POST:
-                print('edit_form_submit')
                 form = LessonModuleForm(request.POST)
                 if form.is_valid():
 
@@ -830,7 +817,6 @@ class GroupPage(View):
                 return redirect(
                     f'/group/{group_id}?tab={tab_name}&opened_months={opened_months}&selected_year={selected_year}')
             elif 'create_lesson_form_submit' in request.POST:
-                print('create_form_submit')
                 form = LessonCreateForm(request.POST)
                 if form.is_valid():
                     start_time = form.cleaned_data['startTime']
@@ -860,7 +846,6 @@ class GroupPage(View):
                 return redirect(
                     f'/group/{group_id}?tab={tab_name}&opened_months={opened_months}&selected_year={selected_year}')
             elif 'attendance_list_create' in request.POST:
-                print('attendance_list_create')
                 form = AttendancelistForm(request.POST)
                 try:
                     attendance_list = AttendanceList.objects.create(group_id=group_id, lesson_date=dj_timezone.now())
@@ -910,7 +895,6 @@ class GroupPage(View):
             ).first()
 
             group_students = GroupStudent.objects.filter(group=group)
-            print(group_students)
 
             notes = group.notes.all()
 
@@ -1025,7 +1009,6 @@ def save_attendance_list_student(request):
         status = True
 
     except Exception as e:
-        print('Update Attendance List Student error:', e)
         if not message:
             message = str(e)
 
@@ -1062,9 +1045,41 @@ def view_student_report(request):
                 **count_lessons_for_student_in_month(student.id, int(year), int(month))
             })
 
-        print(students_report)
         context['students'] = students_report
         context['month'] = month
         context['year'] = year
 
     return render(request, "crm/report-student-month.html", context)
+
+
+IMPORT_FILES = {
+    'student': 'student_import_szablon.xlsx'
+}
+
+
+def import_records(request, model_name):
+    context = {}
+    if model_name not in IMPORT_FILES:
+        messages.error(request, f"Nie znaleziono opcji importu dla tego obiektu: {model_name}")
+        return redirect(f"/{model_name}")
+
+    template_file = IMPORT_FILES[model_name]
+    template_file_path = os.path.join(settings.MEDIA_ROOT, template_file)
+    context['template_file'] = template_file
+
+    # Obsługa pobierania pliku szablonu
+    if 'download' in request.GET:
+        if os.path.exists(template_file_path):
+            # Zwracanie pliku jako odpowiedzi FileResponse
+            return FileResponse(open(template_file_path, 'rb'), as_attachment=True, filename=template_file)
+        else:
+            messages.error(request, "Plik szablonu nie został znaleziony.")
+            return redirect(f"/{model_name}")
+
+    # Renderowanie strony import-records.html z kontekstem
+    return render(request, "crm/import-records.html", context)
+
+
+def download_template(request):
+    file_path = os.path.join(settings.MEDIA_ROOT, 'your_template.xlsx')
+    return FileResponse(open(file_path, 'rb'), as_attachment=True, filename='template.xlsx')

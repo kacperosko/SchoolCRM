@@ -14,12 +14,12 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: rgba(0, 0, 0, 0.6); /* Czarny przezroczysty kolor */
+            background-color: rgba(0, 0, 0, 0.6);
             display: flex;
-            align-items: center; /* Wyrównanie w pionie */
-            justify-content: center; /* Wyrównanie w poziomie */
-            opacity: 0; /* Domyślnie ukryty */
-            transition: opacity 0.3s; /* Efekt przejścia */
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s;
             width: 160px;
             margin-left: auto;
             margin-right: auto;
@@ -27,13 +27,13 @@
         }
 
         .overlay:hover {
-            opacity: 1; /* Pokazuje overlay po najechaniu */
+            opacity: 1;
         }
 
         .overlay-text {
-            color: white; /* Kolor tekstu */
-            font-size: 16px; /* Rozmiar czcionki */
-            font-weight: bold; /* Pogrubienie czcionki */
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
         }
         .modal-body {
             max-height: 400px;
@@ -41,7 +41,7 @@
         }
         .cropper-view-box,
         .cropper-face {
-            border-radius: 50%; /* Zaokrąglenie do kształtu koła */
+            border-radius: 50%;
         }
     </style>
 {% endblock style %}
@@ -58,7 +58,7 @@
                         <div class="card bg-primary pt-4 rounded text-center">
                             <div class="position-relative">
                                 {% if user.user_avatar %}
-                                    <img width="160px" id="user-avatar" class="user-avatar rounded-circle mx-auto" src="{{ user.user_avatar.url }}" alt="user avatar picture">
+                                    <img width="160px" id="user-avatar" class="user-avatar rounded-circle mx-auto" src="/media{{ user.user_avatar.url }}" alt="user avatar picture">
                                 {% else %}
                                     <span id="user-avatar" data-letters="{{ user.get_full_name|initials }}" class="initialsbig initialspage mx-auto"></span>
                                 {% endif %}
@@ -161,17 +161,12 @@
 
         document.getElementById('saveButton').addEventListener('click', function () {
             if (cropper) {
-                // Pobierz przycięty obraz w formacie base64
                 const croppedCanvas = cropper.getCroppedCanvas({
                     width: 300, // Rozmiar przyciętego obrazu
                     height: 300,
                 });
-
-                // Konwertuj przycięty obraz do formatu base64
-                // Wstaw base64 do ukrytego pola formularza
+                
                 document.getElementById('croppedImage').value = croppedCanvas.toDataURL('image/png');
-
-                // Wyślij formularz
                 document.getElementById('uploadForm').submit();
             }
         });
@@ -184,19 +179,16 @@
                     const imageElement = document.getElementById('image-to-crop');
                     imageElement.src = e.target.result;
 
-                    // Pokaż modal
                     $('#cropModal').modal('show');
 
-                    // Inicjuj Cropper.js po załadowaniu obrazu
                     $('#cropModal').on('shown.bs.modal', function () {
                         cropper = new Cropper(imageElement, {
-                            aspectRatio: 1, // Proporcja 1:1 dla kwadratu
+                            aspectRatio: 1,
                             viewMode: 2,
                             autoCropArea: 1,
                         });
                     });
 
-                    // Usuń cropper po zamknięciu modala
                     $('#cropModal').on('hidden.bs.modal', function () {
                         cropper.destroy();
                         cropper = null;
@@ -207,20 +199,17 @@
         }
 
         function cropImage() {
-            // Pobierz przycięte dane obrazu
             const canvas = cropper.getCroppedCanvas({
                 width: 300,
                 height: 300,
             });
 
-            // Przekonwertuj na URL i zaktualizuj zdjęcie profilowe
             const avatarElement = document.getElementById('user-avatar');
             const croppedImageURL = canvas.toDataURL('image/png');
 
             if (avatarElement.tagName === 'IMG') {
                 avatarElement.src = croppedImageURL;
             } else if (avatarElement.tagName === 'SPAN') {
-                // Tworzenie nowego obrazu <img> i zamiana z <span>
                 const newImage = document.createElement('img');
                 newImage.src = croppedImageURL;
                 newImage.width = 160;
@@ -229,9 +218,7 @@
                 avatarElement.parentNode.replaceChild(newImage, avatarElement);
             }
 
-            // Zamknij modal
             $('#cropModal').modal('hide');
         }
-
     </script>
 {% endblock javascript %}
