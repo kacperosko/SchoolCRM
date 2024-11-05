@@ -31,7 +31,6 @@ def user_login(request):
                 return redirect(next_url)
             else:
                 message = 'Nazwa u\u017Cytkownika lub has\u0142o s\u0105 niepoprawne'
-                print(message)
                 sleep(4)
         else:
             message = form.errors
@@ -46,7 +45,7 @@ def users(request):
     try:
         users_all = User.objects.all().order_by("-first_name")
     except Exception as e:
-        print(e)
+        messages.error(request, e)
 
     return render(request, 'auth/users.html', {'users': users_all})
 

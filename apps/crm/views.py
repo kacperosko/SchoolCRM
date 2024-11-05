@@ -14,7 +14,7 @@ from .forms import PersonForm, LessonModuleForm, LessonPlanForm, LessonCreateFor
 from apps.authentication.models import User
 from datetime import datetime, timedelta, date, time
 from time import sleep
-from django.db.models import Q, Count
+from django.db.models import Q, Count, Sum
 from calendar import monthrange
 from collections import defaultdict
 from django.utils import timezone as dj_timezone
@@ -34,6 +34,8 @@ from functools import wraps
 from django.db import transaction
 from django.contrib.admin.models import LogEntry
 import os
+from apps.crm.templatetags.crm_tags import get_month_name
+
 WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
 
@@ -67,12 +69,38 @@ def check_is_admin(func):
         return func(request, *args, **kwargs)
     return wrapper
 
+def income_chart(request):
+    today = dj_timezone.now().date()
+    monthly_income = []
+
+    # Tworzenie listy dochodu dla każdego z ostatnich 4 miesięcy
+    for i in range(6):
+        # Get the first day of each month and the corresponding month number
+        start_of_month = (today.replace(day=1) - timedelta(days=i * 30)).replace(day=1)
+        month_number = start_of_month.month
+
+        # Calculate the income for the month
+        income = Invoice.objects.filter(
+            invoice_date__year=start_of_month.year,
+            invoice_date__month=month_number,
+            is_paid=True
+        ).aggregate(total=Sum('invoiceitem__amount'))['total'] or 0
+
+        # Add month number and income to the list
+        monthly_income.append({
+            'month': get_month_name(month_number),
+            'income': income
+        })
+
+    return monthly_income[::-1]
 
 def crmHomePage(request):
     today = dj_timezone.now()
     lessons_today = count_lessons_for_teacher_in_day(request.user.id, today.year, today.month, today.day)['Lessons']
 
-    return render(request, "crm/index.html", {'lessons': lessons_today, 'today': today})
+    monthly_income = income_chart(request) if request.user.is_admin else []
+
+    return render(request, "crm/index.html", {'lessons': lessons_today, 'today': today, 'monthly_income': monthly_income})
 
 
 @check_permission('crm.view_student')

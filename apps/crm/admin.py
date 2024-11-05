@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Person, Student, Lesson, LessonAdjustment, StudentPerson, Note, Location, Notification, WatchRecord, Group, GroupStudent, AttendanceList, AttendanceListStudent
+from .models import Person, Student, Lesson, LessonAdjustment, StudentPerson, Note, Location, Notification, WatchRecord, Group, GroupStudent, AttendanceList, AttendanceListStudent, Invoice, InvoiceItem
 from django.contrib.contenttypes.admin import GenericTabularInline
 
 
@@ -99,6 +99,24 @@ class AttendanceListAdmin(admin.ModelAdmin):
 
     inlines = [
         AttendanceListStudent_ItemInline,
+    ]
+
+
+class InvoiceItemStudent_ItemInline(admin.TabularInline):
+    model = InvoiceItem
+    extra = 0
+    can_delete = False
+    show_change_link = True
+    # readonly_fields = ['', ]
+
+
+@admin.register(Invoice)
+class InvoiceAdmin(admin.ModelAdmin):
+    list_display = ('name', 'student')
+
+
+    inlines = [
+        InvoiceItemStudent_ItemInline,
     ]
 
 
