@@ -12,6 +12,11 @@ urlpatterns = [
     path("<str:model_name>/edit/<str:record_id>", crm_views.upsert_record, name="crm-insert_record"),
     path("<str:model_name>/new", crm_views.upsert_record, name="crm-create-record"),
 
+    path("report", crm_views.view_reports, name="crm-reports"),
+    path("calendar", crm_views.calendar, name="crm-calendar"),
+    path("<str:model_name>/", crm_views.view_all, name="crm-view-all"),
+    path("crm_api/records/all", crm_views.get_all_records, name="crm-view-all"),
+
     path("student", crm_views.all_students, name="crm-students"),
     path("student/<str:student_id>", crm_views.StudentPage.as_view(), name="crm-students"),
     path("student/<str:student_id>/student-person/add", crm_views.StudentPersonCreate.as_view(), name="crm-student-person-delete"),
@@ -19,7 +24,6 @@ urlpatterns = [
 
     path("person", crm_views.view_contacts, name="crm-contacts"),
     path("person/<str:person_id>", crm_views.view_person, name="crm-contacts-page"),
-    path("calendar", crm_views.calendar, name="crm-calendar"),
 
     path("location", crm_views.all_locations, name="crm-locations"),
     path("<str:model_name>/new", crm_views.upsert_record, name="crm-LocationCreate"),
@@ -31,7 +35,6 @@ urlpatterns = [
 
     path("attendancelist/<str:attendance_list_id>", crm_views.AttendanceListPage.as_view(), name="crm-attendance-list"),
 
-    path("report", crm_views.view_reports, name="crm-reports"),
     path("report/paid-student-lessons-month", crm_views.view_student_report, name="crm-student-report"),
 
     path("import/<str:model_name>", crm_views.import_records, name="crm-import-records"),

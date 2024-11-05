@@ -89,6 +89,10 @@ class Person(models.Model):
     def get_full_name(self):
         return self.first_name + " " + self.last_name
 
+    class Meta:
+        verbose_name = "Kontakt"
+        verbose_name_plural = "Kontakty"
+
 
 class Student(models.Model):
     id = PrefixedUUIDField(primary_key=True)
@@ -107,6 +111,10 @@ class Student(models.Model):
     modified_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='Student_modified_by', null=True,
                                     blank=True)
     modified_date = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = 'Studenci'
+        verbose_name = 'Student'
 
     def get_model_name(self, language):
         names = {
@@ -186,6 +194,10 @@ class Location(models.Model):
     def __str__(self):
         return self.name + ", " + self.country + " " + self.city + " " + self.postal_code + ", ul. " + self.street
 
+    class Meta:
+        verbose_name = "Lokalizacja"
+        verbose_name_plural = "Lokalizacje"
+
 
 class Group(models.Model):
     id = PrefixedUUIDField(primary_key=True)
@@ -206,6 +218,11 @@ class Group(models.Model):
 
     def get_full_name(self):
         return self.name
+
+    class Meta:
+        verbose_name_plural = 'Grupy'
+        verbose_name = 'Grupa'
+
 
 
 class Lesson(models.Model):
