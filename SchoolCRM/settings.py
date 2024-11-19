@@ -145,3 +145,23 @@ STATICFILES_DIRS = (
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+GROUP_PERMISSIONS = {
+    "Pracownicy": [
+        "crm.view_attendancelist",
+        "crm.view_group",
+        "crm.view_lesson",
+        "crm.view_lessonadjustment",
+        "crm.view_location",
+        "crm.view_note",
+        "crm.add_note",
+        "crm.change_note",
+        "crm.view_notification",
+        "crm.add_notification",
+        "crm.view_person",
+        "crm.view_student",
+        "crm.view_studentperson",
+        "crm.view_watchrecord",
+    ]
+}

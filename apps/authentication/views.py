@@ -14,6 +14,7 @@ import base64
 from django.core.files.base import ContentFile
 from io import BytesIO
 import os
+from apps.service_helper import check_permission
 
 
 @login_exempt
@@ -39,7 +40,7 @@ def user_login(request):
     return render(request, 'auth/auth-sign-in.html', {'form': form, 'message': message})
 
 
-@permission_required('crm.view_user', raise_exception=False, login_url="/")
+@check_permission('crm.view_user')
 def users(request):
     users_all = None
     try:
@@ -62,7 +63,7 @@ class UserPage(View):
 
             lessons_with_teacher = Lesson.objects.filter(teacher_id=user_id)
             student_ids = lessons_with_teacher.values_list('student_id', flat=True).distinct()
-            students = Student.objects.filter(id__in=student_ids)
+            students = Student.objects.filter(id__in=student_ids).order_by('first_name')
             context['students'] = students
 
         except Exception as e:

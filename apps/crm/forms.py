@@ -4,7 +4,7 @@ from django.forms import ModelForm
 from django.test import override_settings
 from django.core.exceptions import ValidationError
 
-from .models import Location, Person, Student, Lesson, StudentPerson, GroupStudent, Group, AttendanceList, Invoice
+from .models import Location, Person, Student, Lesson, StudentPerson, GroupStudent, Group, AttendanceList, Invoice, AttendanceListStudent
 from apps.authentication.models import User
 import importlib
 from django.utils import timezone as dj_timezone
@@ -257,6 +257,7 @@ class AttendancelistForm(forms.ModelForm):
         fields = "__all__"
         exclude = ('id', 'created_by', 'modified_by', 'created_date', 'modified_date')
 
+    group = forms.ModelChoiceField(label='Grupa', queryset=Group.objects.all())
     lesson_date = forms.DateTimeField(label='Data lekcji', disabled=False,
                                      widget=forms.DateInput(attrs={'type': 'datetime-local', 'class': 'mt--2'}))
  
@@ -267,14 +268,30 @@ class AttendancelistForm(forms.ModelForm):
             try:
                 group = Group.objects.get(pk=group_id)
                 self.fields['group'].initial = group
-                self.fields['group'].disabled = True
             except Exception:
                 pass
 
     def __init__(self, *args, **kwargs):
         super(AttendancelistForm, self).__init__(*args, **kwargs)
-        # self.fields['lesson_date'].label = 'Data Lekcji'
-        self.fields['group'].disabled = True
+        if kwargs.get('instance', None):
+            pass
+
+    def save(self, commit=True):
+        instance = super(AttendancelistForm, self).save(commit=False)
+
+        if commit:
+            instance.save()
+
+            group_students = GroupStudent.objects.filter(group_id=self.cleaned_data['group'])
+            attendance_list_student = []
+            for group_student in group_students:
+                attendance_list_student.append(
+                    AttendanceListStudent(student_id=group_student.student.id, attendance_list=instance)
+                )
+            AttendanceListStudent.objects.bulk_create(attendance_list_student)
+
+        return instance
+
 
 
 def get_form_class(form_name) -> forms:

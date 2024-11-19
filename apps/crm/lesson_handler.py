@@ -128,10 +128,12 @@ def count_lessons_for_student_in_month(student_id, year, month):
             )
         )
     )
+    if not adjustments and not lessons:
+        return None
 
     generated_lessons = generate_lessons(lessons, adjustments, year)[month]
 
-
+    has_any_lesson = False
     for duration in ["30min", "45min", "60min"]:
         generated_lessons[duration] = 0
 
@@ -141,6 +143,10 @@ def count_lessons_for_student_in_month(student_id, year, month):
             duration_key = f"{str(lesson_handler.duration)[:2]}min"
             if duration_key in generated_lessons:
                 generated_lessons[duration_key] += 1
+                has_any_lesson = True
+
+    if not has_any_lesson:
+        return None
 
     keys_to_remove = ["Lessons", "Zaplanowana", "Nieobecnosc", "Odwolana - nauczyciel", "Odwolana - 24h przed"]
     for key in keys_to_remove:
@@ -229,8 +235,11 @@ def count_lessons_for_teacher_in_day(teacher_id, year, month, day):
             )
         )
     )
+    print(adjustments)
+    print(lessons)
 
     generated_lessons = generate_lessons_for_day(lessons, adjustments, day_of_month)
+    print(generated_lessons)
 
     return generated_lessons
 

@@ -163,7 +163,7 @@ function generateTable(data) {
                 lessonRow.appendChild(lessonDescriptionCell);
 
                 const teacherCell = document.createElement('td');
-                teacherCell.classList.add('d-flex');
+                // teacherCell.classList.add('d-flex');
                 const teacherSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
                 const teacherPath = document.createElementNS(
                     'http://www.w3.org/2000/svg',

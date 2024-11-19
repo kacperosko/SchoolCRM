@@ -3,7 +3,9 @@ import uuid
 from django.db import models
 
 from apps.authentication.models import User
-
+from functools import wraps
+from django.contrib import messages
+from django.shortcuts import render
 
 def get_model_object_by_prefix(prefix):
     from apps.crm.models import Person, Student, StudentPerson, Lesson, LessonAdjustment, Location, Note, WatchRecord, \
@@ -86,3 +88,34 @@ class PrefixedUUIDField(models.CharField):
             setattr(model_instance, self.attname, value)
             return value
         return super().pre_save(model_instance, add)
+
+
+def custom_404(request, exception):
+    messages.error(request, exception)
+    return render(request, 'auth/404.html', status=404)
+
+
+def custom_500(request):
+    return render(request, 'auth/404.html', status=505)
+
+
+def check_is_admin(func):
+    @wraps(func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_admin:
+            return custom_404(request, "Nie masz odpowiednich uprawnień")
+        return func(request, *args, **kwargs)
+    return wrapper
+
+
+def check_permission(perm_name):
+    def decorator(view_func):
+        @wraps(view_func)
+        def _wrapped_view(request, *args, **kwargs):
+            if not request.user.has_perm(perm_name):
+                return custom_404(request, "Nie masz odpowiednich uprawnie\u0144")
+            return view_func(request, *args, **kwargs)
+
+        return _wrapped_view
+
+    return decorator

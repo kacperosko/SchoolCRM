@@ -91,7 +91,7 @@ class Command(BaseCommand):
             adjustment_date = lesson_date + timedelta(weeks=1)  # Adjust on the next occurrence in the series
 
             # Make sure the adjustment date is within the series range
-            if lesson.series_end_date and adjustment_date <= lesson.series_end_date:
+            if lesson.series_end_date and adjustment_date <= lesson.series_end_date.date():
                 modified_start_time = lesson.start_time + timedelta(weeks=1)
                 modified_end_time = lesson.end_time + timedelta(weeks=1)
 

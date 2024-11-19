@@ -275,6 +275,19 @@
                      id="attendance"
                      role="tabpanel" aria-labelledby="details-tab">
 
+                    <div class="d-flex justify-content-end">
+                        {% if request.user.is_admin %}
+                            <a href="/attendanceList/new?group={{ record.id }}&discard_url=/group/{{ record.id }}?tab=Attendance"
+                               class="btn btn-primary rounded-pill font-size-12 align-content-center d-inline-flex">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                     stroke="currentColor" width="18" class="mr-1">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"></path>
+                                </svg>
+                                Dodaj nową listę obecności
+                            </a>
+                        {% endif %}
+                    </div>
+
                     <div class="p-2 align-items-center">
                         <h6 class="mb-2">Dzisiejsza lista:</h6>
                         <div class="container ml-0">
@@ -319,7 +332,7 @@
                                     {% endfor %}
                                 {% else %}
                                     <div class="col-12">
-                                        <div class="bg-light-light card-block p-3 rounded-lg">
+                                        <div class="bg-light-light card-block p-3 rounded-lg col-12 col-sm-6 col-md-4 col-lg-4 mb-4">
                                             Brak pozostałych list
                                         </div>
                                     </div>

@@ -90,11 +90,12 @@
                             <span class="user-display pr-2">
                                 {% if selected_record|get_model_name:'en' == "User" %}
                                     {% if selected_record.user_avatar %}
-                                        <img src="/media{{ selected_record.user_avatar.url }}" class="rounded-circle" width="48px" style="margin-left: -14px" alt="user avatar">
+                                        <img src="/media{{ selected_record.user_avatar.url }}" class="rounded-circle"
+                                             width="48px" style="margin-left: -14px" alt="user avatar">
                                     {% else %}
-                                    <span id="initial_{{ selected_record.id }}"
-                                          data-letters="{{ selected_record.get_full_name|initials }}"
-                                          class="initialssmall initialspage mx-auto"></span>
+                                        <span id="initial_{{ selected_record.id }}"
+                                              data-letters="{{ selected_record.get_full_name|initials }}"
+                                              class="initialssmall initialspage mx-auto"></span>
                                     {% endif %}
                                 {% else %}
                                     <svg width="20px" class="svg-icon" xmlns="http://www.w3.org/2000/svg"
@@ -116,7 +117,8 @@
                                 <a class="dropdown-item user-item"
                                    onclick="showByRecord('{{ teacher.id }}')">
                                     {% if teacher.user_avatar %}
-                                        <img src="/media{{ teacher.user_avatar.url }}" class="rounded-circle mr-0" width="48px" style="margin-left: -14px" alt="user avatar">
+                                        <img src="/media{{ teacher.user_avatar.url }}" class="rounded-circle mr-0"
+                                             width="48px" style="margin-left: -14px" alt="user avatar">
                                         <span class="ml-2">{{ teacher.get_full_name }}</span>
                                     {% else %}
                                         <span id="initial_{{ teacher.id }}"
@@ -465,7 +467,7 @@
 
 
             function addDynamicLessons() {
-                var lessons = JSON.parse('{{lessons|jsonify}}');
+                var lessons = {{ lessons|safe }};
                 var weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
                 var startDate = new Date(document.querySelector('.date-label').textContent);
                 var endDate = new Date(startDate);
@@ -511,7 +513,7 @@
                             lessonElement.style.top = 'calc(' + (startMinutes / 15) * 10 + 'px)';
                             lessonElement.style.height = durationMinutes / 15 * 10 + 'px';
                             {#lessonElement.innerHTML = '<div class="time">' + lesson.startTime + '—' + lesson.endTime + '</div>' +#}
-                            const model = lesson.student_id.substring(0,3) === '0ST' ? 'student' : 'group';
+                            const model = lesson.student_id.substring(0, 3) === '0ST' ? 'student' : 'group';
                             lessonElement.innerHTML = `<a class="" href="/${model}/${lesson.student_id}">${lesson.student}</a>`;
                             {# data-content="{{ teacher.get_full_name }}"#}
                             {#data-placement="bottom" data-trigger="hover" data-toggle="popover"#}
@@ -563,7 +565,7 @@
                                 adjustmentElement.id = 'adjustment_' + adjustment.id + '_' + formatDate(adjustmentDate); // Set ID using adjustment ID and date from JSON
                                 adjustmentElement.style.top = 'calc(' + (adjStartMinutes / 15) * 10 + 'px)';
                                 adjustmentElement.style.height = adjDurationMinutes / 15 * 10 + 'px';
-                                const model = lesson.student_id.substring(0,3) === '0ST' ? 'student' : 'group';
+                                const model = lesson.student_id.substring(0, 3) === '0ST' ? 'student' : 'group';
                                 adjustmentElement.innerHTML = `<a class="" href="/${model}/${lesson.student_id}">${lesson.student}</a>`;
                                 adjustmentElement.setAttribute('data-content', adjustment.startTime + '—' + adjustment.endTime + '<br/>Opis: ' + lesson.description + '<br/>Nauczyciel: ' + lesson.teacher);
                                 adjustmentElement.setAttribute('data-placement', 'bottom');
