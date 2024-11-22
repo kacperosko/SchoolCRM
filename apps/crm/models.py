@@ -242,6 +242,9 @@ class Lesson(models.Model):
     location = models.ForeignKey(Location, on_delete=models.SET_NULL, blank=False, null=True,
                                  related_name='lessonSchedule_location_relationship')
 
+    def weekday(self):
+        return self.start_time.weekday()
+
     def clean(self):
         # Ensure either student or group is set, but not both
         if self.student and self.group:
@@ -383,6 +386,7 @@ class Invoice(models.Model):
     invoice_date = models.DateField()
     is_paid = models.BooleanField(default=False)
     is_sent = models.BooleanField(default=False)
+    amount = models.DecimalField(max_digits=10, decimal_places=2, blank=False, null=False)
 
     def __str__(self):
         return self.name + " " + self.invoice_date.strftime("%d-%m-%y")

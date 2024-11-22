@@ -34,9 +34,9 @@ class LessonAdjustment_ItemInline(admin.TabularInline):
 
 @admin.register(Lesson)
 class LessonAdmin(admin.ModelAdmin):
-    list_display = ('id', 'start_time', 'end_time', 'series_end_date', 'student', 'is_series', 'teacher')
+    list_display = ('id', 'start_time', 'weekday', 'end_time', 'series_end_date', 'student', 'is_series', 'teacher')
     list_filter = ('start_time', 'end_time', 'teacher')
-    search_fields = ('student__firstName', 'student__lastName', 'teacher__username')
+    search_fields = ('student__first_name', 'student__last_name')
 
     inlines = [
         LessonAdjustment_ItemInline,

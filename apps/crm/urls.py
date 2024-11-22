@@ -1,4 +1,4 @@
-from django.urls import path, include
+from django.urls import path, include, re_path
 from apps.crm import views as crm_views
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth import views as auth_views
@@ -14,7 +14,7 @@ urlpatterns = [
 
     path("report", crm_views.view_reports, name="crm-reports"),
     path("calendar", crm_views.calendar, name="crm-calendar"),
-    path("<str:model_name>/", crm_views.view_all, name="crm-view-all"),
+    re_path(r"^(student|group|person|location)$", crm_views.view_all, name="crm-view-all"),
     path("crm_api/records/all", crm_views.get_all_records, name="crm-view-all"),
 
     path("student", crm_views.all_students, name="crm-students"),

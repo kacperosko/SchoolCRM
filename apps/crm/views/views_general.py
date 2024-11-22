@@ -4,13 +4,10 @@ from .views_base import *
 WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
 
-
-
 def income_chart(request):
     today = dj_timezone.now().date()
     monthly_income = []
 
-    # Tworzenie listy dochodu dla każdego z ostatnich 4 miesięcy
     for i in range(6):
         # Get the first day of each month and the corresponding month number
         start_of_month = (today.replace(day=1) - timedelta(days=i * 30)).replace(day=1)
@@ -408,6 +405,26 @@ VIEW_ALL_MODELS = {
             'street': 'Ulica',
             'postal_code': 'Kod pocztowy',
         }
+    },
+    'invoice': {
+        'fields': {
+            'name': 'Nr Faktury',
+            'amount': 'Kwota',
+            'invoice_date__month': 'Miesiąc',
+            'invoice_date__year': 'Rok',
+            'is_sent': 'Czy wysłane?',
+            'is_paid': 'Czy zapłacone?',
+        },
+        'fields_mods': {
+            'invoice_date__month': {
+                "mode": "FUNC",
+                "func": "get_month_name"
+            },
+            'amount': {
+                "mode": "STR",
+                "func": "ARG PLN"
+            },
+        }
     }
 }
 
@@ -457,9 +474,29 @@ def get_all_records(request):
         for field in fields:
             query |= Q(**{f"{field}__icontains": user_input})
 
+
         records_query = model.objects.filter(query).values(*fields, 'id').order_by(order_field)
     else:
         records_query = model.objects.all().values(*fields, 'id').order_by(order_field)
+    import locale
+    locale.setlocale(locale.LC_ALL, 'pl_PL')
+
+    if 'fields_mods' in VIEW_ALL_MODELS[model_name]:
+        fields_mods = VIEW_ALL_MODELS[model_name]['fields_mods']
+        for record in records_query:
+            for field in fields:
+                if field in fields_mods:
+                    mode = fields_mods[field]["mode"]
+                    if mode == "EVAL":
+                        full_expression = f"record['{field}'].{fields_mods[field]['func']}"
+                        record[field] = eval(full_expression)
+                        pass
+                    elif mode == "FUNC":
+                        func_name = fields_mods[field]['func']
+                        record[field] = globals()[func_name](record[field])
+                    elif mode == "STR":
+                        record[field] = fields_mods[field]['func'].replace("ARG", str(record[field]))
+
 
     # Paginacja wyników
     paginator = Paginator(records_query, 10)
@@ -476,6 +513,7 @@ def get_all_records(request):
         'has_previous': records_page.has_previous(),
         'has_next': records_page.has_next(),
         'num_pages': records_page.paginator.num_pages,
+        'fields': fields_with_labels,
     }
 
     return JsonResponse({'success': True, **context}, status=200)

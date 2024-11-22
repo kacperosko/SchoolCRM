@@ -1,0 +1,49 @@
+{% load crm_tags %}
+{% load static %}
+<div class="table-responsive">
+    <div class="w-25 ml-auto mb-3 d-flex align-items-center">
+        <span class="mr-1">Szukaj:</span>
+        <input class="form-control" type="text" id="search-input" placeholder="">
+    </div>
+
+    <table id="records_table" class="table table-striped table-bordered">
+        <thead class="bg-primary-light">
+        <tr>
+            {% for field, label in fields.items %}
+                <th id="{{ field }}">
+                    {{ label }}
+                    <svg style="opacity: 0.5" id="{{ field }}_order_icon" xmlns="http://www.w3.org/2000/svg"
+                         fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" width="15">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M19.5 13.5 12 21m0 0-7.5-7.5M12 21V3"></path>
+                    </svg>
+                    <svg style="opacity: 0.5; transform: rotate(180deg); margin-left: -7px"
+                         id="-{{ field }}_order_icon" xmlns="http://www.w3.org/2000/svg" fill="none"
+                         viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" width="15">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M19.5 13.5 12 21m0 0-7.5-7.5M12 21V3"></path>
+                    </svg>
+                </th>
+            {% endfor %}
+        </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <div class="d-flex justify-content-end mx-3">
+        <div id="pagination" class="pagination d-flex">
+            <!-- Przyciski paginacji zostaną wygenerowane tutaj przez JavaScript -->
+        </div>
+    </div>
+
+</div>
+
+{% block javascript %}
+<script>
+    let currentPage = 1;
+    let headers_loaded = false;
+    const is_related_list = true;
+</script>
+<script src="{% static '/js/records_viewer.js' %}"></script>
+{% endblock javascript %}

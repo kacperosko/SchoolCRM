@@ -211,6 +211,7 @@ def count_lessons_for_teacher_in_day(teacher_id, year, month, day):
             (
                 Q(is_series=True) &
                 Q(start_time__lte=day_of_month) &
+                Q(start_time__iso_week_day=day_of_month.weekday()+1) &
                 (
                     Q(series_end_date__isnull=True) |
                     Q(series_end_date__gte=day_of_month)
@@ -377,8 +378,8 @@ def generate_lessons(lessons, adjustments, year):
     return lessons_count_in_months
 
 
-def generate_lessons_for_day(lessons, adjustments, target_date):
-    current_timezone = dj_timezone.get_current_timezone()
+def generate_lessons_for_day(lessons, adjustments, target_datetime):
+    # current_timezone = dj_timezone.get_current_timezone()
     lessons_for_day = {
         Statutes.PLANNED: 0,
         Statutes.NIEOBECNOSC: 0,
@@ -386,19 +387,18 @@ def generate_lessons_for_day(lessons, adjustments, target_date):
         Statutes.ODWOLANA_24H_PRZED: 0,
         'Lessons': {}
     }
-
+    end_date = date(target_datetime.year, target_datetime.month, target_datetime.day)
+    print("target_date", target_datetime)
     for lesson in lessons:
         if lesson.is_series:
             # Obliczamy datę i czas dla lekcji cyklicznych
             current_date = lesson.start_time.date()
             current_date_time = lesson.start_time
 
-            # Jeśli seria ma datę zakończenia, sprawdzamy, czy lekcja mieści się w zakresie
-            end_date = lesson.series_end_date or date(target_date.year, 12, 31)
 
             # Sprawdzamy, czy wybrany dzień pasuje do cyklu serii
-            while current_date <= end_date:
-                if current_date == target_date:
+            while current_date_time.date() <= end_date:
+                if current_date_time.date() == target_datetime.date():
                     status = Statutes.PLANNED
                     lessons_for_day[status] += 1
                     lessons_for_day['Lessons'][generate_lesson_dict_key(current_date_time, lesson.id)] = LessonHandler(
@@ -414,11 +414,10 @@ def generate_lessons_for_day(lessons, adjustments, target_date):
                     )
                     break
                 # Przechodzimy do następnego tygodnia
-                current_date += timedelta(days=7)
                 current_date_time += timedelta(days=7)
         else:
             # Lekcje jednorazowe, które przypadają na target_date
-            if lesson.start_time.date() == target_date:
+            if lesson.start_time.date() == target_datetime.date():
                 status = Statutes.PLANNED
                 lessons_for_day[status] += 1
                 lessons_for_day['Lessons'][generate_lesson_dict_key(lesson.start_time, lesson.id)] = LessonHandler(
@@ -437,12 +436,12 @@ def generate_lessons_for_day(lessons, adjustments, target_date):
         original_lesson_datetime = datetime.combine(adjustment.original_lesson_date, adjustment.lesson.start_time.time())
 
         # Sprawdzenie, czy oryginalna data lekcji przypada na target_date
-        if adjustment.original_lesson_date == target_date:
+        if adjustment.original_lesson_date.date() == target_datetime.date():
             lessons_for_day[Statutes.PLANNED] -= 1
             lessons_for_day['Lessons'].pop(generate_lesson_dict_key(original_lesson_datetime, adjustment.lesson.id), None)
 
         # Dodanie zmodyfikowanej lekcji, jeśli przypada na target_date
-        if adjustment.modified_start_time.date() == target_date:
+        if adjustment.modified_start_time.date() == target_datetime.date() and adjustment.status == Statutes.PLANNED:
             status = adjustment.status
             lessons_for_day[status] += 1
             lessons_for_day['Lessons'][generate_lesson_dict_key(adjustment.modified_start_time, 'adj' + str(adjustment.id))] = LessonHandler(

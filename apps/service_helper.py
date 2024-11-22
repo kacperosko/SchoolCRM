@@ -5,7 +5,7 @@ from django.db import models
 from apps.authentication.models import User
 from functools import wraps
 from django.contrib import messages
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 
 def get_model_object_by_prefix(prefix):
     from apps.crm.models import Person, Student, StudentPerson, Lesson, LessonAdjustment, Location, Note, WatchRecord, \
@@ -91,11 +91,16 @@ class PrefixedUUIDField(models.CharField):
 
 
 def custom_404(request, exception):
+    if not request.user.is_authenticated:
+        return redirect("/login/")
     messages.error(request, exception)
     return render(request, 'auth/404.html', status=404)
 
 
 def custom_500(request):
+    if not request.user.is_authenticated:
+        return redirect("/login/")
+    messages.error(request, exception)
     return render(request, 'auth/404.html', status=505)
 
 

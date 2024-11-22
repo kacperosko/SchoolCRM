@@ -1,4 +1,5 @@
 const records_table = $("#records_table tbody");
+const records_table_headers = $("#records_table thead");
 const prev_button = $("#prev-page");
 const next_button = $("#next-page");
 const page_info = $("#page-info");
@@ -20,6 +21,9 @@ function fetchRecords(page = 1, query = "") {
         dataType: 'json',
         success: function (data) {
             if (data.success) {
+                if (is_related_list && !headers_loaded){
+                    generateHeaders(data.fields);
+                }
                 updateTable(data.records);
                 updatePagination(data);
                 updateOrderIcons();
@@ -35,20 +39,53 @@ function fetchRecords(page = 1, query = "") {
     });
 }
 
+function generateHeaders(fields) {
+    console.log(fields);
+    // fields.forEach(field => {
+    // });
+    for (const [field, label] of Object.entries(fields)) {
+        const row = $(`<td id="${field}">${label}</td>`);
+        records_table_headers.append(row);
+    }
+}
+
 // Funkcja do aktualizacji tabeli z rekordami
 function updateTable(records) {
     records_table.empty(); // Wyczyść tabelę
 
     if (records.length > 0) {
         records.forEach(record => {
-            const row = $("<tr></tr>");
+            const row = $("<tr id=''></tr>");
             let isFirstField = true;
 
             Object.entries(record).forEach(([key, value]) => {
                 if (key === 'id') {
                     return;
                 }
-                const displayValue = value ? value : "-";
+                let displayValue;
+                if (typeof value == "boolean") {
+                    if (value){
+                        displayValue = `
+                            <div class="mx-auto text-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" class="text-success" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" width="18">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                            </svg>
+                            </div>
+                        `
+                    } else {
+                        displayValue = `
+                            <div class="mx-auto text-center">
+                           <svg xmlns="http://www.w3.org/2000/svg" fill="none" class="text-danger" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" width="18">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                            </svg>
+                            </div>
+                        `
+                    }
+                } else {
+                    displayValue = value ? value : "-";
+                }
+
+
 
                 // Jeśli jest to pierwsze pole, ustaw link do szczegółów rekordu
                 if (isFirstField) {
@@ -147,6 +184,7 @@ search_input.on("keyup", function (event) {
 // Początkowe pobranie rekordów
 document.addEventListener('DOMContentLoaded', function () {
     updateOrderIcons();
+    fetchRecords();
 
     // Event listener dla kliknięć na nagłówki
     document.querySelectorAll("th").forEach(th => {
@@ -157,7 +195,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    fetchRecords();
 });
 
 
