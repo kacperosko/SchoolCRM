@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Person, Student, Lesson, LessonAdjustment, StudentPerson, Note, Location, Notification, WatchRecord, Group, GroupStudent, AttendanceList, AttendanceListStudent, Invoice, InvoiceItem
+from .models import Person, Student, Lesson, LessonAdjustment, StudentPerson, Note, Location, Notification, WatchRecord, Group, GroupStudent, AttendanceList, AttendanceListStudent, Invoice, InvoiceItem, LessonEvent, LessonDefinition
 from django.contrib.contenttypes.admin import GenericTabularInline
 
 
@@ -119,6 +119,27 @@ class InvoiceAdmin(admin.ModelAdmin):
         InvoiceItemStudent_ItemInline,
     ]
 
+
+class LessonEvent_ItemInline(admin.TabularInline):
+    model = LessonEvent
+    extra = 0
+    can_delete = False
+    show_change_link = True
+    # readonly_fields = ['', ]
+
+
+@admin.register(LessonDefinition)
+class LessonDefinitionAdmin(admin.ModelAdmin):
+    list_display = ('id',)
+
+
+    inlines = [
+        LessonEvent_ItemInline,
+    ]
+
+@admin.register(LessonEvent)
+class LessonDefinitionAdmin(admin.ModelAdmin):
+    list_display = ('id', 'start_time', 'end_time', 'lesson_date')
 
 # Uncomment the following lines if you decide to use LessonException model
 # from .models import LessonException

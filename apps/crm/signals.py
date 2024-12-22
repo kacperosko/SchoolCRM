@@ -1,9 +1,37 @@
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.contrib.contenttypes.models import ContentType
-from .models import Note, WatchRecord, Notification, Student, Group, AttendanceList
+from .models import Note, WatchRecord, Notification, Student, Group, AttendanceList, LessonDefinition, LessonEvent
 from django.utils import timezone
 from apps.authentication.middleware.current_user_middleware import get_current_user
+from datetime import timedelta, date
+
+
+@receiver(post_save, sender=LessonDefinition)
+def generate_lesson_events(sender, instance, created, **kwargs):
+    if created:  # Wygeneruj lekcje tylko dla nowo dodanej definicji
+        current_date = instance.series_start_date
+        stop_date = min(instance.series_end_date, instance.series_start_date + timedelta(days=180))  # 6 miesięcy
+        lessons = []
+        while current_date <= stop_date:
+
+            lessons.append(
+                LessonEvent(
+                    lesson_definition=instance,
+                    status="planned",
+                    lesson_date=current_date,
+                    start_time=instance.start_time,
+                    end_time=instance.end_time,
+                    teacher=instance.teacher,
+                    location=instance.location,
+                )
+            )
+            # Przesuwaj datę co tydzień, jeśli to seria
+            if instance.is_series:
+                current_date += timedelta(weeks=1)
+            else:
+                break  # Bez serii tylko jedno wydarzenie
+        LessonEvent.objects.bulk_create(lessons)
 
 
 def get_record_watchers(content_type, object_id):

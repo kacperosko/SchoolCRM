@@ -224,6 +224,47 @@ class Group(models.Model):
         verbose_name = 'Grupa'
 
 
+class Statutes:
+    PLANNED = 'Zaplanowana'
+    NIEOBECNOSC = "Nieobecnosc"
+    ODWOLANA_NAUCZYCIEL = "Odwolana - nauczyciel"
+    ODWOLANA_24H_PRZED = "Odwolana - 24h przed"
+
+
+LESSON_STATUTES = (
+    ('Zaplanowana', 'Zaplanowana'),
+    ('Nieobecnosc', 'Nieobecno\u015B\u0107'),
+    ('Odwolana - nauczyciel', 'Odwo\u0142ana - nauczyciel'),
+    ('Odwolana - 24h przed', 'Odwo\u0142ana - 24h przed')
+)
+
+
+class LessonDefinition(models.Model):
+    id = PrefixedUUIDField(primary_key=True)
+    series_start_date = models.DateField()
+    series_end_date = models.DateField()
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    is_series = models.BooleanField(default=False)
+
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, blank=False, null=False,)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, blank=False, null=False,)
+
+    teacher = models.ForeignKey(User, on_delete=models.CASCADE, blank=False, null=False,)
+    location = models.ForeignKey(Location, on_delete=models.CASCADE, blank=False, null=False,)
+
+
+class LessonEvent(models.Model):
+    id = PrefixedUUIDField(primary_key=True)
+    lesson_definition = models.ForeignKey(LessonDefinition, on_delete=models.CASCADE, blank=False, null=False,)
+    status = models.CharField(max_length=100, choices=LESSON_STATUTES, blank=False, null=False,)
+    lesson_date = models.DateField()
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+
+    teacher = models.ForeignKey(User, on_delete=models.CASCADE, blank=False, null=False, )
+    location = models.ForeignKey(Location, on_delete=models.CASCADE, blank=False, null=False, )
+
 
 class Lesson(models.Model):
     id = PrefixedUUIDField(primary_key=True)
@@ -275,19 +316,6 @@ class Lesson(models.Model):
         return f'/student/{self.student.id}/lesson-series'
 
 
-class Statutes:
-    PLANNED = 'Zaplanowana'
-    NIEOBECNOSC = "Nieobecnosc"
-    ODWOLANA_NAUCZYCIEL = "Odwolana - nauczyciel"
-    ODWOLANA_24H_PRZED = "Odwolana - 24h przed"
-
-
-LESSON_STATUTES = (
-    ('Zaplanowana', 'Zaplanowana'),
-    ('Nieobecnosc', 'Nieobecno\u015B\u0107'),
-    ('Odwolana - nauczyciel', 'Odwo\u0142ana - nauczyciel'),
-    ('Odwolana - 24h przed', 'Odwo\u0142ana - 24h przed')
-)
 
 
 class LessonAdjustment(models.Model):
