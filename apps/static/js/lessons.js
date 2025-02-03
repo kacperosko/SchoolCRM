@@ -1,6 +1,11 @@
 const lessons_tbody = $("#lessons_tbody");
 let openedMonths = [];
-
+LESSONS_STATUTES = {
+    ZAPLANOWANA: 'zaplanowana',
+    NIEOBECNOSC: 'nieobecnosc',
+    ODWOLANA_NAUCZYCIEL: 'odwolana_nauczyciel',
+    ODWOLANA_24H_PRZED: 'odwolana_24h_przed',
+}
 function isGroupPage() {
     const pathSegments = window.location.pathname.split('/').filter(Boolean);  // Podziel URL na fragmenty
     return pathSegments[0] === 'group';  // Sprawdź, czy pierwszy fragment to 'group'
@@ -93,23 +98,23 @@ function generateTable(data) {
 
         var zaplanowaneCell = document.createElement('td');
         zaplanowaneCell.classList.add('text-center');
-        zaplanowaneCell.textContent = statutes['Zaplanowana'];
+        zaplanowaneCell.textContent = statutes[LESSONS_STATUTES.ZAPLANOWANA];
         row.appendChild(zaplanowaneCell);
 
 
         var odwolaneTeacherCell = document.createElement('td');
         odwolaneTeacherCell.classList.add('text-center');
-        odwolaneTeacherCell.textContent = statutes['Odwolana - nauczyciel'];
+        odwolaneTeacherCell.textContent = statutes[LESSONS_STATUTES.ODWOLANA_NAUCZYCIEL];
         row.appendChild(odwolaneTeacherCell);
 
         var odwolane24hCell = document.createElement('td');
         odwolane24hCell.classList.add('text-center', 'cancelled-24h-cells');
-        odwolane24hCell.textContent = statutes["Odwolana - 24h przed"];
+        odwolane24hCell.textContent = statutes[LESSONS_STATUTES.ODWOLANA_24H_PRZED];
         row.appendChild(odwolane24hCell);
 
         var canceledeCell = document.createElement('td');
         canceledeCell.classList.add('text-warning', 'text-center', 'cancelled-cell');
-        canceledeCell.textContent = statutes['Nieobecnosc'];
+        canceledeCell.textContent = statutes[LESSONS_STATUTES.NIEOBECNOSC];
         row.appendChild(canceledeCell);
 
         tbody.appendChild(row);
@@ -136,16 +141,16 @@ function generateTable(data) {
                 const lessonDateCell = document.createElement('td');
                 lessonDateCell.textContent = lesson['start_date'] + ' (' + lesson['weekday'] + ')';
 
-                if (lesson['original_date'] !== lesson['start_date'] && lesson['is_adjustment']) {
+                if (lesson['original_date'] !== lesson['start_date']) {
                     lessonDateCell.textContent += ' (przeniesione z ' + lesson['original_date'] + ' ' + lesson['original_time'] + ')';
-                } else if (lesson['original_time'] !== lesson['start_time'] && lesson['is_adjustment']) {
+                } else if (lesson['original_time'] !== lesson['start_time']) {
                     lessonDateCell.textContent += ' (przeniesione z ' + lesson['original_time'] + ')';
                 }
 
-                if (lesson.status === "Zaplanowana") {
+                if (lesson.status === "zaplanowana") {
                     lessonRow.classList.add("bg-primary-light");
                 } else {
-                    if (lesson.status === 'Nieobecnosc') {
+                    if (lesson.status === 'nieobecnosc') {
                         lessonRow.classList.add("bg-danger-light");
                     } else {
                         lessonRow.classList.add("bg-orange-light");
@@ -235,7 +240,7 @@ function generateTable(data) {
                 editLink.type = 'button';
                 editLink.setAttribute('data-toggle', 'modal');
                 editLink.setAttribute('data-target', '#editEventModalCenter');
-                editLink.setAttribute("onclick", `modifyEvent(lesson_schedule_id='${lesson.lesson_id}', startTime='${lesson.start_time}', endTime='${lesson.end_time}', lessonDate='${lesson.start_date}', studentName='', status='${lesson.status}', isAdjustment=${lesson.is_adjustment});`);
+                editLink.setAttribute("onclick", `modifyEvent(lesson_schedule_id='${lesson.lesson_id}', startTime='${lesson.start_time}', endTime='${lesson.end_time}', lessonDate='${lesson.start_date}', studentName='', status='${lesson.status}');`);
 
 
                 editCell.appendChild(editLink);

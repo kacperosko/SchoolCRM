@@ -1,27 +1,43 @@
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.contrib.contenttypes.models import ContentType
-from .models import Note, WatchRecord, Notification, Student, Group, AttendanceList, LessonDefinition, LessonEvent
+from .models import Note, WatchRecord, Notification, Student, Group, AttendanceList, LessonDefinition, Event, EventType, LessonStatutes
 from django.utils import timezone
 from apps.authentication.middleware.current_user_middleware import get_current_user
-from datetime import timedelta, date
-
+from datetime import timedelta, date, datetime
+import calendar
 
 @receiver(post_save, sender=LessonDefinition)
 def generate_lesson_events(sender, instance, created, **kwargs):
     if created:  # Wygeneruj lekcje tylko dla nowo dodanej definicji
-        current_date = instance.series_start_date
-        stop_date = min(instance.series_end_date, instance.series_start_date + timedelta(days=180))  # 6 miesięcy
+        current_date = instance.lesson_date
+
+        # Oblicz docelowy miesiąc i rok
+        target_month = (instance.lesson_date.month + 6 - 1) % 12 + 1
+        target_year = instance.lesson_date.year + (instance.lesson_date.month + 6 - 1) // 12
+
+        # Pobierz ostatni dzień docelowego miesiąca
+        last_day = calendar.monthrange(target_year, target_month)[1]
+
+        # Ustawienie stop_date na ostatni dzień miesiąca za 6 miesięcy
+        calculated_stop_date = date(target_year, target_month, last_day)
+
+        # Jeśli istnieje series_end_date, wybierz wcześniejszą z dat
+        stop_date = min(instance.series_end_date, calculated_stop_date) if instance.series_end_date else calculated_stop_date
+
         lessons = []
         while current_date <= stop_date:
 
             lessons.append(
-                LessonEvent(
+                Event(
+                    event_type=EventType.LESSON,
                     lesson_definition=instance,
-                    status="planned",
-                    lesson_date=current_date,
+                    status=LessonStatutes.ZAPLANOWANA,
+                    event_date=current_date,
+                    original_lesson_datetime=datetime.combine(current_date, instance.start_time),
                     start_time=instance.start_time,
-                    end_time=instance.end_time,
+                    end_time=(datetime.combine(date.today(), instance.start_time) + timedelta(minutes=instance.duration)).time(),
+                    duration=instance.duration,
                     teacher=instance.teacher,
                     location=instance.location,
                 )
@@ -31,7 +47,8 @@ def generate_lesson_events(sender, instance, created, **kwargs):
                 current_date += timedelta(weeks=1)
             else:
                 break  # Bez serii tylko jedno wydarzenie
-        LessonEvent.objects.bulk_create(lessons)
+
+        Event.objects.bulk_create(lessons)
 
 
 def get_record_watchers(content_type, object_id):

@@ -7,9 +7,10 @@ from functools import wraps
 from django.contrib import messages
 from django.shortcuts import render
 
+
 def get_model_object_by_prefix(prefix):
     from apps.crm.models import Person, Student, StudentPerson, Lesson, LessonAdjustment, Location, Note, WatchRecord, \
-        Notification, Group, GroupStudent, AttendanceList, Invoice
+        Notification, Group, GroupStudent, AttendanceList, Invoice,  LessonDefinition, LessonEvent
 
 
     prefixes = {
@@ -27,6 +28,8 @@ def get_model_object_by_prefix(prefix):
         '0GS': GroupStudent,
         '0AS': AttendanceList,
         '0IV': Invoice,
+        '0LD': LessonDefinition,
+        '0LE': LessonEvent,
     }
     return prefixes.get(prefix, None)
 
@@ -46,7 +49,9 @@ def get_model_by_prefix(prefix):
         '0GR': 'Group',
         '0GS': 'GroupStudent',
         '0AS': 'AttendanceList',
-        '0IV': 'Invoice'
+        '0IV': 'Invoice',
+        '0LD': 'LessonDefinition',
+        '0LE': 'LessonEvent',
     }
     return prefixes.get(prefix, None)
 
@@ -67,6 +72,8 @@ def get_prefix_by_model(model_name):
         'GroupStudent': '0GS',
         'AttendanceList': '0AS',
         'Invoice': '0IV',
+        'LessonDefinition': '0LD',
+        'LessonEvent': '0LE',
     }
     return prefixes.get(model_name, '0EX')
 

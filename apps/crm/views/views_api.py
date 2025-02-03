@@ -3,21 +3,22 @@ from .views_base import *
 
 def get_student_group_lessons(request, record_id):
     status = False
-    selected_year = int(request.GET.get('selected_year', datetime.now().year))
+    selected_year = int(request.GET.get('selected_year',  dj_timezone.localtime(dj_timezone.now()).year))
 
     if get_model_by_prefix(record_id[:3]) == 'Student':
-        lessons_count = count_lessons_for_student_in_year(record_id, selected_year)
+        # lessons_count = count_lessons_for_student_in_year(record_id, selected_year)
+        lessons_count = get_student_lessons_in_year(record_id, selected_year)
     elif get_model_by_prefix(record_id[:3]) == 'Group':
         lessons_count = count_lessons_for_group_in_year(record_id, selected_year)
-
+    print(lessons_count)
     lessons_count_serializable = {}
     for key, value in lessons_count.items():
         lessons = {k: v.to_dict() for k, v in value['Lessons'].items()}
         lessons_count_serializable[key] = {
-            Statutes.PLANNED: value[Statutes.PLANNED],
-            Statutes.NIEOBECNOSC: value[Statutes.NIEOBECNOSC],
-            Statutes.ODWOLANA_NAUCZYCIEL: value[Statutes.ODWOLANA_NAUCZYCIEL],
-            Statutes.ODWOLANA_24H_PRZED: value[Statutes.ODWOLANA_24H_PRZED],
+            LessonStatutes.ZAPLANOWANA: value[LessonStatutes.ZAPLANOWANA],
+            LessonStatutes.NIEOBECNOSC: value[LessonStatutes.NIEOBECNOSC],
+            LessonStatutes.ODWOLANA_NAUCZYCIEL: value[LessonStatutes.ODWOLANA_NAUCZYCIEL],
+            LessonStatutes.ODWOLANA_24H_PRZED: value[LessonStatutes.ODWOLANA_24H_PRZED],
             'Lessons': lessons
         }
     status = True

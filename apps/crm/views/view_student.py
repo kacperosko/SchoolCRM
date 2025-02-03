@@ -47,14 +47,15 @@ class StudentPage(View):
                     if is_series:
                         end_series = form.cleaned_data['end_series']
 
-                    start_datetime = dj_timezone.make_aware(datetime.combine(lesson_date, start_time), dj_timezone.get_current_timezone())
-                    end_datetime = start_datetime + timedelta(minutes=lesson_duration)
+                    start_datetime = dj_timezone.make_aware(datetime.combine(lesson_date, start_time),
+                                                            dj_timezone.get_current_timezone())
 
-                    lesson = Lesson.objects.create(student_id=student_id, start_time=start_datetime,
-                                                   end_time=end_datetime,
-                                                   is_series=is_series, teacher_id=teacher_id,
-                                                   description=description, series_end_date=end_series,
-                                                   location_id=location_id)
+                    lesson = LessonDefinition.objects.create(student_id=student_id, start_time=start_time,
+                                                             duration=lesson_duration, description=description,
+                                                             is_series=is_series, teacher_id=teacher_id,
+                                                             location_id=location_id, series_end_date=end_series,
+                                                             lesson_date=lesson_date)
+
                     lesson_msg = 'Seria lekcji' if is_series else 'Lekcja'
                     messages.success(request, f'{lesson_msg} dodana pomy\u015Blnie!')
                 else:

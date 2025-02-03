@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, date, time
-from .models import Student, Lesson, LessonAdjustment, Person, Statutes
+from .models import Student, Lesson, LessonAdjustment, Person, LessonStatutes, Event
 from django.utils import timezone as dj_timezone
 from collections import defaultdict
 from django.db.models import Q
@@ -17,7 +17,7 @@ class LessonHandler:
     }
 
     def __init__(self, start_date: date, end_date: date, start_time: time, end_time: time, lesson_id,
-                 description, teacher, student, location, original_date=None, status=Statutes.PLANNED, is_adjustment=False):
+                 description, teacher, student, location, original_date=None, status=LessonStatutes.ZAPLANOWANA, is_adjustment=False):
         self.start_date = start_date.strftime('%d-%m-%Y')
         self.end_date = end_date.strftime('%d-%m-%Y')
         self.start_time = start_time.strftime('%H:%M')
@@ -60,6 +60,47 @@ class LessonHandler:
 
     def __str__(self):
         return f"start_date: {self.start_date}, end_date: {self.end_date}, start_time: {self.start_time}, end_time: {self.end_time}, original_date: {self.original_date}, status: {self.status}"
+
+
+def generate_lesson_dict(lessons):
+
+    lessons_count_in_months = defaultdict(
+        lambda: {LessonStatutes.ZAPLANOWANA: 0, LessonStatutes.NIEOBECNOSC: 0, LessonStatutes.ODWOLANA_NAUCZYCIEL: 0,
+                 LessonStatutes.ODWOLANA_24H_PRZED: 0, 'Lessons': {}})
+    all_months = range(1, 13)
+
+    for month in all_months:
+        lessons_count_in_months[month]
+
+    for lesson in lessons.order_by('event_date'):
+        lesson_key = lesson.event_date.strftime('%d-%m-%Y') + "_" + lesson.start_time.strftime('%H:%M')
+        while lesson_key in lessons_count_in_months[lesson.event_date.month]['Lessons']:
+            lesson_key += "x"
+
+        lessons_count_in_months[lesson.event_date.month]['Lessons'][lesson_key] = lesson
+        lessons_count_in_months[lesson.event_date.month][lesson.status] += 1
+
+    lessons_count_in_months = dict(sorted(lessons_count_in_months.items()))
+
+    for month, data in lessons_count_in_months.items():
+        sorted_lessons = dict(sorted(data['Lessons'].items()))
+        lessons_count_in_months[month]['Lessons'] = sorted_lessons
+
+    return lessons_count_in_months
+
+
+def get_today_teacher_lessons(teacher_id, lesson_date):
+    lessons = Event.objects.filter(event_date=lesson_date, teacher_id=teacher_id)
+    return lessons
+
+
+def get_student_lessons_in_month(student_id, month, year):
+    lessons = Event.objects.filter(lesson_definition__student_id=student_id, event_date__month=month, event_date__year=year)
+
+
+def get_student_lessons_in_year(student_id, year):
+    lessons = Event.objects.filter(lesson_definition__student_id=student_id, event_date__year=year)
+    return generate_lesson_dict(lessons)
 
 
 def generate_lesson_dict_key(start_time: datetime, lesson_id):
@@ -139,7 +180,7 @@ def count_lessons_for_student_in_month(student_id, year, month):
 
     # Liczenie lekcji na podstawie ich długości
     for lesson_handler in generated_lessons['Lessons'].values():
-        if lesson_handler.status == Statutes.PLANNED or lesson_handler.status == Statutes.NIEOBECNOSC:
+        if lesson_handler.status == LessonStatutes.PLANNED or lesson_handler.status == LessonStatutes.NIEOBECNOSC:
             duration_key = f"{str(lesson_handler.duration)[:2]}min"
             if duration_key in generated_lessons:
                 generated_lessons[duration_key] += 1
@@ -272,8 +313,8 @@ def generate_lessons(lessons, adjustments, year):
     current_datetime = datetime.now().astimezone(current_timezone)
 
     lessons_count_in_months = defaultdict(
-        lambda: {Statutes.PLANNED: 0, Statutes.NIEOBECNOSC: 0, Statutes.ODWOLANA_NAUCZYCIEL: 0,
-                 Statutes.ODWOLANA_24H_PRZED: 0, 'Lessons': {}})
+        lambda: {LessonStatutes.ZAPLANOWANA: 0, LessonStatutes.NIEOBECNOSC: 0, LessonStatutes.ODWOLANA_NAUCZYCIEL: 0,
+                 LessonStatutes.ODWOLANA_24H_PRZED: 0, 'Lessons': {}})
 
     # create placeholders for all months
     all_months = range(1, 13)
@@ -299,7 +340,7 @@ def generate_lessons(lessons, adjustments, year):
             while current_date <= end_date:
                 if current_date.weekday() == lesson.start_time.weekday():
                     month = current_date.month
-                    status = Statutes.PLANNED
+                    status = LessonStatutes.PLANNED
                     lessons_count_in_months[month][status] += 1
                     lessons_count_in_months[month]['Lessons'][
                         generate_lesson_dict_key(current_date_time, lesson.id)] = LessonHandler(
@@ -319,7 +360,7 @@ def generate_lessons(lessons, adjustments, year):
                 current_date_time += timedelta(days=7)
         elif lesson.start_time.year == year:
             month = lesson.start_time.month
-            status = Statutes.PLANNED
+            status = LessonStatutes.PLANNED
             lessons_count_in_months[month][status] += 1
             lessons_count_in_months[month]['Lessons'][
                 generate_lesson_dict_key(lesson.start_time, lesson.id)] = LessonHandler(
@@ -342,12 +383,12 @@ def generate_lessons(lessons, adjustments, year):
                                                     adjustment.lesson.start_time.time())
 
         if adjustment.original_lesson_date.year == year:
-            lessons_count_in_months[month_original_lesson][Statutes.PLANNED] -= 1
+            lessons_count_in_months[month_original_lesson][LessonStatutes.PLANNED] -= 1
         origan_lesson_key_dict = generate_lesson_dict_key(original_lesson_datetime, adjustment.lesson.id)
         if origan_lesson_key_dict in lessons_count_in_months[month_original_lesson]['Lessons']:
             del lessons_count_in_months[month_original_lesson]['Lessons'][
                 generate_lesson_dict_key(original_lesson_datetime, adjustment.lesson.id)]
-        status = Statutes.PLANNED
+        status = LessonStatutes.PLANNED
 
         if adjustment.modified_start_time.year == year:
             lessons_count_in_months[month_modified_lesson][adjustment.status] += 1
@@ -380,10 +421,10 @@ def generate_lessons(lessons, adjustments, year):
 def generate_lessons_for_day(lessons, adjustments, target_date):
     current_timezone = dj_timezone.get_current_timezone()
     lessons_for_day = {
-        Statutes.PLANNED: 0,
-        Statutes.NIEOBECNOSC: 0,
-        Statutes.ODWOLANA_NAUCZYCIEL: 0,
-        Statutes.ODWOLANA_24H_PRZED: 0,
+        LessonStatutes.PLANNED: 0,
+        LessonStatutes.NIEOBECNOSC: 0,
+        LessonStatutes.ODWOLANA_NAUCZYCIEL: 0,
+        LessonStatutes.ODWOLANA_24H_PRZED: 0,
         'Lessons': {}
     }
 
@@ -399,7 +440,7 @@ def generate_lessons_for_day(lessons, adjustments, target_date):
             # Sprawdzamy, czy wybrany dzień pasuje do cyklu serii
             while current_date <= end_date:
                 if current_date == target_date:
-                    status = Statutes.PLANNED
+                    status = LessonStatutes.PLANNED
                     lessons_for_day[status] += 1
                     lessons_for_day['Lessons'][generate_lesson_dict_key(current_date_time, lesson.id)] = LessonHandler(
                         start_date=current_date,
@@ -419,7 +460,7 @@ def generate_lessons_for_day(lessons, adjustments, target_date):
         else:
             # Lekcje jednorazowe, które przypadają na target_date
             if lesson.start_time.date() == target_date:
-                status = Statutes.PLANNED
+                status = LessonStatutes.PLANNED
                 lessons_for_day[status] += 1
                 lessons_for_day['Lessons'][generate_lesson_dict_key(lesson.start_time, lesson.id)] = LessonHandler(
                     start_date=lesson.start_time.date(),
@@ -438,7 +479,7 @@ def generate_lessons_for_day(lessons, adjustments, target_date):
 
         # Sprawdzenie, czy oryginalna data lekcji przypada na target_date
         if adjustment.original_lesson_date == target_date:
-            lessons_for_day[Statutes.PLANNED] -= 1
+            lessons_for_day[LessonStatutes.PLANNED] -= 1
             lessons_for_day['Lessons'].pop(generate_lesson_dict_key(original_lesson_datetime, adjustment.lesson.id), None)
 
         # Dodanie zmodyfikowanej lekcji, jeśli przypada na target_date

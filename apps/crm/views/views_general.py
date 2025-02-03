@@ -33,13 +33,12 @@ def income_chart(request):
 
 
 def crmHomePage(request):
-    today = dj_timezone.now()
-    lessons_today = count_lessons_for_teacher_in_day(request.user.id, today.year, today.month, today.day)['Lessons']
-    print('lessons_today', lessons_today)
+    today_day = dj_timezone.localtime(dj_timezone.now())
+    lessons_today = get_today_teacher_lessons(request.user.id, today_day)
 
     monthly_income = income_chart(request) if request.user.is_admin else []
 
-    return render(request, "crm/index.html", {'lessons': lessons_today, 'today': today, 'monthly_income': monthly_income})
+    return render(request, "crm/index.html", {'today_lessons': lessons_today, 'today_day': today_day, 'monthly_income': monthly_income})
 
 
 @check_permission('crm.view_person')

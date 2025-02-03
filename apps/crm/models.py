@@ -205,7 +205,6 @@ class Group(models.Model):
     name = models.CharField(max_length=32)
     notes = GenericRelation(Note)
 
-
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='group_created_by', null=True,
                                    blank=True)
     created_date = models.DateTimeField(auto_now_add=True)
@@ -224,13 +223,14 @@ class Group(models.Model):
         verbose_name = 'Grupa'
 
 
-class Statutes:
-    PLANNED = 'Zaplanowana'
-    NIEOBECNOSC = "Nieobecnosc"
-    ODWOLANA_NAUCZYCIEL = "Odwolana - nauczyciel"
-    ODWOLANA_24H_PRZED = "Odwolana - 24h przed"
+class LessonStatutes(models.TextChoices):
+    ZAPLANOWANA = 'zaplanowana', 'Zaplanowana'
+    NIEOBECNOSC = 'nieobecnosc', 'Nieobecność'
+    ODWOLANA_NAUCZYCIEL = 'odwolana_nauczyciel', 'Odwołana - nauczyciel'
+    ODWOLANA_24H_PRZED = 'odwolana_24h_przed', 'Odwołana - 24h przed'
 
 
+# TODO change values without spaces
 LESSON_STATUTES = (
     ('Zaplanowana', 'Zaplanowana'),
     ('Nieobecnosc', 'Nieobecno\u015B\u0107'),
@@ -239,31 +239,88 @@ LESSON_STATUTES = (
 )
 
 
+class LessonDuration(models.IntegerChoices):
+    SHORT = 30, '30 min'
+    NORMAL = 60, '60 min'
+
+
 class LessonDefinition(models.Model):
     id = PrefixedUUIDField(primary_key=True)
-    series_start_date = models.DateField()
-    series_end_date = models.DateField()
-    start_time = models.TimeField()
-    end_time = models.TimeField()
-    is_series = models.BooleanField(default=False)
-
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, blank=False, null=False,)
-    group = models.ForeignKey(Group, on_delete=models.CASCADE, blank=False, null=False,)
-
-    teacher = models.ForeignKey(User, on_delete=models.CASCADE, blank=False, null=False,)
-    location = models.ForeignKey(Location, on_delete=models.CASCADE, blank=False, null=False,)
-
-
-class LessonEvent(models.Model):
-    id = PrefixedUUIDField(primary_key=True)
-    lesson_definition = models.ForeignKey(LessonDefinition, on_delete=models.CASCADE, blank=False, null=False,)
-    status = models.CharField(max_length=100, choices=LESSON_STATUTES, blank=False, null=False,)
     lesson_date = models.DateField()
     start_time = models.TimeField()
-    end_time = models.TimeField()
+    duration = models.IntegerField(choices=LessonDuration.choices, blank=False, null=False, )
+    description = models.CharField(max_length=255, null=True, blank=True)
+
+    # series fields
+    series_end_date = models.DateField(blank=True, null=True)
+    is_series = models.BooleanField(default=False)
+
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, blank=True, null=True, )
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, blank=True, null=True, )
 
     teacher = models.ForeignKey(User, on_delete=models.CASCADE, blank=False, null=False, )
     location = models.ForeignKey(Location, on_delete=models.CASCADE, blank=False, null=False, )
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                name="%(app_label)s_%(class)s_student_or_group",
+                check=(
+                        models.Q(student__isnull=True, group__isnull=False) | models.Q(student__isnull=False, group__isnull=True)
+                ),
+            )
+        ]
+
+
+class EventType(models.TextChoices):
+    LESSON = 'lesson', 'Lekcja'
+    STANDARD = 'standard', 'Standardowe Wydarzenie'
+
+
+week_days_pl = {
+        0: "Poniedzia\u0142ek",
+        1: "Wtorek",
+        2: "\u015Aroda",
+        3: "Czwartek",
+        4: "Pi\u0105tek",
+        5: "Sobota",
+        6: "Niedziela"
+    }
+
+class Event(models.Model):
+    # Type
+    event_type = models.CharField(max_length=32, choices=EventType.choices, default=EventType.STANDARD)
+
+    # Standard fields
+    id = PrefixedUUIDField(primary_key=True)
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    event_date = models.DateField()
+    description = models.CharField(max_length=255,  blank=True, null=True)
+
+    # Lesson Fields
+    lesson_definition = models.ForeignKey(LessonDefinition, on_delete=models.CASCADE, blank=False, null=False, )
+    status = models.CharField(max_length=100, choices=LessonStatutes.choices, blank=False, null=False, )
+    original_lesson_datetime = models.DateTimeField()
+    duration = models.IntegerField(choices=LessonDuration.choices, blank=False, null=False, )
+    teacher = models.ForeignKey(User, on_delete=models.CASCADE, blank=False, null=False, )
+    location = models.ForeignKey(Location, on_delete=models.CASCADE, blank=False, null=False, )
+
+    def to_dict(self):
+        return {
+            'start_date': self.event_date,
+            'start_time': self.start_time.strftime("%H:%M"),
+            'end_time': self.end_time.strftime("%H:%M"),
+            'lesson_id': self.id,
+            'status': self.status,
+            'weekday': week_days_pl[self.event_date.weekday()],
+            'description': self.description if self.description else self.lesson_definition.description if self.lesson_definition else '',
+            'teacher': self.teacher.get_full_name(),
+            'location': str(self.location),
+            'duration': self.duration,
+            'original_date': self.original_lesson_datetime.date() if self.original_lesson_datetime else None,
+            'original_time': self.original_lesson_datetime.time().strftime("%H:%M") if self.original_lesson_datetime else None,
+        }
 
 
 class Lesson(models.Model):
@@ -314,8 +371,6 @@ class Lesson(models.Model):
         if self.student is None:
             return f'/group/{self.group.id}/lesson-series'
         return f'/student/{self.student.id}/lesson-series'
-
-
 
 
 class LessonAdjustment(models.Model):
@@ -371,7 +426,8 @@ class AttendanceList(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='attenndancelist_createdby', null=True,
                                    blank=True)
     created_date = models.DateTimeField(auto_now_add=True)
-    modified_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='attenndancelist_modified_by', null=True,
+    modified_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='attenndancelist_modified_by',
+                                    null=True,
                                     blank=True)
     modified_date = models.DateTimeField(auto_now=True)
 
@@ -383,6 +439,7 @@ class AttendanceList(models.Model):
 
     def redirect_after_delete(self):
         return f'/group/{self.group.id}?tab=Attendance'
+
 
 class AttendanceStatutes:
     OBECNOSC = "Obecnosc"
@@ -399,15 +456,17 @@ ATTENDANCE_STATUTES = (
 
 class AttendanceListStudent(models.Model):
     id = PrefixedUUIDField(primary_key=True)
-    attendance_list = models.ForeignKey(AttendanceList, on_delete=models.CASCADE, blank=False, null=False, related_name='attendance_list_student_group_relationship')
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, blank=False, null=False,)
-    attendance_status = models.CharField(max_length=64, choices=ATTENDANCE_STATUTES, null=True, blank=True, default="Obecnosc")
+    attendance_list = models.ForeignKey(AttendanceList, on_delete=models.CASCADE, blank=False, null=False,
+                                        related_name='attendance_list_student_group_relationship')
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, blank=False, null=False, )
+    attendance_status = models.CharField(max_length=64, choices=ATTENDANCE_STATUTES, null=True, blank=True,
+                                         default="Obecnosc")
 
 
 class Invoice(models.Model):
     id = PrefixedUUIDField(primary_key=True)
     name = models.CharField(max_length=64, blank=False, null=False)
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, blank=False, null=False,)
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, blank=False, null=False, )
     invoice_date = models.DateField()
     is_paid = models.BooleanField(default=False)
     is_sent = models.BooleanField(default=False)
@@ -434,11 +493,7 @@ class Invoice(models.Model):
 
 class InvoiceItem(models.Model):
     id = PrefixedUUIDField(primary_key=True)
-    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, blank=False, null=False,)
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, blank=False, null=False, )
     name = models.CharField(max_length=255)
     amount = models.IntegerField()
     quantity = models.IntegerField()
-
-
-
-
