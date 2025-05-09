@@ -81,7 +81,7 @@ def view_person(request, person_id):
 def calendar(request):
     selected_record_id = request.GET.get("selected_record_id", request.user.id)
     try:
-        model_name = get_model_by_prefix(str(selected_record_id)[:3])
+        model_name = get_model_by_prefix(str(selected_record_id)[:3])  # User or Group
         if model_name is None:
             raise Exception(f'Nie znaleziono modelu dla id {selected_record_id}')
     except Exception as e:
@@ -94,14 +94,13 @@ def calendar(request):
     if not request.GET._mutable:
         request.GET._mutable = True
 
-    teachers = User.objects.all()
+    teachers = User.objects.filter(is_active=True)
     locations = Location.objects.all()
 
     if model_name == 'Location':
         selected_record = Location.objects.get(id=selected_record_id)
         lesson_result = get_lessons_for_location_in_year(selected_record_id, selected_year)
         locations = locations.exclude(id=selected_record_id)
-
     else:
         selected_record = User.objects.get(id=selected_record_id)
         lesson_result = get_lessons_for_teacher_in_year(selected_record_id, selected_year)

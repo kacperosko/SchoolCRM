@@ -5,8 +5,7 @@ from collections import defaultdict
 from django.db.models import Q
 
 
-class LessonHandler:
-    week_days_pl = {
+week_days_pl = {
         0: "Poniedzia\u0142ek",
         1: "Wtorek",
         2: "\u015Aroda",
@@ -14,7 +13,10 @@ class LessonHandler:
         4: "Pi\u0105tek",
         5: "Sobota",
         6: "Niedziela"
-    }
+}
+
+
+class LessonHandler:
 
     def __init__(self, start_date: date, end_date: date, start_time: time, end_time: time, lesson_id,
                  description, teacher, student, location, original_date=None, status=LessonStatutes.ZAPLANOWANA, is_adjustment=False):
@@ -24,7 +26,7 @@ class LessonHandler:
         self.end_time = end_time.strftime('%H:%M')
         self.lesson_id = lesson_id
         self.status = status
-        self.weekday = self.week_days_pl[start_date.weekday()]
+        self.weekday = week_days_pl[start_date.weekday()]
         self.is_adjustment = is_adjustment
         self.description = description
         self.teacher = teacher
@@ -290,16 +292,16 @@ def get_lessons_for_location_in_year(location_id, year):
         Q(location_id=location_id) &
         Q(start_time__year__lte=year) &
         (
-            (Q(series_end_date__year__gte=year) |
-             Q(series_end_date=None))
+            Q(series_end_date__year__gte=year) |
+            Q(series_end_date=None)
         )
     )
 
     adjustments = LessonAdjustment.objects.filter(
         Q(location_id=location_id) &
         (
-                Q(original_lesson_date__year=year) |
-                Q(modified_start_time__year=year)
+            Q(original_lesson_date__year=year) |
+            Q(modified_start_time__year=year)
         )
     )
 

@@ -230,7 +230,7 @@ function generateTable(data) {
                 lessonRow.appendChild(locationCell);
 
                 var lessonStatusCell = document.createElement('td');
-                lessonStatusCell.textContent = lesson['status'];
+                lessonStatusCell.textContent = lesson.status;
                 lessonRow.appendChild(lessonStatusCell);
 
                 const editCell = document.createElement('td');
@@ -240,6 +240,8 @@ function generateTable(data) {
                 editLink.type = 'button';
                 editLink.setAttribute('data-toggle', 'modal');
                 editLink.setAttribute('data-target', '#editEventModalCenter');
+                console.log("LESSON");
+                console.log(lesson);
                 editLink.setAttribute("onclick", `modifyEvent(lesson_schedule_id='${lesson.lesson_id}', startTime='${lesson.start_time}', endTime='${lesson.end_time}', lessonDate='${lesson.start_date}', studentName='', status='${lesson.status}');`);
 
 

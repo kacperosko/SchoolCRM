@@ -432,10 +432,10 @@
                             <div class="form-group col-sm-6">
                                 <label for="status_cancelForm">Status <span class="text-danger">*</span></label>
                                 <select name="status" class="form-control" id="status_cancelForm" required>
-                                    <option>Zaplanowana</option>
-                                    <option value="Nieobecnosc">Nieobecność</option>
-                                    <option value="Odwolana - nauczyciel">Odwołana - nauczyciel</option>
-                                    <option value="Odwolana - 24h przed">Odwołana - 24h przed</option>
+                                    <option value="zaplanowana">Zaplanowana</option>
+                                    <option value="nieobecnosc">Nieobecność</option>
+                                    <option value="odwolana_nauczyciel">Odwołana - nauczyciel</option>
+                                    <option value="odwolana_24h_przed">Odwołana - 24h przed</option>
                                 </select>
                             </div>
                             <div class="form-group col-sm-6">
@@ -456,12 +456,12 @@
                                        value=""
                                        style="line-height: 20px;" readonly="">
                             </div>
-                            <div class="form-group col-sm-6" hidden="">
+                            <div class="form-group col-sm-6" >
                                 <label for="lessonSchedule_cancelForm">lessonSchedule</label>
                                 <input name="lessonId" type="text" class="form-control"
                                        id="lessonId_cancelForm"
                                        value=""
-                                       style="line-height: 20px;" readonly="">
+                                       style="line-height: 20px;" >
                             </div>
                             <div class="form-group col-sm-6">
                                 <label for="location_createLesson">Lokalizacja <span
@@ -664,9 +664,9 @@
             const edit_title = 'Czy chcesz zedytowa\u0107 t\u0119 lekcje?';
 
             let parts = lessonDate.split('-');
-            let day = parts[0];
+            let day = parts[2];
             let month = parts[1];
-            let year = parts[2];
+            let year = parts[0];
 
             // Utw\u00F3rz obiekt Date z rozdzielonej daty
             let dateObject = new Date(year, month - 1, day + 1);
