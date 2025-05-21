@@ -6,6 +6,7 @@ from django.utils import timezone
 from apps.authentication.middleware.current_user_middleware import get_current_user
 from datetime import timedelta, date, datetime
 import calendar
+from django.utils.timezone import make_aware
 
 @receiver(post_save, sender=LessonDefinition)
 def generate_lesson_events(sender, instance, created, **kwargs):
@@ -25,6 +26,13 @@ def generate_lesson_events(sender, instance, created, **kwargs):
         # Jeśli istnieje series_end_date, wybierz wcześniejszą z dat
         stop_date = min(instance.series_end_date, calculated_stop_date) if instance.series_end_date else calculated_stop_date
 
+        print('SIGNALS generate_lesson_events')
+        print('series_end_date -> ' + str(instance.series_end_date))
+        print('stop_date -> ' + str(stop_date))
+        print('target_month -> ' + str(target_month))
+        print('target_year -> ' + str(target_year))
+        print('is_series -> ' + str(instance.is_series))
+
         lessons = []
         while current_date <= stop_date:
 
@@ -34,7 +42,7 @@ def generate_lesson_events(sender, instance, created, **kwargs):
                     lesson_definition=instance,
                     status=LessonStatutes.ZAPLANOWANA,
                     event_date=current_date,
-                    original_lesson_datetime=datetime.combine(current_date, instance.start_time),
+                    original_lesson_datetime=make_aware(datetime.combine(current_date, instance.start_time)),
                     start_time=instance.start_time,
                     end_time=(datetime.combine(date.today(), instance.start_time) + timedelta(minutes=instance.duration)).time(),
                     duration=instance.duration,

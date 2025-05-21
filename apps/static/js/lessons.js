@@ -230,18 +230,35 @@ function generateTable(data) {
                 lessonRow.appendChild(locationCell);
 
                 var lessonStatusCell = document.createElement('td');
-                lessonStatusCell.textContent = lesson.status;
+                lessonStatusCell.textContent = lesson.status_label;
                 lessonRow.appendChild(lessonStatusCell);
 
                 const editCell = document.createElement('td');
+                // teacherCell.classList.add('d-flex');
+                const editSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                const editPath = document.createElementNS(
+                    'http://www.w3.org/2000/svg',
+                    'path'
+                );
+                editSvg.setAttribute('fill', 'none');
+                editSvg.setAttribute('viewBox', '0 0 24 24');
+                editSvg.setAttribute('stroke', 'currentColor');
+                editSvg.setAttribute('stroke-width', '2');
+                editSvg.classList.add('mr-1');
+                editSvg.setAttribute('width', '18px');
+
+                editPath.setAttribute('d', 'M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z');
+                editPath.setAttribute('stroke-linecap', 'round');
+                editPath.setAttribute('stroke-linejoin', 'round');
+
+                editSvg.appendChild(editPath);
+
                 const editLink = document.createElement('a');
-                editLink.text = 'Edytuj'
-                editLink.className = 'bg-blue text-white p-1 rounded-sm font-size-12 menu-button text-center';
+                editLink.appendChild(editSvg);
+                // editLink.className = 'bg-blue text-white p-1 rounded-sm font-size-12 menu-button text-center';
                 editLink.type = 'button';
                 editLink.setAttribute('data-toggle', 'modal');
                 editLink.setAttribute('data-target', '#editEventModalCenter');
-                console.log("LESSON");
-                console.log(lesson);
                 editLink.setAttribute("onclick", `modifyEvent(lesson_schedule_id='${lesson.lesson_id}', startTime='${lesson.start_time}', endTime='${lesson.end_time}', lessonDate='${lesson.start_date}', studentName='', status='${lesson.status}');`);
 
 

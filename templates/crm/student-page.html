@@ -88,6 +88,7 @@
                 </li>
             </ul>
             <div class="tab-content" id="tab-student">
+                {#      ============ STUDENT TAB ============      #}
                 <div class="tab-pane fade {% if request.GET.tab == 'Details' %}show active{% endif %}" id="details"
                      role="tabpanel" aria-labelledby="details-tab">
                     <div class=" row align-items-center">
@@ -231,6 +232,7 @@
                     </div>
                 </div>
 
+                {#      ============ LESSON TAB ============      #}
                 <div class="tab-pane fade {% if request.GET.tab == 'Lessons' %}show active{% endif %}" id="lessons"
                      role="tabpanel" aria-labelledby="lessons-tab">
                     <div class="d-flex justify-content-between">
@@ -239,11 +241,11 @@
                             <button type="button"
                                     class="btn btn-outline-primary rounded-pill  d-flex align-content-center font-size-12"
                                     id="prevYearBtn"
-                                    onclick="setQueryYear(-1)">
+                                    onclick="setPrevYear()">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                      stroke-width="1.5"
                                      stroke="currentColor" class="w-6 h-6" width="18">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                    <path stroke-linecap="round" stroke-linejoin="rouz"
                                           d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"></path>
                                 </svg>
                             </button>
@@ -257,7 +259,7 @@
                             <button type="button"
                                     class="btn btn-outline-primary rounded-pill  d-flex align-content-center font-size-12"
                                     id="nextYearBTn"
-                                    onclick="setQueryYear(1)">
+                                    onclick="setNextYear()">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                      stroke-width="1.5"
                                      stroke="currentColor" class="w-6 h-6" width="18">
@@ -299,6 +301,7 @@
                     </div>
                 </div>
 
+                {#      ============ INVOICE TAB ============      #}
                 {% if perms.crm.view_invoice %}
                     <div class="tab-pane fade {% if request.GET.tab == 'Invoices' %}show active{% endif %}"
                          id="invoices"
@@ -345,7 +348,7 @@
                                                class="">{{ invoice.name }}
                                             </a>
                                         </th>
-                                        <td class="text-center">{{ invoice.get_total_amount }}</td>
+                                        <td class="text-center">{{ invoice.get_total_amount|floatformat:"2g" }} zł</td>
                                         <td class="text-center">{{ invoice.invoice_date.month|get_month_name }}</td>
                                         <td class="text-center">{{ invoice.invoice_date.year }}</td>
                                         <td class="text-center">{{ invoice.is_sent|yes_no }}</td>
@@ -385,6 +388,7 @@
                     </div>
                 {% endif %}
 
+                {#      ============ NOTES TAB ============      #}
                 {% include 'modules/notes.html' %}
             </div>
         </div>
@@ -472,7 +476,7 @@
                                     {% endfor %}
                                 </select>
                             </div>
-                            <div class="form-group col-sm-6 d-none" id="lessonDate_endSeries_div">
+                            <div class="form-group col-sm-6 d-none" id="lessonDate_endSeries_div_old">
                                 <label for="lessonDate_endSeries">Koniec Serii</label>
                                 <input name="end_series" type="date" class="form-control" id="lessonDate_endSeries"
                                        value=""
@@ -510,103 +514,7 @@
             </div>
         </div>
     </div>
-    <div class="modal fade" id="createEventModalCenter" tabindex="-1" role="dialog"
-         aria-labelledby="createEventModalCenterTitle" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="createEventModalCenterTitle">Dodawanie nowej lekcji</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <form method="post" name="create_form" id="create_lesson_form">
-                    {% csrf_token %}
-                    <div class="modal-body">
-                        {% csrf_token %}
-                        <div class=" row align-items-center">
-                            <div class="form-group col-sm-6">
-                                <label for="starTime_createLesson">Godzina Rozpoczęcia <span
-                                        class="text-danger">*</span></label>
-                                <input name="startTime" type="time" class="form-control" id="starTime_createLesson"
-                                       value="" style="line-height: 20px;"
-                                       required>
-                            </div>
-                            <div class="form-group col-sm-6">
-                                <label for="lessonDuration_createLesson">Czas trwania <span class="text-danger">*</span>
-                                </label>
-                                <select name="lessonDuration" class="form-control "
-                                        id="lessonDuration_createLesson" required>
-                                    <option value="30">30 min</option>
-                                    <option value="45">45 min</option>
-                                    <option value="60">60 min</option>
-                                </select>
-                            </div>
-                            <div class="form-group col-sm-6">
-                                <label for="lessonDate_createLesson">Data Lekcji <span
-                                        class="text-danger">*</span></label>
-                                <input name="lessonDate" type="date" class="form-control" id="lessonDate_createLesson"
-                                       value=""
-                                       style="line-height: 20px;" required>
-                            </div>
-                            <div class="form-group col-sm-6">
-                                <label for="repeating_createLesson">Powtarzanie <span
-                                        class="text-danger">*</span></label>
-                                <select class="form-control" id="repeating_createLesson" name="repeat" required>
-                                    <option value="never" selected>Nigdy</option>
-                                    <option value="weekly">Co tydzień</option>
-                                </select>
-                            </div>
-                            <div class="form-group col-sm-6">
-                                <label for="repeating_createLesson">Opis <span class="text-danger">*</span></label>
-                                <input name="description" type="text" class="form-control" id="description_createLesson"
-                                       value=""
-                                       style="line-height: 20px;" required>
-                            </div>
-                            <div class="form-group col-sm-6">
-                                <label for="studentForm_cancelForm">Student <span class="text-danger">*</span></label>
-                                <input class="form-control" id="studentForm_cancelForm"
-                                       value="{{ record.get_full_name }}" required readonly="">
-                            </div>
-
-                            <div class="form-group col-sm-6">
-                                <label for="teacher_createLesson">Nauczyciel <span class="text-danger">*</span></label>
-                                <select class="form-control" id="teacher_createLesson" name="teacher" required>
-                                    {% for user in users %}
-                                        <option value="{{ user.id }}">{{ user.get_full_name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="form-group col-sm-6">
-                                <label for="location_createLesson">Lokalizacja <span
-                                        class="text-danger">*</span></label>
-                                <select class="form-control" id="location_createLesson" name="location" required>
-                                    {% for location in locations %}
-                                        <option value="{{ location.id }}">{{ location.get_full_name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="form-group col-sm-6 d-none" id="lessonDate_endSeries_div">
-                                <label for="lessonDate_endSeries">Koniec Serii</label>
-                                <input name="end_series" type="date" class="form-control" id="lessonDate_endSeries"
-                                       value=""
-                                       style="line-height: 20px;" data-toggle="tooltip" data-placement="right"
-                                       title="Podaj datę ostatniej lekcji z serii. Może być puste">
-                            </div>
-                        </div>
-
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Anuluj</button>
-                        <button name="create_lesson_form_submit" id="createLesson_form_btn" type="submit"
-                                class="btn btn-primary">
-                            Utwórz lekcje
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+    {% include 'modals/create-lesson-modal.html' %}
 {% endblock content %}
 
 {% block javascript %}
@@ -736,6 +644,13 @@
             {#        ;#}
         })
 
+        function setNextYear(){
+            setQueryYear(1);
+        }
+        function setPrevYear(){
+            setQueryYear(-1);
+        }
+
         function setQueryYear(value) {
             selected_year_div.innerHTML = parseInt(selected_year_div.innerHTML) + value;
             const currentURL = window.location.href;
@@ -801,7 +716,8 @@
         endSeries_div = document.getElementById('lessonDate_endSeries_div');
 
         repeating_createLesson.addEventListener("change", function () {
-            if (repeating_createLesson.value === 'never') {
+            console.log(repeating_createLesson.checked);
+            if (!repeating_createLesson.checked) {
                 endSeries_div.classList.add('d-none');
                 endSeries_input.value = null;
             } else {
@@ -809,5 +725,10 @@
             }
 
         });
+
+        function addLesson() {
+            const startTime = document.getElementById('starTime_createLesson');
+
+        }
     </script>
 {% endblock javascript %}

@@ -4,7 +4,7 @@ from django.forms import ModelForm
 from django.test import override_settings
 from django.core.exceptions import ValidationError
 
-from .models import Location, Person, Student, Lesson, StudentPerson, GroupStudent, Group, AttendanceList, Invoice, AttendanceListStudent
+from .models import Location, Person, Student, Lesson, StudentPerson, GroupStudent, Group, AttendanceList, Invoice, AttendanceListStudent, LessonDefinition
 from apps.authentication.models import User
 import importlib
 from django.utils import timezone as dj_timezone
@@ -59,15 +59,22 @@ class LessonModuleForm(forms.Form):
     location = forms.CharField()
 
 
-class LessonCreateForm(forms.Form):
-    startTime = forms.TimeField()
-    lessonDuration = forms.IntegerField()
-    lessonDate = forms.DateField()
-    repeat = forms.CharField()
-    description = forms.CharField()
-    end_series = forms.DateField(required=False)
-    teacher = forms.CharField()
-    location = forms.CharField()
+class LessonCreateForm(forms.ModelForm):
+    class Meta:
+        model = LessonDefinition
+        fields = ['lesson_date', 'start_time', 'duration', 'description', 'series_end_date', 'is_series', 'student', 'group', 'teacher', 'location']
+        widgets = {
+            'start_time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
+            'lesson_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'series_end_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'duration': forms.Select(attrs={'class': 'form-control'}),
+            'description': forms.TextInput(attrs={'class': 'form-control'}),
+            'is_series': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'student': forms.Select(attrs={'class': 'form-control'}),
+            'group': forms.Select(attrs={'class': 'form-control'}),
+            'teacher': forms.Select(attrs={'class': 'form-control'}),
+            'location': forms.Select(attrs={'class': 'form-control'}),
+        }
 
 
 class LessonPlanForm(forms.Form):

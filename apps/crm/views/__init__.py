@@ -4,6 +4,7 @@ from .views_reports import view_reports, view_student_report, view_students_in_g
 from .views_student import all_students, StudentPage, StudentPersonCreate
 from .views_location import all_locations, LocationPage
 from .views_group import all_groups, GroupPage
-from .views_api import get_student_group_lessons, upsert_note, delete_note, get_notifications, \
+from .views_api import upsert_note, delete_note, get_notifications, \
     mark_notification_as_read, watch_record, save_attendance_list_student
+from .views_api_lessons import get_student_group_lessons, create_lesson
 

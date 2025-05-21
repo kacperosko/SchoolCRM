@@ -51,5 +51,7 @@ urlpatterns = [
 
 
     path('crm_api/save-attendance-list/', crm_views.save_attendance_list_student, name='save_attendance_list_student'),
+    path('crm_api/create-lesson/', crm_views.create_lesson, name='create_lesson'),
+
 ]
 

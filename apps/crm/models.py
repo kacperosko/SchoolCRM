@@ -241,6 +241,7 @@ LESSON_STATUTES = (
 
 class LessonDuration(models.IntegerChoices):
     SHORT = 30, '30 min'
+    MEDIUM = 45, '45 min'
     NORMAL = 60, '60 min'
 
 
@@ -313,6 +314,7 @@ class Event(models.Model):
             'end_time': self.end_time.strftime("%H:%M"),
             'lesson_id': self.id,
             'status': self.status,
+            'status_label': self.get_status_display(),
             'weekday': week_days_pl[self.event_date.weekday()],
             'description': self.description if self.description else self.lesson_definition.description if self.lesson_definition else '',
             'teacher': self.teacher.get_full_name(),
