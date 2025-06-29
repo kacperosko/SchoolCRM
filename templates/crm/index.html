@@ -64,7 +64,8 @@
                                         </td>
                                         <td class="pl-0 py-3">
                                             <h6 class="mb-0 text-secondary  d-flex align-items-center">
-                                                <svg width="20px" class="svg-icon mr-1" xmlns="http://www.w3.org/2000/svg"
+                                                <svg width="20px" class="svg-icon mr-1"
+                                                     xmlns="http://www.w3.org/2000/svg"
                                                      fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round"
                                                           d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"></path>
@@ -72,6 +73,48 @@
                                                           d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"></path>
                                                 </svg>
                                                 {{ lesson.location }}
+                                            </h6>
+                                        </td>
+                                        <td class="pl-0 py-3" data-lesson-id="{{ lesson.id }}"
+                                            data-current-status="{{ lesson.status }}">
+                                            <h6 class="mb-0 text-secondary d-flex align-items-center">
+                                                <!-- Wyświetlany status -->
+                                                <div class="status-display">
+                                                    <div class="{{ lesson.status|get_status_color }} status-box pl-2 p-1 rounded-lg d-flex align-items-center" style="width: 10rem">
+                                                        {{ lesson.get_status_display }}
+                                                        <button type="button" name="editLessonStatus"
+                                                                class="btn {{ lesson.status|get_status_color }} ml-2 p-1"
+                                                                data-lesson-id="{{ lesson.id }}">
+                                                            <!-- Ikona edycji -->
+                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                                 viewBox="0 0 24 24"
+                                                                 stroke-width="1" stroke="currentColor" class="w-6 h-6"
+                                                                 width="18">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                      stroke-width="2"
+                                                                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Formularz edycji -->
+                                                <div class="status-edit d-none ">
+                                                    <div class="bg-secondary p-1 rounded-lg d-flex align-items-center">
+                                                        <select name="lessonStatus" class="form-control select-form"
+                                                                required style="width: 10rem">
+                                                            <option value="zaplanowana">Zaplanowana</option>
+                                                            <option value="nieobecnosc">Nieobecność</option>
+                                                            <option value="odwolana_nauczyciel">Odwołana - nauczyciel
+                                                            </option>
+                                                            <option value="odwolana_24h_przed">Odwołana - 24h przed
+                                                            </option>
+                                                        </select>
+                                                        <button type="button"
+                                                                class="cancel-edit btn bg-secondary ml-2 px-1 py-0">x
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </h6>
                                         </td>
                                     </tr>
@@ -119,47 +162,174 @@
         </div>
     {% endif %}
 
+    {% csrf_token %}
 {% endblock content %}
 
 {% block javascript %}
     {% if request.user.is_admin %}
         <script>
-            // Dane, które przekażemy do wykresu
-            const incomeData = {{ monthly_income|safe }};
 
-            const labels = incomeData.map(item => item.month);
-            const data = incomeData.map(item => item.income);
+            document.addEventListener("DOMContentLoaded", function () {
+                {#const selectElements = document.querySelectorAll('.select-form');#}
+                {#selectElements.forEach(function (selectElement) {#}
+                {#    if (selectElement.choicesInstance) {#}
+                {#        selectElement.choicesInstance.destroy();#}
+                {#    }#}
+                {#    selectElement.choicesInstance = new Choices(selectElement, {#}
+                {#        shouldSort: false,#}
+                {#        removeItemButton: true#}
+                {#    });#}
 
-            const ctx = document.getElementById('incomeChart').getContext('2d');
-            const incomeChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Dochód (PLN)',
-                        data: data,
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                // Dodanie "PLN" jako suffix na osi Y
-                                callback: function (value, index, values) {
-                                    return value + ' PLN';
+                // Dane, które przekażemy do wykresu
+                const incomeData = {{ monthly_income|safe }};
+
+                const labels = incomeData.map(item => item.month);
+                const data = incomeData.map(item => item.income);
+
+                const ctx = document.getElementById('incomeChart').getContext('2d');
+                const incomeChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Dochód (PLN)',
+                            data: data,
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    // Dodanie "PLN" jako suffix na osi Y
+                                    callback: function (value, index, values) {
+                                        return value + ' PLN';
+                                    }
                                 }
                             }
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'index',
                         }
-                    },
-                    interaction: {
-                        intersect: false,
-                        mode: 'index',
                     }
+                });
+
+                function getCSRFToken() {
+                    return document.querySelector('[name=csrfmiddlewaretoken]').value;
                 }
+
+                function getStatusColor(status) {
+                    if (status === 'nieobecnosc') {
+                        return 'bg-danger-light text-danger';
+                    }
+                    if (status === 'zaplanowana') {
+                        return 'bg-primary-light text-primary';
+                    }
+                    if (status === 'odwolana_nauczyciel' || status === 'odwolana_24h_przed') {
+                        return 'bg-warning-light text-warning';
+                    }
+                    return 'bg-secondary text-secondary'; // fallback
+                }
+
+                document.querySelectorAll('td[data-lesson-id]').forEach(cell => {
+                    const lessonId = cell.dataset.lessonId;
+                    const currentStatus = cell.dataset.currentStatus;
+                    const displayDiv = cell.querySelector('.status-display');
+                    const editDiv = cell.querySelector('.status-edit');
+                    const select = editDiv.querySelector('select[name="lessonStatus"]');
+                    const cancelBtn = editDiv.querySelector('.cancel-edit');
+                    const editBtn = displayDiv.querySelector('button[name="editLessonStatus"]');
+
+                    let originalStatus = currentStatus;
+
+                    // Ustaw domyślny status w select
+                    select.value = originalStatus;
+
+                    // Przycisk edycji
+                    editBtn.addEventListener('click', function () {
+                        select.value = originalStatus;  // reset na aktualny status
+                        displayDiv.classList.add('d-none');
+                        editDiv.classList.remove('d-none');
+                    });
+
+                    // Przycisk anulowania edycji
+                    cancelBtn.addEventListener('click', function () {
+                        select.value = originalStatus;
+                        editDiv.classList.add('d-none');
+                        displayDiv.classList.remove('d-none');
+                    });
+
+                    // Zmiana selecta – wysyłka AJAX
+                    select.addEventListener('change', function () {
+                        const newStatus = this.value;
+
+                        fetch("{% url 'crm_update_status' %}", {
+                            method: "POST",
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': getCSRFToken(),
+                            },
+                            body: JSON.stringify({
+                                event_id: lessonId,
+                                new_status: newStatus
+                            })
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.status) {
+                                    // Zaktualizuj stan lokalny
+                                    originalStatus = newStatus;
+                                    cell.dataset.currentStatus = newStatus;
+
+                                    // Zaktualizuj widoczny div
+                                    const colorClass = getStatusColor(newStatus);
+                                    const statusBox = displayDiv.querySelector('.status-box');
+
+                                    // Aktualizacja klas
+                                    statusBox.className = `status-box ${colorClass} p-1 rounded-lg d-flex align-items-center`;
+
+                                    // Aktualizacja zawartości
+                                    statusBox.innerHTML = `
+                                        ${data.status_display}
+                                        <button type="button" name="editLessonStatus"
+                                            class="btn ${colorClass} ml-2 p-1" data-lesson-id="${lessonId}">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                viewBox="0 0 24 24" stroke-width="1" stroke="currentColor"
+                                                class="w-6 h-6" width="18">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                                            </svg>
+                                        </button>
+                                    `;
+
+                                    // Przełącz widoczność
+                                    editDiv.classList.add('d-none');
+                                    displayDiv.classList.remove('d-none');
+
+                                    // Przypnij ponownie listener do nowego przycisku
+                                    statusBox.querySelector('button[name="editLessonStatus"]').addEventListener('click', function () {
+                                        select.value = originalStatus;
+                                        displayDiv.classList.add('d-none');
+                                        editDiv.classList.remove('d-none');
+                                    });
+
+                                    handleResponse(data);  // opcjonalny alert
+                                } else {
+                                    alert("Błąd: " + data.error || "Nie udało się zaktualizować statusu.");
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Błąd:', error);
+                                alert("Błąd połączenia z serwerem.");
+                            });
+                    });
+                });
+
             });
         </script>
     {% endif %}

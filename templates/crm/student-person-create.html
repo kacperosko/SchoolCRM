@@ -25,7 +25,7 @@
                             <div class="text-danger">{{ form.person.errors|striptags }}</div>
                             <label for="person_select">Kontakt <span class="text-danger">*</span></label>
                             <select name="person" class="form-control choicesjs" id="person_select" required>
-                                <option disabled selected value></option>
+                                <option disabled selected value>- Wybierz kontakt -</option>
                                 <option value="new">+ Dodaj nowy kontakt</option>
                                 {% for p in persons %}
                                     <option value="{{ p.id }}">{{ p.get_full_name }}</option>

@@ -8,7 +8,7 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <form method="post" name="create_form" id="create_lesson_form" data-url="{% url 'create_lesson' %}">
+            <form method="post" name="create_form" id="create_lesson_form" data-url="{% url 'crm_create_lesson' %}">
                 {% csrf_token %}
                 <div class="modal-body">
                     <div class="row align-items-center">
@@ -39,10 +39,6 @@
                         <div class="form-group col-sm-6">
                             <label for="repeating_createLesson">Powtarzanie <span class="text-danger">*</span></label>
                             <input name="is_series" type="checkbox" class="form-control" id="repeating_createLesson" style="line-height: 20px;" required>
-{#                            <select class="form-control" id="repeating_createLesson" name="repeat" required>#}
-{#                                <option value="never" selected>Nigdy</option>#}
-{#                                <option value="weekly">Co tydzień</option>#}
-{#                            </select>#}
                         </div>
 
                         <div class="form-group col-sm-6">

@@ -1,6 +1,10 @@
 from .views_base import *
 from django.views.decorators.csrf import csrf_exempt
-from ..forms import LessonCreateForm
+from ..forms import LessonCreateForm, EditLessonForm
+from ..lesson_handler import update_lesson
+from ..models import Event
+from apps.crm.templatetags.crm_tags import get_status_color
+
 
 def get_student_group_lessons(request, record_id):
     status = False
@@ -44,3 +48,63 @@ def create_lesson(request):
             return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
 
     return JsonResponse({'status': 'error', 'message': 'Nieprawidłowe żądanie.'}, status=400)
+
+
+@csrf_exempt
+def edit_lesson(request):
+    print('start')
+    if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        print('Headers OK')
+
+        event_id = request.POST.get('event_id')
+
+        try:
+            event = Event.objects.get(pk=event_id)
+            print('event event_date', event.event_date)
+            print('event start_time', event.start_time)
+        except Event.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Lekcja nie istnieje'})
+
+        old_dates = {
+            'old_date': event.event_date,
+            'old_start_time': event.start_time,
+            'old_original_datetime': event.original_lesson_datetime
+        }
+
+        form = EditLessonForm(request.POST, instance=event)
+
+        if form.is_valid():
+            edit_mode = form.cleaned_data['edit_mode']
+            print('event event_date', event.event_date)
+            print('event start_time', event.start_time)
+            update_lesson(event, form, edit_mode, old_dates)
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Lekcja została zaktualizowana pomyślnie.'
+            })
+        else:
+            return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
+
+    print('zle')
+    return JsonResponse({'status': 'error', 'message': 'Nieprawidłowe żądanie.'}, status=400)
+
+
+@csrf_exempt
+def update_status(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        event_id = data.get('event_id')
+        new_status = data.get('new_status')
+
+        try:
+            event = Event.objects.get(id=event_id)
+            event.status = new_status
+            event.save()
+            return JsonResponse({
+                'status': True,
+                'message': 'Status lekcji zaktualizowany pomyślnie.',
+                'status_display': event.get_status_display()
+            })
+        except Lesson.DoesNotExist:
+            return JsonResponse({'status': False, 'message': 'Event nie znaleziony'})
+    return JsonResponse({'status': False, 'message': 'Niepoprawne zawołanie'})

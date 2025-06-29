@@ -1,12 +1,14 @@
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.contrib.contenttypes.models import ContentType
-from .models import Note, WatchRecord, Notification, Student, Group, AttendanceList, LessonDefinition, Event, EventType, LessonStatutes
+from .models import Note, WatchRecord, Notification, Student, Group, AttendanceList, LessonDefinition, Event, EventType, \
+    LessonStatutes, FieldHistory
 from django.utils import timezone
 from apps.authentication.middleware.current_user_middleware import get_current_user
 from datetime import timedelta, date, datetime
 import calendar
 from django.utils.timezone import make_aware
+
 
 @receiver(post_save, sender=LessonDefinition)
 def generate_lesson_events(sender, instance, created, **kwargs):
@@ -24,7 +26,8 @@ def generate_lesson_events(sender, instance, created, **kwargs):
         calculated_stop_date = date(target_year, target_month, last_day)
 
         # Jeśli istnieje series_end_date, wybierz wcześniejszą z dat
-        stop_date = min(instance.series_end_date, calculated_stop_date) if instance.series_end_date else calculated_stop_date
+        stop_date = min(instance.series_end_date,
+                        calculated_stop_date) if instance.series_end_date else calculated_stop_date
 
         print('SIGNALS generate_lesson_events')
         print('series_end_date -> ' + str(instance.series_end_date))
@@ -44,7 +47,8 @@ def generate_lesson_events(sender, instance, created, **kwargs):
                     event_date=current_date,
                     original_lesson_datetime=make_aware(datetime.combine(current_date, instance.start_time)),
                     start_time=instance.start_time,
-                    end_time=(datetime.combine(date.today(), instance.start_time) + timedelta(minutes=instance.duration)).time(),
+                    end_time=(datetime.combine(date.today(), instance.start_time) + timedelta(
+                        minutes=instance.duration)).time(),
                     duration=instance.duration,
                     teacher=instance.teacher,
                     location=instance.location,
@@ -102,9 +106,43 @@ def create_notifications(sender, instance, created, **kwargs):
         Notification.objects.bulk_create(notifications)
 
 
-def set_created_by_modified_by(sender, instance):
+
+TRACKED_MODELS = {
+    'Student': ['first_name', 'last_name', 'email', 'phone', 'birthdate'],
+}
+
+
+@receiver(pre_save)
+def track_field_changes(sender, instance, **kwargs):
+    model_name = sender.__name__
+    if model_name not in TRACKED_MODELS:
+        return
+
+    if not instance.pk:
+        return
+
+    try:
+        old_instance = sender.objects.get(pk=instance.pk)
+    except sender.DoesNotExist:
+        return
+
+    for field in TRACKED_MODELS[model_name]:
+        old_value = getattr(old_instance, field, None)
+        new_value = getattr(instance, field, None)
+        if old_value != new_value:
+            FieldHistory.objects.create(
+                content_type=ContentType.objects.get_for_model(sender),
+                object_id=instance.pk,
+                field_name=field,
+                old_value=str(old_value),
+                new_value=str(new_value),
+                changed_by=get_current_user()
+            )
+
+
+def set_created_by_modified_by(instance, user):
     print('signals set_created_by_modified_by')
-    user = get_current_user()
+    user = get_current_user() if not user else user
     if not instance.pk:  # Check if the record is new
         instance.created_date = timezone.now()
         instance.created_by = user
@@ -114,7 +152,8 @@ def set_created_by_modified_by(sender, instance):
 
 @receiver(pre_save, sender=Student)
 def student_signal(sender, instance, **kwargs):
-    set_created_by_modified_by(sender, instance)
+    user = get_current_user()
+    set_created_by_modified_by(instance, user)
 
 
 @receiver(pre_save, sender=Group)

@@ -1,14 +1,35 @@
 const lessons_tbody = $("#lessons_tbody");
 let openedMonths = [];
+let lessons_data = new Map();
+
 LESSONS_STATUTES = {
     ZAPLANOWANA: 'zaplanowana',
     NIEOBECNOSC: 'nieobecnosc',
     ODWOLANA_NAUCZYCIEL: 'odwolana_nauczyciel',
     ODWOLANA_24H_PRZED: 'odwolana_24h_przed',
 }
+
 function isGroupPage() {
     const pathSegments = window.location.pathname.split('/').filter(Boolean);  // Podziel URL na fragmenty
     return pathSegments[0] === 'group';  // Sprawdź, czy pierwszy fragment to 'group'
+}
+
+function expandOpenedMonths() {
+    let urlParams = new URLSearchParams(window.location.search);
+    openedMonths = urlParams.get('opened_months');
+    if (!openedMonths) {
+        openedMonths = [];
+        return
+    }
+    console.log('listener openedMonths ' + openedMonths)
+    openedMonths = openedMonths.split(',');
+    openedMonths.forEach(function (monthNumber) {
+        let collapsibleDiv = document.getElementById('collaps_' + monthNumber);
+        console.log('listener collapsibleDiv ' + collapsibleDiv)
+        if (collapsibleDiv) {
+            collapsibleDiv.classList.add('show');
+        }
+    });
 }
 
 function get_lessons(record_id) {
@@ -48,6 +69,8 @@ function get_lessons(record_id) {
 
 function generateTable(data) {
     // Creating table
+    lessons_data = new Map();
+
     var table = document.createElement('table');
     table.classList.add('table', 'table-bordered', 'table-striped');
     table.id = "lesson_table";
@@ -72,6 +95,8 @@ function generateTable(data) {
 
     // Iterating all months and statutes (e.g. 1: {Cancelled: 1, Planned: 0}, 2: : {Cancelled: 0, Planned: 0} 3: ....)
     Object.entries(data).forEach(function ([month_number, statutes]) {
+
+
         var row = document.createElement('tr');
 
         var monthCell = document.createElement('th');
@@ -136,6 +161,9 @@ function generateTable(data) {
 
         if (!jQuery.isEmptyObject(statutes['Lessons'])) {
             Object.entries(statutes['Lessons']).forEach(function ([key, lesson]) {
+
+                lessons_data.set(lesson.lesson_id, lesson);
+
                 const lessonRow = document.createElement('tr');
 
                 const lessonDateCell = document.createElement('td');
@@ -257,9 +285,9 @@ function generateTable(data) {
                 editLink.appendChild(editSvg);
                 // editLink.className = 'bg-blue text-white p-1 rounded-sm font-size-12 menu-button text-center';
                 editLink.type = 'button';
-                editLink.setAttribute('data-toggle', 'modal');
-                editLink.setAttribute('data-target', '#editEventModalCenter');
-                editLink.setAttribute("onclick", `modifyEvent(lesson_schedule_id='${lesson.lesson_id}', startTime='${lesson.start_time}', endTime='${lesson.end_time}', lessonDate='${lesson.start_date}', studentName='', status='${lesson.status}');`);
+                // editLink.setAttribute('data-toggle', 'modal');
+                // editLink.setAttribute('data-target', '#editLessonModal');
+                editLink.setAttribute("onclick", `openEditLessonModal(event_id='${lesson.lesson_id}', startTime='${lesson.start_time}', endTime='${lesson.end_time}', lessonDate='${lesson.start_date}', studentName='', status='${lesson.status}');`);
 
 
                 editCell.appendChild(editLink);
@@ -300,15 +328,11 @@ function getMonthName(monthNumber) {
     return months[monthNumber - 1];
 }
 
-function toggleDetails(element) {
-    var targetId = element.children[0].getAttribute('data-target');
-    var target = document.querySelector(targetId);
-    target.classList.toggle('show');
-}
 
 function open_months_url() {
     let urlParams = new URLSearchParams(window.location.search);
     openedMonths = urlParams.get('opened_months');
+    console.log('openedMonths -> ' + openedMonths);
     if (openedMonths) {
         openedMonths = openedMonths.split(',');
         openedMonths.forEach(function (monthNumber) {
@@ -320,4 +344,129 @@ function open_months_url() {
     } else {
         openedMonths = [];
     }
+}
+
+let lessonsLoaded = false;
+let selected_year_div = document.getElementById("selected-year");
+let nextYearBTn = document.getElementById("nextYearBTn");
+let prevYearBtn = document.getElementById("prevYearBtn");
+
+
+const delay = (delayInms) => {
+    return new Promise(resolve => setTimeout(resolve, delayInms));
+};
+
+
+function generate_lessons() {
+    if (!lessonsLoaded) {
+        get_lessons(recordId)
+        lessonsLoaded = true;
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    let urlParams = new URLSearchParams(window.location.search);
+
+    let selected_year = urlParams.get('selected_year');
+    if (!selected_year) {
+        const current_year = new Date().getFullYear();
+        selected_year = current_year;
+        addParamToURL('selected_year', current_year)
+    }
+    selected_year_div.innerHTML = selected_year
+
+
+    const tab = urlParams.get('tab');
+    if (tab !== undefined) {
+        if (tab === 'Lessons' && !lessonsLoaded) {
+            generate_lessons();
+        }
+    }
+})
+
+function setNextYear() {
+    setQueryYear(1);
+}
+
+function setPrevYear() {
+    setQueryYear(-1);
+}
+
+function setQueryYear(value) {
+    selected_year_div.innerHTML = parseInt(selected_year_div.innerHTML) + value;
+    const currentURL = window.location.href;
+    let urlSearchParams = new URLSearchParams(window.location.search);
+    urlSearchParams.set('selected_year', selected_year_div.innerHTML);
+    urlSearchParams.set('opened_months', '');
+    window.history.pushState({}, document.title, '?' + urlSearchParams.toString());
+    get_lessons(recordId);
+
+    // window.location.href = currentURL.split('?')[0] + '?' + urlSearchParams.toString();
+
+}
+
+function setQueryYearNow() {
+    selected_year_div.innerHTML = new Date().getFullYear();
+
+    const currentURL = window.location.href;
+    let urlSearchParams = new URLSearchParams(window.location.search);
+    urlSearchParams.set('selected_year', selected_year_div.innerHTML);
+    window.history.pushState({}, document.title, '?' + urlSearchParams.toString());
+    get_lessons(recordId);
+
+    // window.location.href = currentURL.split('?')[0] + '?' + urlSearchParams.toString();
+}
+
+function toggleDetails(element) {
+    let detailsRow = element.parentElement.nextElementSibling;
+    if (detailsRow.classList.contains('details')) {
+        if (detailsRow.style.maxHeight === 0) {
+            // detailsRow.style.display = 'table-row';
+            detailsRow.style.maxHeight = 1000 + 'px';
+        } else {
+            detailsRow.style.maxHeight = '0px';
+
+        }
+    }
+}
+
+async function refreshOpenedMonths() {
+    let delayres = await delay(1000);
+    let divElements = document.querySelectorAll('[id^="collaps_"]');
+    console.log('refreshing months')
+    openedMonths = [];
+    divElements.forEach(function (div) {
+        let monthNumber = div.id.split('_')[1];
+        if (div.classList.contains('show')) {
+            openedMonths.push(monthNumber);
+            console.log('checking ' + monthNumber);
+        }
+    });
+
+    let urlParams = new URLSearchParams(window.location.search);
+    urlParams.set('opened_months', openedMonths.join(','));
+    window.history.replaceState({}, '', window.location.pathname + '?' + urlParams.toString());
+}
+
+document.getElementById('repeating_createLesson').addEventListener("change", function () {
+    if (!document.getElementById('repeating_createLesson').checked) {
+        document.getElementById('lessonDate_endSeries_div').classList.add('d-none');
+        document.getElementById('lessonDate_endSeries').value = null;
+    } else {
+        document.getElementById('lessonDate_endSeries_div').classList.remove('d-none');
+    }
+});
+
+function calculateTimeDifference(startTime, endTime) {
+    // Parsowanie godzin na obiekty Date
+    const start = new Date(`1970-01-01T${startTime}:00`);
+    const end = new Date(`1970-01-01T${endTime}:00`);
+
+    // Obliczenie r\u00F3\u017Cnicy w milisekundach
+    const differenceInMilliseconds = end - start;
+
+    // Konwersja milisekund na minuty
+    const differenceInMinutes = differenceInMilliseconds / (1000 * 60);
+
+    return differenceInMinutes;
 }

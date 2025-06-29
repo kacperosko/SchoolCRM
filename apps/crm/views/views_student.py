@@ -96,9 +96,11 @@ class StudentPage(View):
             invoices = Invoice.objects.filter(student_id=student_id).order_by('-invoice_date')[:10]
 
             notes = student.notes.all().order_by('-created_at')
+            history = student.history.all().order_by('-changed_at')[:10]
             context.update({
                 'record': student,
                 'notes': notes,
+                'field_history': history,
                 'student_persons': student_persons,
                 'watch_record': user_watch_record,
                 'users': User.objects.all(),
@@ -110,7 +112,7 @@ class StudentPage(View):
             messages.error(request, f'Nie znaleziono Studenta z id {student_id}')
             return redirect('/student')
         except Exception as e:
-            messages.error(request, f'StudentPage exception: {e}')
+            # messages.error(request, f'StudentPage exception: {e}')
             return custom_404(request, e)
 
         return render(request, "crm/student-page.html", context)

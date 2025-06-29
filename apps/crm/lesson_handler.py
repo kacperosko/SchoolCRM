@@ -3,7 +3,8 @@ from .models import Student, Lesson, LessonAdjustment, Person, LessonStatutes, E
 from django.utils import timezone as dj_timezone
 from collections import defaultdict
 from django.db.models import Q
-
+from django.db import transaction
+import copy
 
 week_days_pl = {
         0: "Poniedzia\u0142ek",
@@ -555,3 +556,68 @@ def create_lesson_adjustment(lesson_form, is_edit=False):
         lesson_adjustment.location_id = location
 
         lesson_adjustment.save()
+
+
+@transaction.atomic
+def update_lesson(event, form_data, edit_mode, old_dates):
+    """
+    Aktualizuje pojedynczą lekcję oraz ewentualnie całą serię w zależności od edit_mode.
+    """
+
+    # update pojedynczego eventu
+    updated_event = form_data.save()
+
+    if edit_mode == 'single':
+        return
+
+    # --- logika dla edit_mode == 'series' ---
+    new_date = updated_event.event_date
+    new_start_time = updated_event.start_time
+
+    event.original_lesson_datetime = datetime.combine(new_date, new_start_time)
+    event.save()
+
+    # czy data lub godzina się zmieniły
+    is_shift = (old_dates.get('old_date') != new_date) or (old_dates.get('old_start_time') != new_start_time)
+
+    # znajdź wszystkie kolejne lekcje z tej serii
+    affected_lessons = Event.objects.filter(
+        lesson_definition=event.lesson_definition,
+        original_lesson_datetime__gt=old_dates.get('old_original_datetime')
+    ).order_by('original_lesson_datetime')
+
+    print(len(affected_lessons))
+
+    if is_shift:
+        print('is shift')
+        lessons_to_update = []
+        for lesson in affected_lessons:
+            # ile tygodni różnicy było między aktualizowaną lekcją a aktualnie przetwarzaną
+            weeks_diff = (lesson.original_lesson_datetime.date() - old_dates.get('old_date')).days // 7
+
+            # budujemy nowy termin lekcji względem nowej daty:
+            new_event_date = new_date + timedelta(weeks=weeks_diff)
+            new_original = datetime.combine(new_event_date, new_start_time)
+
+            lesson.original_lesson_datetime = new_original
+            lesson.event_date = new_event_date
+            lesson.start_time = new_start_time
+
+            lesson.end_time = (datetime.combine(new_event_date, new_start_time)
+                               + timedelta(minutes=lesson.duration)).time()
+
+            lessons_to_update.append(lesson)
+
+        # batchowa aktualizacja
+        Event.objects.bulk_update(
+            lessons_to_update,
+            ['original_lesson_datetime', 'event_date', 'start_time', 'end_time']
+        )
+
+        # aktualizujemy hurtowo pozostałe dane (bez przesuwania)
+    affected_lessons.update(
+        teacher=updated_event.teacher,
+        location=updated_event.location,
+        status=updated_event.status,
+        description=updated_event.description
+    )

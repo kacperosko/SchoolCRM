@@ -11,6 +11,7 @@
 
     <link rel="stylesheet" href="{% static 'css/backend-plugin.min.css' %}">
     <link rel="stylesheet" href="{% static 'css/backend.css' %}">
+    <link rel="stylesheet" href="{% static 'css/crm.css' %}">
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -63,17 +64,19 @@
     {% endblock style %}
 </head>
 <body class=" color-light">
+
 <!-- loader Start -->
 {#<div id="loading">#}
 {#    <div id="loading-center">#}
 {#    </div>#}
 {#</div>#}
-<div class="container mt-5 fixed-top">
+<div class="container mt-5 fixed-top" style="z-index: 99999 !important;">
     <div class="row justify-content-center">
         <div id="alertContainer"></div>
     </div>
 </div>
 <!-- loader END -->
+
 <!-- Wrapper Start -->
 <div class="wrapper">
     {% include 'includes/sidebar.html' %}
@@ -90,6 +93,7 @@
     </div>
 </div>
 <!-- Wrapper End-->
+
 {#<footer class="iq-footer">#}
 {#    <div class="container-fluid">#}
 {#        <div class="row">#}

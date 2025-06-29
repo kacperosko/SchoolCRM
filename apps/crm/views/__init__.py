@@ -6,5 +6,5 @@ from .views_location import all_locations, LocationPage
 from .views_group import all_groups, GroupPage
 from .views_api import upsert_note, delete_note, get_notifications, \
     mark_notification_as_read, watch_record, save_attendance_list_student
-from .views_api_lessons import get_student_group_lessons, create_lesson
+from .views_api_lessons import get_student_group_lessons, create_lesson, edit_lesson, update_status
 

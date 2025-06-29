@@ -111,16 +111,16 @@
                             <p class="pb-1 field">{{ record.phone|default:"-" }}</p>
                         </div>
                         <div class="form-group col-sm-6">
-                            <label for="student_phone" class="text-muted">Data Urodzenia:</label>
+                            <label for="" class="text-muted">Data Urodzenia:</label>
                             <p class="pb-1 field">{{ record.birthdate|default:"-" }}</p>
                         </div>
                         <div class="form-group col-sm-6">
-                            <label for="student_phone" class="text-muted">Wiek:</label>
+                            <label for="" class="text-muted">Wiek:</label>
                             <p class="pb-1 field">{{ record.get_age|default:"-" }}</p>
 
                         </div>
                         <div class="form-group col-sm-6">
-                            <label for="student_phone" class="text-muted">Utworzono:</label>
+                            <label for="" class="text-muted">Utworzono:</label>
                             <p class="pb-1 field">{{ record.created_date|default:"-" }}
                                 {% if record.created_by %}
                                     <a href="/user/{{ record.created_by.id }}">
@@ -138,7 +138,7 @@
 
                         </div>
                         <div class="form-group col-sm-6">
-                            <label for="student_phone" class="text-muted">Ostatnio zmodyfikowano:</label>
+                            <label for="" class="text-muted">Ostatnio zmodyfikowano:</label>
                             <p class="pb-1 field">{{ record.modified_date|default:"-" }}
                                 {% if record.modified_by %}
                                     <a href="/user/{{ record.modified_by.id }}">
@@ -157,149 +157,141 @@
                         </div>
                     </div>
                     <div class="mb-5"></div>
-                    <div class="table-responsive">
-                        <div class="d-flex justify-content-between mb-2">
-                            <h5 class="card-title">Powiązane kontakty:</h5>
+                    <!-- Powiązane kontakty -->
+                    <div class="card mb-4 shadow-sm">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Powiązane kontakty</h5>
                             {% if perms.crm.add_student_person %}
                                 <a href="/student/{{ record.id }}/student-person/add"
-                                   class="btn btn-primary rounded-pill font-size-12">
+                                   class="btn btn-sm btn-primary rounded-pill d-flex align-items-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                         stroke-width="1.5"
-                                         stroke="currentColor" class="w-6 h-6" width="18">
+                                         stroke-width="1.5" stroke="currentColor" class="me-1" width="18">
                                         <path stroke-linecap="round" stroke-linejoin="round"
-                                              d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 1-4.512-.645-6.374-1.766Z"></path>
+                                              d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0
+                          3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75
+                          0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 1-4.512-.645-6.374-1.766Z"></path>
                                     </svg>
-                                    Dodaj powiązany kontakt
+                                    Dodaj kontakt
                                 </a>
                             {% endif %}
                         </div>
-                        <table class="table table-bordered table-striped">
-                            <thead>
-                            <tr>
-                                <th scope="col" class="text-center">Imię Nazwisko</th>
-                                <th scope="col" class="text-center">Relacja</th>
-                                <th scope="col" class="text-center">Email</th>
-                                <th scope="col" class="text-center">Telefon</th>
-                                <th scope="col" class="text-center"></th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {% if student_persons %}
-                                {% for student_person in student_persons %}
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover table-striped table-bordered mb-0">
+                                    <thead class="table-light text-center">
                                     <tr>
-                                        <th scope="row" class="text-center"
-                                            onclick="toggleDetails(this)">
-                                            <a type="button" href="/person/{{ student_person.person.id }}"
-                                               class="">{{ student_person.person.get_full_name }}
-                                            </a>
-                                        </th>
-                                        <td class="text-center">{{ student_person.relationship_type }}</td>
-                                        <td class="text-center">{{ student_person.person.email|default:"-" }}</td>
-                                        <td class="text-center">{{ student_person.person.phone|default:"-" }}</td>
-                                        <td class="text-center">
-                                            <a class="text-primary mr-2"
-                                               href="/studentPerson/edit/{{ student_person.id }}"
-                                               data-trigger="hover" data-toggle="popover"
-                                               data-content="Edytuj relacje" data-placement="bottom">
-                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                                     stroke-width="1"
-                                                     stroke="currentColor" class="w-6 h-6 mr-1" width="18">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                          stroke-width="2"
-                                                          d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
-                                                </svg>
-                                            </a>
-                                            <a class="text-warning"
-                                                    {#                                               href="/student/{{ record.id }}/{{ student_person.id }}/delete"#}
-                                               href="/delete/{{ student_person.id }}"
-                                               data-trigger="hover" data-toggle="popover"
-                                               data-content="Usuń relacje" data-placement="bottom">
-                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                                     stroke-width="1.5"
-                                                     stroke="currentColor" class="w-6 h-6 mr-1" width="18">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                          d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"></path>
-                                                </svg>
-                                            </a>
-                                        </td>
+                                        <th>Imię i nazwisko</th>
+                                        <th>Relacja</th>
+                                        <th>Email</th>
+                                        <th>Telefon</th>
+                                        <th>Akcje</th>
                                     </tr>
-                                {% endfor %}
-                            {% else %}
-                                <td class="text-center" colspan="5">Brak powiązanych kontaktów</td>
-                            {% endif %}
-                            </tbody>
-                        </table>
+                                    </thead>
+                                    <tbody>
+                                    {% if student_persons %}
+                                        {% for student_person in student_persons %}
+                                            <tr>
+                                                <td class="text-center">
+                                                    <a href="/person/{{ student_person.person.id }}">
+                                                        {{ student_person.person.get_full_name }}
+                                                    </a>
+                                                </td>
+                                                <td class="text-center">{{ student_person.relationship_type }}</td>
+                                                <td class="text-center">{{ student_person.person.email|default:"-" }}</td>
+                                                <td class="text-center">{{ student_person.person.phone|default:"-" }}</td>
+                                                <td class="text-center">
+                                                    <a href="/studentPerson/edit/{{ student_person.id }}"
+                                                       class="text-primary me-2" data-bs-toggle="tooltip"
+                                                       title="Edytuj relację">
+                                                        <!-- Heroicon edit -->
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                             viewBox="0 0 24 24"
+                                                             stroke-width="1" stroke="currentColor" class="w-6 h-6"
+                                                             width="18">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5
+                                                  21.036H3v-3.572L16.732 3.732z"></path>
+                                                        </svg>
+                                                    </a>
+                                                    <a href="/delete/{{ student_person.id }}" class="text-danger"
+                                                       data-bs-toggle="tooltip" title="Usuń relację">
+                                                        <!-- Heroicon trash -->
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                             viewBox="0 0 24 24"
+                                                             stroke-width="1.5" stroke="currentColor" class="w-6 h-6"
+                                                             width="18">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                  d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107
+                                                  1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0
+                                                  1-2.244 2.077H8.084a2.25 2.25 0 0
+                                                  1-2.244-2.077L4.772 5.79m14.456
+                                                  0a48.108 48.108 0 0 0-3.478-.397m-12
+                                                  .562c.34-.059.68-.114 1.022-.165m0
+                                                  0a48.11 48.11 0 0 1 3.478-.397m7.5
+                                                  0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964
+                                                  51.964 0 0 0-3.32 0c-1.18.037-2.09
+                                                  1.022-2.09 2.201v.916m7.5 0a48.667
+                                                  48.667 0 0 0-7.5 0"></path>
+                                                        </svg>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="5" class="text-center">Brak powiązanych kontaktów</td>
+                                        </tr>
+                                    {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- Historia rekordu -->
+                    <div class="card shadow-sm">
+                        <div class="card-header">
+                            <h5 class="mb-0">Historia rekordu</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover table-striped table-bordered mb-0">
+                                    <thead class="table-light text-center">
+                                    <tr>
+                                        <th>Pole</th>
+                                        <th>Stara wartość</th>
+                                        <th>Nowa wartość</th>
+                                        <th>Zmienione przez</th>
+                                        <th>Data</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% if field_history %}
+                                        {% for field_h in field_history %}
+                                            <tr>
+                                                <td class="text-center">{{ field_h.field_name }}</td>
+                                                <td class="text-center">{{ field_h.old_value }}</td>
+                                                <td class="text-center">{{ field_h.new_value }}</td>
+                                                <td class="text-center">{{ field_h.changed_by }}</td>
+                                                <td class="text-center">{{ field_h.changed_at }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="5" class="text-center">Brak historii</td>
+                                        </tr>
+                                    {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+
                 </div>
 
                 {#      ============ LESSON TAB ============      #}
-                <div class="tab-pane fade {% if request.GET.tab == 'Lessons' %}show active{% endif %}" id="lessons"
-                     role="tabpanel" aria-labelledby="lessons-tab">
-                    <div class="d-flex justify-content-between">
-
-                        <div class="d-flex align-items-center">
-                            <button type="button"
-                                    class="btn btn-outline-primary rounded-pill  d-flex align-content-center font-size-12"
-                                    id="prevYearBtn"
-                                    onclick="setPrevYear()">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                     stroke-width="1.5"
-                                     stroke="currentColor" class="w-6 h-6" width="18">
-                                    <path stroke-linecap="round" stroke-linejoin="rouz"
-                                          d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"></path>
-                                </svg>
-                            </button>
-                            <button type="button"
-                                    class="btn btn-outline-primary rounded-pill mx-1 d-flex align-content-center font-size-12"
-                                    id="currentYearBtn"
-                                    onclick="setQueryYearNow()">
-                                Teraz
-                            </button>
-
-                            <button type="button"
-                                    class="btn btn-outline-primary rounded-pill  d-flex align-content-center font-size-12"
-                                    id="nextYearBTn"
-                                    onclick="setNextYear()">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                     stroke-width="1.5"
-                                     stroke="currentColor" class="w-6 h-6" width="18">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                          d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"></path>
-                                </svg>
-
-                            </button>
-                        </div>
-                        <div class="mx-2 font-weight-500 d-flex align-items-center">
-                            <h5 id="selected-year">{{ request.GET.selected_year }}</h5>
-                        </div>
-                        <div class="d-flex">
-                            <button type="button"
-                                    class="btn btn-outline-primary rounded-pill mt-2 mb-3 mr-2 d-flex align-content-center font-size-12"
-                                    onclick="window.location.href = '/student/{{ record.id }}/lesson-series'">
-                                Zobacz serie lekcji
-                            </button>
-
-                            <button type="button"
-                                    class="btn btn-primary rounded-pill mt-2 mb-3 d-flex align-content-center font-size-12"
-                                    id="addLessonBtn" data-toggle="modal"
-                                    data-target="#createEventModalCenter">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                     stroke-width="1.5"
-                                     stroke="currentColor" class="w-6 h-6 mr-1" width="18">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                          d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5m-9-6h.008v.008H12v-.008ZM12 15h.008v.008H12V15Zm0 2.25h.008v.008H12v-.008ZM9.75 15h.008v.008H9.75V15Zm0 2.25h.008v.008H9.75v-.008ZM7.5 15h.008v.008H7.5V15Zm0 2.25h.008v.008H7.5v-.008Zm6.75-4.5h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V15Zm0 2.25h.008v.008h-.008v-.008Zm2.25-4.5h.008v.008H16.5v-.008Zm0 2.25h.008v.008H16.5V15Z"></path>
-                                </svg>
-                                Utwórz lekcje
-                            </button>
-                        </div>
-                    </div>
-                    <div class="table-responsive" id="table-container">
-                        {# content auto generated by js after tab loaded by user #}
-                        <div class="d-flex mx-auto justify-content-center">
-                            <img src="{% static '/images/loader.gif' %}" alt="loader">
-                        </div>
-                    </div>
-                </div>
+                {% include 'modules/lessons.html' %}
 
                 {#      ============ INVOICE TAB ============      #}
                 {% if perms.crm.view_invoice %}
@@ -342,8 +334,7 @@
                                 {% endif %}
                                 {% for invoice in invoices %}
                                     <tr>
-                                        <th scope="row" class="text-center"
-                                            onclick="toggleDetails(this)">
+                                        <th scope="row" class="text-center">
                                             <a type="button" href="/invoice/{{ invoice.id }}"
                                                class="">{{ invoice.name }}
                                             </a>
@@ -383,7 +374,6 @@
                                 {% endfor %}
                                 </tbody>
                             </table>
-
                         </div>
                     </div>
                 {% endif %}
@@ -393,223 +383,14 @@
             </div>
         </div>
     </div>
-    
-    {% include 'modals/edit-lesson-modal.html' %}
-    {% include 'modals/create-lesson-modal.html' %}
+
+
 {% endblock content %}
 
 {% block javascript %}
+    <script>
+        const recordId = '{{ record.id }}';
+    </script>
     <script src="{% static '/js/watchRecord.js' %}"></script>
     <script src="{% static '/js/lessons.js' %}"></script>
-    <script>
-        {#const csrf_token = '{% csrf_token %}';#}
-        let student_first_name = document.getElementById("student_first_name");
-        let student_last_name = document.getElementById("student_last_name");
-        let student_email = document.getElementById("student_email");
-        let student_phone = document.getElementById("student_phone");
-        {#let student_edit = document.getElementById("student_btn_edit");#}
-        let student_cancel = document.getElementById("student_btn_cancel");
-        let student_submit = document.getElementById("student_btn_submit");
-
-        let selected_year_div = document.getElementById("selected-year");
-        let nextYearBTn = document.getElementById("nextYearBTn");
-        let prevYearBtn = document.getElementById("prevYearBtn");
-
-
-        const delay = (delayInms) => {
-            return new Promise(resolve => setTimeout(resolve, delayInms));
-        };
-
-        function calculateTimeDifference(startTime, endTime) {
-            // Parsowanie godzin na obiekty Date
-            const start = new Date(`1970-01-01T${startTime}:00`);
-            const end = new Date(`1970-01-01T${endTime}:00`);
-
-            // Obliczenie r\u00F3\u017Cnicy w milisekundach
-            const differenceInMilliseconds = end - start;
-
-            // Konwersja milisekund na minuty
-            const differenceInMinutes = differenceInMilliseconds / (1000 * 60);
-
-            return differenceInMinutes;
-        }
-
-        function modifyEvent(lesson_schedule_id, startTime, endTime, lessonDate, studentName, status, isAdjustment, is_edit = false) {
-            let editEvent_title = document.getElementById('editEvent_title');
-            let startTime_form = document.getElementById('starTime_cancelForm');
-            let lessonDuration_form = document.getElementById('lessonDuration_cancelForm');
-            let lessonDate_form = document.getElementById('lessonDate_cancelForm');
-            let originalDate_form = document.getElementById('originalDate_cancelForm');
-            let lessonId_form = document.getElementById('lessonId_cancelForm');
-            let student_form = document.getElementById('studentForm_cancelForm');
-            let status_form = document.getElementById('status_cancelForm');
-            let btn_plan = document.getElementById('cancel_form_btn_plan');
-            let btn_cancel = document.getElementById('cancel_form_btn_cancel');
-            let btn_edit = document.getElementById('cancel_form_btn_edit');
-            let cancelModalCenterTitle = document.getElementById('cancelModalCenterTitle');
-            let isAdjustment_form = document.getElementById('isAdjustment_cancelForm');
-            const cancel_title = 'Chcesz odwo\u0142a\u0107 t\u0119 lekcj\u0119?';
-            const plan_title = 'Chcesz zaplanowa\u0107 t\u0119 lekcj\u0119?';
-            const edit_title = 'Czy chcesz zedytowa\u0107 t\u0119 lekcje?';
-
-            let parts = lessonDate.split('-');
-            let day = parts[2];
-            let month = parts[1];
-            let year = parts[0];
-
-            // Utw\u00F3rz obiekt Date z rozdzielonej daty
-            let dateObject = new Date(year, month - 1, day + 1);
-
-            // Uzyskaj warto\u015B\u0107 w formacie rok-miesi\u0105c-dzie\u0144
-            let formattedDate = dateObject.toISOString().slice(0, 10);
-            const start = new Date(`1970-01-01T${startTime}:00`);
-            const end = new Date(`1970-01-01T${endTime}:00`);
-
-            editEvent_title.innerHTML = year + '-' + month + '-' + day;
-            startTime_form.value = startTime;
-            lessonDuration_form.value = calculateTimeDifference(startTime, endTime);
-            lessonDate_form.value = year + '-' + month + '-' + day;
-            lessonId_form.value = lesson_schedule_id;
-            student_form.value = '{{record.get_full_name}}';
-            originalDate_form.value = year + '-' + month + '-' + day;
-            status_form.value = status;
-            isAdjustment_form.checked = isAdjustment;
-        }
-
-        {#let openedMonths = [];#}
-
-        let lessonsLoaded = false;
-
-        function generate_lessons() {
-            if (!lessonsLoaded) {
-                get_lessons('{{ record.id }}')
-                lessonsLoaded = true;
-            }
-        }
-
-        document.addEventListener("DOMContentLoaded", function () {
-            let urlParams = new URLSearchParams(window.location.search);
-
-            let selected_year = urlParams.get('selected_year');
-            if (!selected_year) {
-                const current_year = new Date().getFullYear();
-                selected_year = current_year;
-                addParamToURL('selected_year', current_year)
-            }
-            selected_year_div.innerHTML = selected_year
-
-
-            const tab = urlParams.get('tab');
-            if (tab !== undefined) {
-                if (tab === 'Lessons' && !lessonsLoaded) {
-                    generate_lessons();
-                }
-            }
-            {#openedMonths = urlParams.get('opened_months');#}
-            {#if (openedMonths) {#}
-            {#    console.log('listener openedMonths ' + openedMonths)#}
-            {#    openedMonths = openedMonths.split(',');#}
-            {#    openedMonths.forEach(function (monthNumber) {#}
-            {#        let collapsibleDiv = document.getElementById('collaps_' + monthNumber);#}
-            {#        console.log('listener collapsibleDiv ' + collapsibleDiv)#}
-            {#        if (collapsibleDiv) {#}
-            {#            collapsibleDiv.classList.add('show');#}
-            {#        }#}
-            {#    });#}
-            {# else#}
-            {#    openedMonths = [];#}
-            {##}
-            {##}
-            {#        }#}
-            {#    )#}
-            {#        ;#}
-        })
-
-        function setNextYear(){
-            setQueryYear(1);
-        }
-        function setPrevYear(){
-            setQueryYear(-1);
-        }
-
-        function setQueryYear(value) {
-            selected_year_div.innerHTML = parseInt(selected_year_div.innerHTML) + value;
-            const currentURL = window.location.href;
-            let urlSearchParams = new URLSearchParams(window.location.search);
-            urlSearchParams.set('selected_year', selected_year_div.innerHTML);
-            urlSearchParams.set('opened_months', '');
-            window.history.pushState({}, document.title, '?' + urlSearchParams.toString());
-            get_lessons('{{ record.id }}');
-
-            {#window.location.href = currentURL.split('?')[0] + '?' + urlSearchParams.toString();#}
-        }
-
-        function setQueryYearNow() {
-            selected_year_div.innerHTML = new Date().getFullYear();
-
-            const currentURL = window.location.href;
-            let urlSearchParams = new URLSearchParams(window.location.search);
-            urlSearchParams.set('selected_year', selected_year_div.innerHTML);
-            window.history.pushState({}, document.title, '?' + urlSearchParams.toString());
-            get_lessons('{{ record.id }}');
-
-            {#window.location.href = currentURL.split('?')[0] + '?' + urlSearchParams.toString();#}
-        }
-
-        {#selected_year_div.addEventListener("change", function () {#}
-        {#   console.log('year changed');#}
-        {#   get_lessons('{{ record.id }}');#}
-        {# });#}
-
-        async function refreshOpenedMonths() {
-            let delayres = await delay(1000);
-            let divElements = document.querySelectorAll('[id^="collaps_"]');
-            console.log('refreshing months')
-            openedMonths = [];
-            divElements.forEach(function (div) {
-                let monthNumber = div.id.split('_')[1];
-                if (div.classList.contains('show')) {
-                    openedMonths.push(monthNumber);
-                    console.log('checking ' + monthNumber);
-                }
-            });
-
-            let urlParams = new URLSearchParams(window.location.search);
-            urlParams.set('opened_months', openedMonths.join(','));
-            window.history.replaceState({}, '', window.location.pathname + '?' + urlParams.toString());
-        }
-
-        function toggleDetails(element) {
-            let detailsRow = element.parentElement.nextElementSibling;
-            if (detailsRow.classList.contains('details')) {
-                if (detailsRow.style.maxHeight === 0) {
-                    {#detailsRow.style.display = 'table-row';#}
-                    detailsRow.style.maxHeight = 1000 + 'px';
-                } else {
-                    detailsRow.style.maxHeight = '0px';
-
-                }
-            }
-        }
-
-        repeating_createLesson = document.getElementById('repeating_createLesson');
-        endSeries_input = document.getElementById('lessonDate_endSeries');
-        endSeries_div = document.getElementById('lessonDate_endSeries_div');
-
-        repeating_createLesson.addEventListener("change", function () {
-            console.log(repeating_createLesson.checked);
-            if (!repeating_createLesson.checked) {
-                endSeries_div.classList.add('d-none');
-                endSeries_input.value = null;
-            } else {
-                endSeries_div.classList.remove('d-none');
-            }
-
-        });
-
-        function addLesson() {
-            const startTime = document.getElementById('starTime_createLesson');
-
-        }
-    </script>
 {% endblock javascript %}

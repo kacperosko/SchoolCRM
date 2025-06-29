@@ -1,122 +1,246 @@
-<div class="modal fade" id="editEventModalCenter" tabindex="-1" role="dialog"
-     aria-labelledby="cancelModalCenterTitle" aria-hidden="true">
+<!-- edit_modal.html -->
+
+<div class="modal fade" id="editLessonModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="cancelModalCenterTitle">Edytowanie lekcji: <span
-                        id="editEvent_title"></span></h5>
+                <h5 class="modal-title">Edytowanie <span id="editLessonTitleSeries" class="d-none">cyklicznej </span>
+                    lekcji: <span id="editLessonTitle"></span></h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <form method="post" name="cancel_form" id="cancel_plan_form">
+
+            <form method="post" id="editLessonForm">
                 {% csrf_token %}
                 <div class="modal-body">
-                    {% csrf_token %}
-                    <div class=" row align-items-center">
+                    <div class="row align-items-center">
+
                         <div class="form-group col-sm-6">
-                            <label for="starTime_cancelForm">Godzina Rozpoczęcia <span
-                                    class="text-danger">*</span></label>
-                            <input name="startTime" type="time" class="form-control" id="starTime_cancelForm"
-                                   value="" style="line-height: 20px;"
-                                   required>
-                        </div>
-                        <div class="form-group col-sm-6">
-                            <label for="lessonDuration_cancelForm">Czas trwania <span class="text-danger">*</span>
-                            </label>
-                            <select name="lessonDuration" class="form-control "
-                                    id="lessonDuration_cancelForm" required>
-                                <option disabled>-</option>
-                                <option value="30">30 min</option>
-                                <option value="45">45 min</option>
-                                <option value="60">60 min</option>
-                            </select>
-                        </div>
-                        <div class="form-group col-sm-6">
-                            <label for="lessonDate_cancelForm">Data Lekcji <span
-                                    class="text-danger">*</span></label>
-                            <input name="lessonDate" type="date" class="form-control" id="lessonDate_cancelForm"
-                                   value=""
+                            <label for="editStartTime">Godzina rozpoczęcia <span class="text-danger">*</span></label>
+                            <input name="start_time" type="time" class="form-control" id="editStartTime"
                                    style="line-height: 20px;" required>
                         </div>
+
                         <div class="form-group col-sm-6">
-                            <label for="status_cancelForm">Status <span class="text-danger">*</span></label>
-                            <select name="status" class="form-control" id="status_cancelForm" required>
+                            <label for="editDuration">Czas trwania <span class="text-danger">*</span></label>
+                            <select name="duration" class="form-control" id="editDuration" required>
+                                <option value="30">30 min</option>
+                                <option value="45">45 min</option>
+                                <option value="60" selected>60 min</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group col-sm-6">
+                            <label for="editDate">Data lekcji <span class="text-danger">*</span></label>
+                            <input name="event_date" type="date" class="form-control" id="editDate"
+                                   style="line-height: 20px;" required>
+                        </div>
+
+                        <div class="form-group col-sm-6">
+                            <label for="editDescription">Opis <span class="text-danger">*</span></label>
+                            <input name="description" type="text" class="form-control" id="editDescription"
+                                   value="" style="line-height: 20px;" required>
+                        </div>
+
+                        <div class="form-group col-sm-6">
+                            <label for="editStatus">Status <span class="text-danger">*</span></label>
+                            <select name="status" class="form-control" id="editStatus" required>
                                 <option value="zaplanowana">Zaplanowana</option>
                                 <option value="nieobecnosc">Nieobecność</option>
                                 <option value="odwolana_nauczyciel">Odwołana - nauczyciel</option>
                                 <option value="odwolana_24h_przed">Odwołana - 24h przed</option>
                             </select>
                         </div>
+
                         <div class="form-group col-sm-6">
-                            <label for="studentForm_cancelForm">Student <span class="text-danger">*</span></label>
-                            <input class="form-control" id="studentForm_cancelForm" required readonly="">
+                            <label for="editStudent">Student <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="editStudent" readonly
+                                   value="{{ record.get_full_name }}">
                         </div>
+
                         <div class="form-group col-sm-6">
-                            <label for="teacher_createLesson">Nauczyciel <span class="text-danger">*</span></label>
-                            <select class="form-control" id="teacher_createLesson" name="teacher" required>
+                            <label for="editTeacher">Nauczyciel <span class="text-danger">*</span></label>
+                            <select class="form-control" id="editTeacher" name="teacher" required>
                                 {% for user in users %}
                                     <option value="{{ user.id }}">{{ user.get_full_name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="form-group col-sm-6" hidden="">
-                            <label for="originalDate_cancelForm">original_date</label>
-                            <input name="originalDate" type="date" class="form-control" id="originalDate_cancelForm"
-                                   value=""
-                                   style="line-height: 20px;" readonly="">
-                        </div>
+
                         <div class="form-group col-sm-6">
-                            <label for="lessonSchedule_cancelForm">lessonSchedule</label>
-                            <input name="lessonId" type="text" class="form-control"
-                                   id="lessonId_cancelForm"
-                                   value=""
-                                   style="line-height: 20px;">
-                        </div>
-                        <div class="form-group col-sm-6">
-                            <label for="location_createLesson">Lokalizacja <span
-                                    class="text-danger">*</span></label>
-                            <select class="form-control" id="location_createLesson" name="location" required>
+                            <label for="editLocation">Lokalizacja <span class="text-danger">*</span></label>
+                            <select class="form-control" id="editLocation" name="location" required>
                                 {% for location in locations %}
                                     <option value="{{ location.id }}">{{ location.get_full_name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="form-group col-sm-6 d-none" id="lessonDate_endSeries_div_old">
-                            <label for="lessonDate_endSeries">Koniec Serii</label>
-                            <input name="end_series" type="date" class="form-control" id="lessonDate_endSeries"
-                                   value=""
-                                   style="line-height: 20px;" data-toggle="tooltip" data-placement="right"
-                                   title="Podaj datę ostatniej lekcji z serii. Może być puste">
-                        </div>
-                        {#                            <div class="form-group col-sm-6">#}
-                        {#                                <label for="status_cancelForm">lessonSchedule</label>#}
-                        {#                                <input name="status" type="text" class="form-control" id="status_cancelForm"#}
-                        {#                                       value=""#}
-                        {#                                       style="line-height: 20px;" readonly="">#}
-                        {#                            </div>#}
-                        <div class="form-group col-sm-6" hidden="">
-                            <label for="status_cancelForm">isAdjustment</label>
-                            <input name="isAdjustment" type="checkbox" class="form-control"
-                                   id="isAdjustment_cancelForm"
-                                   style="line-height: 20px;" readonly="">
-                        </div>
-                    </div>
 
+                        <div class="form-group col-sm-6 d-none">
+                            <input name="lesson_id" type="hidden" id="editLessonId">
+                        </div>
+
+                        <div class="form-group col-sm-6 d-none">
+                            <input name="original_date" type="hidden" id="editOriginalDate">
+                        </div>
+
+                        <div class="form-group col-sm-6 d-none">
+                            <input name="is_series" type="hidden" id="editIsSeries">
+                        </div>
+
+                    </div>
                 </div>
+
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Anuluj</button>
-                    {#                        <button name="plan_form_submit" id="cancel_form_btn_plan" type="submit" class="btn btn-success">#}
-                    {#                            Tak, Zaplanuj Lekcje#}
-                    {#                        </button>#}
-                    {#                        <button name="cancel_form_submit" id="cancel_form_btn_cancel" type="submit"#}
-                    {#                                class="btn btn-danger">Tak, Odwołaj Lekcje#}
-                    {#                        </button>#}
-                    <button name="edit_form_submit" id="cancel_form_btn_edit" type="submit"
-                            class="btn btn-primary">Zapisz Zmiany
-                    </button>
+                    <button type="submit" class="btn btn-primary" id="editLessonSaveBtn">Zapisz zmiany</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+<!-- Modal wyboru akcji dla serii -->
+<div class="modal fade" id="confirmEditLessonModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edytowanie lekcji cyklicznej</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <form id="confirmEditLessonForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="editOption" id="editSingle" value="single"
+                               checked>
+                        <label class="form-check-label" for="editSingle">Tylko tę lekcję</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="editOption" id="editSeries" value="series">
+                        <label class="form-check-label" for="editSeries">Tę i wszystkie przyszłe</label>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancelConfirmEditBtn">Anuluj</button>
+                    <button type="submit" class="btn btn-primary">Ok</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Funkcja wywoływana przy kliknięciu "Edytuj" przy danej lekcji
+    let currentEditingLessonId = null;
+
+    function openEditLessonModal(lesson_id) {
+        const lesson = lessons_data.get(lesson_id);
+        currentEditingLessonId = lesson_id;
+        $("[name=editOption]").val(["single"]);
+
+        document.getElementById('editLessonTitle').innerText = lesson.start_date;
+        document.getElementById('editStartTime').value = lesson.start_time;
+        document.getElementById('editDuration').value = calculateTimeDifference(lesson.start_time, lesson.end_time);
+        document.getElementById('editDate').value = lesson.start_date;
+        document.getElementById('editLessonId').value = lesson.event_id;
+        document.getElementById('editStatus').value = lesson.status;
+        document.getElementById('editTeacher').value = lesson.teacher_id;
+        document.getElementById('editLocation').value = lesson.location_id;
+        document.getElementById('editOriginalDate').value = lesson.start_date;
+        document.getElementById('editIsSeries').value = lesson.is_series ? 'true' : 'false';
+        document.getElementById('editDescription').value = lesson.description;
+
+        const seriesTitle = document.getElementById('editLessonTitleSeries');
+        if (lesson.is_series) {
+            seriesTitle.classList.remove('d-none');
+        } else {
+            seriesTitle.classList.add('d-none');
+        }
+
+        window.lesson_id = lesson_id;
+
+        $('#editLessonModal').modal('show');
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const editForm = document.getElementById('editLessonForm');
+        const confirmForm = document.getElementById('confirmEditLessonForm');
+        const editSaveBtn = document.getElementById('editLessonSaveBtn');
+
+        editForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const isSeries = document.getElementById('editIsSeries').value === 'true';
+            if (isSeries) {
+                $('#editLessonModal').modal('hide');
+                setTimeout(function () {
+                    console.log('test wait 2')
+                    $('#confirmEditLessonModal').modal('show');
+                }, 100);
+
+            } else {
+                submitEditForm('single');
+            }
+        });
+
+
+        confirmForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const selectedOption = document.querySelector('input[name="editOption"]:checked').value;
+
+            $('#confirmEditLessonModal').modal('hide');
+            $('#editLessonModal').modal('hide');
+
+            submitEditForm(selectedOption);
+        });
+
+        document.getElementById('cancelConfirmEditBtn').addEventListener('click', function () {
+            $('#confirmEditLessonModal').modal('hide');
+            $('#editLessonModal').modal('show');
+        });
+
+
+        function submitEditForm(editMode) {
+            const formData = new FormData(editForm);
+            formData.append('edit_mode', editMode);
+            formData.append('event_id', currentEditingLessonId);
+
+            console.log('BODY FORM');
+            formData.forEach((value, key) => {
+                console.log(`${key}: ${value}`);
+            });
+
+
+            fetch("{% url 'crm_edit_lesson' %}", {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': editForm.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        get_lessons('{{ record.id }}');
+                        editForm.reset();
+                        $('#editLessonModal').modal('hide');
+
+                        handleResponse(data);
+                    } else {
+                        handleResponse(data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Wystąpił błąd przy edycji.');
+                });
+        }
+    });
+</script>

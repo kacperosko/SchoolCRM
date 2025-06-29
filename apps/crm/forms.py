@@ -4,7 +4,7 @@ from django.forms import ModelForm
 from django.test import override_settings
 from django.core.exceptions import ValidationError
 
-from .models import Location, Person, Student, Lesson, StudentPerson, GroupStudent, Group, AttendanceList, Invoice, AttendanceListStudent, LessonDefinition
+from .models import Location, Person, Student, Lesson, StudentPerson, GroupStudent, Group, AttendanceList, Invoice, AttendanceListStudent, LessonDefinition, Event
 from apps.authentication.models import User
 import importlib
 from django.utils import timezone as dj_timezone
@@ -75,6 +75,51 @@ class LessonCreateForm(forms.ModelForm):
             'teacher': forms.Select(attrs={'class': 'form-control'}),
             'location': forms.Select(attrs={'class': 'form-control'}),
         }
+
+
+class EditLessonForm(forms.ModelForm):
+    # Dodajemy dodatkowe pole spoza modelu:
+    edit_mode = forms.ChoiceField(choices=[
+        ('single', 'single'),
+        ('series', 'series')
+    ], required=True)
+    is_seried = forms.BooleanField(required=False)
+
+    class Meta:
+        model = Event
+        fields = [
+            'start_time',
+            'duration',
+            'event_date',
+            'status',
+            'teacher',
+            'location',
+            'description',
+        ]
+
+    # Dodatkowe ustawienia formatów dla daty i godziny:
+    start_time = forms.TimeField(input_formats=["%H:%M"])
+    event_date = forms.DateField(input_formats=["%Y-%m-%d"])
+
+    def clean_duration(self):
+        data = self.cleaned_data['duration']
+        return int(data)
+
+    def save(self, commit=True):
+        event = super().save(commit=False)
+
+        # Wyliczamy end_time na podstawie start_time i duration
+        from datetime import datetime, timedelta
+
+        # tworzymy datetime pomocniczy do dodania minut
+        dummy_date = datetime.combine(event.event_date, event.start_time)
+        end_dt = dummy_date + timedelta(minutes=event.duration)
+        event.end_time = end_dt.time()
+
+        if commit:
+            event.save()
+        return event
+
 
 
 class LessonPlanForm(forms.Form):

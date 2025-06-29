@@ -51,7 +51,9 @@ urlpatterns = [
 
 
     path('crm_api/save-attendance-list/', crm_views.save_attendance_list_student, name='save_attendance_list_student'),
-    path('crm_api/create-lesson/', crm_views.create_lesson, name='create_lesson'),
+    path('crm_api/create-lesson/', crm_views.create_lesson, name='crm_create_lesson'),
+    path('crm_api/edit-lesson/', crm_views.edit_lesson, name='crm_edit_lesson'),
+    path('crm_api/update_status/', crm_views.update_status, name='crm_update_status'),
 
 ]
 

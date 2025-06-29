@@ -69,6 +69,27 @@ class Notification(models.Model):
         return self.message
 
 
+class FieldHistory(models.Model):
+    id = PrefixedUUIDField(primary_key=True)
+
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.CharField(max_length=39)
+    content_object = GenericForeignKey('content_type', 'object_id')
+
+    field_name = models.CharField(max_length=255)
+    old_value = models.TextField(null=True, blank=True)
+    new_value = models.TextField(null=True, blank=True)
+
+    changed_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
+    changed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-changed_at']
+
+    def __str__(self):
+        return f"{self.content_object} - {self.field_name} changed"
+
+
 class Person(models.Model):
     id = PrefixedUUIDField(primary_key=True)
 
@@ -104,6 +125,7 @@ class Student(models.Model):
     birthdate = models.DateField(blank=True, null=True)
 
     notes = GenericRelation(Note)
+    history = GenericRelation(FieldHistory)
 
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='Student_created_by', null=True,
                                    blank=True)
@@ -288,6 +310,7 @@ week_days_pl = {
         6: "Niedziela"
     }
 
+
 class Event(models.Model):
     # Type
     event_type = models.CharField(max_length=32, choices=EventType.choices, default=EventType.STANDARD)
@@ -318,10 +341,13 @@ class Event(models.Model):
             'weekday': week_days_pl[self.event_date.weekday()],
             'description': self.description if self.description else self.lesson_definition.description if self.lesson_definition else '',
             'teacher': self.teacher.get_full_name(),
+            'teacher_id': self.teacher.id,
             'location': str(self.location),
+            'location_id': self.location.id,
             'duration': self.duration,
             'original_date': self.original_lesson_datetime.date() if self.original_lesson_datetime else None,
             'original_time': self.original_lesson_datetime.time().strftime("%H:%M") if self.original_lesson_datetime else None,
+            'is_series': self.lesson_definition.is_series if self.lesson_definition else False,
         }
 
 
@@ -499,3 +525,5 @@ class InvoiceItem(models.Model):
     name = models.CharField(max_length=255)
     amount = models.IntegerField()
     quantity = models.IntegerField()
+
+
