@@ -88,11 +88,23 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'SchoolCRM.wsgi.application'
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#         'TIME_ZONE': 'Europe/Warsaw',
+#     }
+# }
+
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-        'TIME_ZONE': 'Europe/Warsaw',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'django_crm_db',
+        'USER': 'postgres',
+        'PASSWORD': 'admin',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 
