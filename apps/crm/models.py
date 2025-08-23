@@ -127,10 +127,14 @@ class Student(models.Model):
     notes = GenericRelation(Note)
     history = GenericRelation(FieldHistory)
 
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='Student_created_by', null=True,
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL,
+                                   related_name='Student_created_by',
+                                   null=True,
                                    blank=True)
     created_date = models.DateTimeField(auto_now_add=True)
-    modified_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='Student_modified_by', null=True,
+    modified_by = models.ForeignKey(User, on_delete=models.SET_NULL,
+                                    related_name='Student_modified_by',
+                                    null=True,
                                     blank=True)
     modified_date = models.DateTimeField(auto_now=True)
 
