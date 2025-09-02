@@ -118,7 +118,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'warsztat6_warsztat_muzyczny',
         'USER': 'warsztat6_warsztat_muzyczny',
-        'PASSWORD': 'fygdeX-8worwu-tifdov',
+        'PASSWORD': 'baz@-warsztatmuzyczny!123',
         'HOST': 'localhost',
         'PORT': '',
     }

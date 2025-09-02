@@ -3,4 +3,3 @@ Babel~=2.15.0
 pymysql
 pillow
 faker
-psycopg2-binary
