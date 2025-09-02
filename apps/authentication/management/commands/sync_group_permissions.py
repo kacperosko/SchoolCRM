@@ -8,6 +8,7 @@ class Command(BaseCommand):
     help = "Synchronize group permissions based on the GROUP_PERMISSIONS dictionary."
 
     def handle(self, *args, **kwargs):
+        print("Synchronizing group permissions...")
         for group_name, perms in settings.GROUP_PERMISSIONS.items():
             group, created = Group.objects.get_or_create(name=group_name)
             for perm_name in perms:

@@ -58,8 +58,8 @@ def view_students_in_group_report(request):
         })
 
         attendance_list_student = AttendanceListStudent.objects.filter(attendance_list__group_id=group_id,
-                                                                       attendance_list__lesson_date__month=month,
-                                                                       attendance_list__lesson_date__year=year)
+                                                                       attendance_list__event__event_date__month=month,
+                                                                       attendance_list__event__event_date__year=year)
 
         if not len(attendance_list_student) > 0:
             print("ERROR")

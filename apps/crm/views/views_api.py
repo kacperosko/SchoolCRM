@@ -1,8 +1,6 @@
 from .views_base import *
 
 
-
-
 def upsert_note(request):
     status = False
     message = ""
@@ -182,6 +180,33 @@ def watch_record(request, mode, record_id):
         message = str(e)
 
     return JsonResponse({'status': status, 'message': message})
+
+
+def create_attendance_list_student(request):
+    status = True
+    message = 'Lista obecności utworzona pomyślnie'
+    attendance_list_id = ''
+    try:
+        event_id = request.POST.get('event_id')
+        group_id = request.POST.get('group_id')
+        print("event_id", event_id)
+        print("group_id", group_id)
+        attendance_list = AttendanceList.objects.create(group_id=group_id, event_id=event_id)
+
+        group_students = GroupStudent.objects.filter(group_id=group_id)
+        attendances = []
+
+        for group_student in group_students:
+            attendances.append(
+                AttendanceListStudent(attendance_list=attendance_list, student_id=group_student.student.id))
+
+        AttendanceListStudent.objects.bulk_create(attendances)
+
+        attendance_list_id = attendance_list.id
+    except Exception as e:
+        message = str(e)
+        status = False
+    return JsonResponse({'status': status, 'message': message, 'attendance_list_id': attendance_list_id})
 
 
 def save_attendance_list_student(request):

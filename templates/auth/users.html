@@ -1,6 +1,7 @@
 {% extends 'base/base.html' %}
 {% block title %} Nauczyciele {% endblock title %}
 {% load static %}
+{% load crm_tags %}
 
 {% block content %}
     <div class="card">
@@ -36,10 +37,10 @@
                     {% for user in users %}
                         <tr>
                             <td>
-                                <a href="/user/{{ user.id }}">{{ user.get_full_name }}</a>
+                                <a href="/user/view/{{ user.id }}">{{ user.get_full_name }}</a>
                             </td>
                             <td>{{ user.email }}</td>
-                            <td>{{ user.phone|default:"-" }}</td>
+                            <td>{{ user.phone|phone_format|default:"-" }}</td>
                             <td>{{ user.last_login|default:"-" }}</td>
                         </tr>
                     {% endfor %}

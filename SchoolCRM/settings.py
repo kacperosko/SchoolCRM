@@ -58,7 +58,9 @@ MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
 ROOT_URLCONF = 'SchoolCRM.urls'
 
 # Email sending configuration
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
 DEFAULT_FROM_EMAIL = 'biuro@warsztat-muzyczny.kacperosko.hmcloud.pl'
 EMAIL_HOST = 'mx1.hitme.net.pl'
@@ -160,20 +162,59 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 GROUP_PERMISSIONS = {
-    "Pracownicy": [
+    "Nauczyciel": [
         "crm.view_attendancelist",
+        "crm.add_attendancelist",
         "crm.view_group",
-        "crm.view_lesson",
-        "crm.view_lessonadjustment",
+        "crm.view_lessondefinition",
+        "crm.view_event",
         "crm.view_location",
         "crm.view_note",
-        "crm.add_note",
         "crm.change_note",
-        "crm.view_notification",
-        "crm.add_notification",
+        "crm.add_note",
         "crm.view_person",
         "crm.view_student",
-        "crm.view_studentperson",
-        "crm.view_watchrecord",
+    ],
+    "Kierownik": [
+        "crm.view_attendancelist",
+        "crm.change_attendancelist",
+        "crm.add_attendancelist",
+        "crm.delete_attendancelist",
+        "crm.view_group",
+        "crm.change_group",
+        "crm.add_group",
+        "crm.delete_group",
+        "crm.view_lessondefinition",
+        "crm.change_lessondefinition",
+        "crm.add_lessondefinition",
+        "crm.delete_lessondefinition",
+        "crm.view_event",
+        "crm.change_event",
+        "crm.add_event",
+        "crm.delete_event",
+        "crm.view_location",
+        "crm.change_location",
+        "crm.add_location",
+        "crm.delete_location",
+        "crm.view_note",
+        "crm.change_note",
+        "crm.add_note",
+        "crm.delete_note",
+        "crm.view_person",
+        "crm.change_person",
+        "crm.add_person",
+        "crm.delete_person",
+        "crm.view_student",
+        "crm.change_student",
+        "crm.add_student",
+        "crm.delete_student",
+        "crm.view_invoice",
+        "crm.change_invoice",
+        "crm.add_invoice",
+        "crm.delete_invoice",
+        "crm.view_invoiceitem",
+        "crm.change_invoiceitem",
+        "crm.add_invoiceitem",
+        "crm.delete_invoiceitem",
     ]
 }

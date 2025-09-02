@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from datetime import date
+from django.utils.translation import gettext_lazy as _
 
 from ..service_helper import PrefixedUUIDField
 
@@ -139,12 +140,12 @@ class Student(models.Model):
     modified_date = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name_plural = 'Studenci'
-        verbose_name = 'Student'
+        verbose_name_plural = 'Uczniowie'
+        verbose_name = 'Uczeń'
 
     def get_model_name(self, language):
         names = {
-            "pl": "Student"
+            "pl": "Uczeń"
         }
         return names.get(language, self.__class__.__name__)
 
@@ -230,6 +231,7 @@ class Group(models.Model):
 
     name = models.CharField(max_length=32)
     notes = GenericRelation(Note)
+
 
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='group_created_by', null=True,
                                    blank=True)
@@ -336,7 +338,7 @@ class Event(models.Model):
 
     def to_dict(self):
         return {
-            'start_date': self.event_date,
+            'start_date': self.event_date.strftime("%Y-%m-%d"),
             'start_time': self.start_time.strftime("%H:%M"),
             'end_time': self.end_time.strftime("%H:%M"),
             'lesson_id': self.id,
@@ -349,95 +351,37 @@ class Event(models.Model):
             'location': str(self.location),
             'location_id': self.location.id,
             'duration': self.duration,
-            'original_date': self.original_lesson_datetime.date() if self.original_lesson_datetime else None,
+            'original_date': self.original_lesson_datetime.date().strftime("%Y-%m-%d") if self.original_lesson_datetime else None,
             'original_time': self.original_lesson_datetime.time().strftime("%H:%M") if self.original_lesson_datetime else None,
-            'is_series': self.lesson_definition.is_series if self.lesson_definition else False,
+            'is_series': "true" if self.lesson_definition.is_series else "false",
+            'assignee_id': self.lesson_definition.student.id if self.lesson_definition and self.lesson_definition.student else self.lesson_definition.group.id if self.lesson_definition and self.lesson_definition.group else '',
+            'assignee_name': self.lesson_definition.student.get_full_name() if self.lesson_definition and self.lesson_definition.student else self.lesson_definition.group.get_full_name() if self.lesson_definition and self.lesson_definition.group else '',
+            'id': self.id
         }
-
-
-class Lesson(models.Model):
-    id = PrefixedUUIDField(primary_key=True)
-
-    start_time = models.DateTimeField()
-    end_time = models.DateTimeField()
-    is_series = models.BooleanField(default=False)
-    description = models.CharField(max_length=120, blank=True, null=True)
-    series_end_date = models.DateField(blank=True, null=True)
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, blank=True, null=True,
-                                related_name='lessonSchedule_student_student_relationship')
-    group = models.ForeignKey(Group, on_delete=models.CASCADE, blank=True, null=True,
-                              related_name='lessonSchedule_lesson_group_relationship')
-    teacher = models.ForeignKey(User, on_delete=models.SET_NULL, blank=False, null=True,
-                                related_name='lessonSchedule_teacher_user_relationship')
-    location = models.ForeignKey(Location, on_delete=models.SET_NULL, blank=False, null=True,
-                                 related_name='lessonSchedule_location_relationship')
-
-    def clean(self):
-        # Ensure either student or group is set, but not both
-        if self.student and self.group:
-            raise ValidationError('You can only assign a lesson to either a student or a group, not both.')
-        if not self.student and not self.group:
-            raise ValidationError('A lesson must be assigned to either a student or a group.')
-
-    def save(self, *args, **kwargs):
-        # Call clean before saving to ensure validation is applied
-        self.clean()
-        super().save(*args, **kwargs)
-
-    def get_model_name(self, language):
-        names = {
-            "pl": "Lekcja"
-        }
-        return names.get(language, self.__class__.__name__)
 
     def __str__(self):
-        return self.description + " " + str(self.start_time.time())[:5] + " - " + str(self.end_time.time())[
-                                                                                  :5] + " " + self.location.get_full_name()
-
-    def redirect_after_delete(self):
-        if self.student is None:
-            return f'/group/{self.group.id}/lesson-series'
-        return f'/student/{self.student.id}/lesson-series'
-
-    def redirect_after_edit(self):
-        if self.student is None:
-            return f'/group/{self.group.id}/lesson-series'
-        return f'/student/{self.student.id}/lesson-series'
+        return f"{self.get_event_type_display()} {self.event_date.strftime('%d-%m-%Y')}, {self.start_time.strftime('%H:%M')}-{self.end_time.strftime('%H:%M')}"
 
 
-class LessonAdjustment(models.Model):
-    id = PrefixedUUIDField(primary_key=True)
-
-    original_lesson_date = models.DateTimeField(default=now)
-    modified_start_time = models.DateTimeField()
-    modified_end_time = models.DateTimeField()
-    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, blank=False, null=False,
-                               related_name='lesson_lesson_relationship')
-    status = models.CharField(max_length=64, choices=LESSON_STATUTES, null=True, blank=True)
-    comments = models.CharField(max_length=255, blank=True, null=True)
-    teacher = models.ForeignKey(User, on_delete=models.SET_NULL, blank=False, null=True,
-                                related_name='lessonAdjustment_teacher_user_relationship')
-    location = models.ForeignKey(Location, on_delete=models.SET_NULL, blank=False, null=True,
-                                 related_name='lessonAdjustment_location_relationship')
-
-
-class Absense(models.Model):
-    teacher = models.ForeignKey(User, on_delete=models.CASCADE, blank=False, null=False,
-                                related_name='Absense_teacher_user_relationship')
-    start_time = models.DateTimeField()
-    end_time = models.DateTimeField()
+#TODO dodac modul urlopow/nieobecnosci nauczycieli - automatyczne odwolywanie zajec w czasie urlopu lub ekran do przepisywania lekcji na innego nauczyciela
+# class Absense(models.Model):
+#     teacher = models.ForeignKey(User, on_delete=models.CASCADE, blank=False, null=False,
+#                                 related_name='Absense_teacher_user_relationship')
+#     start_time = models.DateTimeField()
+#     end_time = models.DateTimeField()
 
 
 class GroupStudent(models.Model):
     id = PrefixedUUIDField(primary_key=True)
 
     group = models.ForeignKey(Group, on_delete=models.CASCADE, blank=False, null=False,
-                              related_name='group_student_group_relationship')
+                              related_name='group_student_group_relationship', verbose_name='Grupa')
     student = models.ForeignKey(Student, on_delete=models.CASCADE, blank=False, null=False,
-                                related_name='groupStudent_student_relationship')
+                                related_name='groupStudent_student_relationship', verbose_name='Uczeń')
 
     class Meta:
         unique_together = ('group', 'student')
+        verbose_name = "Uczeń w grupie"
 
     def __str__(self):
         return f"Student {self.student.get_full_name()} w grupie {self.group.get_full_name()}"
@@ -453,7 +397,7 @@ class AttendanceList(models.Model):
     id = PrefixedUUIDField(primary_key=True)
     group = models.ForeignKey(Group, on_delete=models.CASCADE, blank=False, null=False,
                               related_name='attendance_group_relationship')
-    lesson_date = models.DateTimeField()
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, blank=False, null=False, related_name='attendance_list_event')
 
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='attenndancelist_createdby', null=True,
                                    blank=True)
@@ -464,26 +408,25 @@ class AttendanceList(models.Model):
     modified_date = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Lista Obecności {self.lesson_date.strftime('%d-%m-%y %H:%M')}"
+        return f"Lista Obecności {self.event.event_date.strftime('%d-%m-%y')}, {self.event.start_time.strftime('%H:%M')}-{self.event.end_time.strftime('%H:%M')}"
 
     def redirect_after_edit(self):
         return f'/attendancelist/{self.id}'
 
     def redirect_after_delete(self):
-        return f'/group/{self.group.id}?tab=Attendance'
+        return f'/group/{self.group.id}?tab=Lessons'
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["event"], name="unique_event_attendance_list") # Ograniczenie wymuszające by pod tym samym rekordem Event był maksymalnie jeden rekord AttendanceList
+        ]
 
 
-class AttendanceStatutes:
-    OBECNOSC = "Obecnosc"
-    NIEOBECNOSC = "Nieobecnosc"
-    SPOZNIENIE = "Spoznienie"
+class AttendanceStatutes(models.TextChoices):
+    OBECNOSC = 'Obecnosc', 'Obecność'
+    NIEOBECNOSC = 'Nieobecnosc', 'Nieobecność'
+    SPOZNIENIE = 'Spoznienie', 'Spóźnienie'
 
-
-ATTENDANCE_STATUTES = (
-    ('Obecnosc', 'Obecno\u015B\u0107'),
-    ('Nieobecnosc', 'Nieobecno\u015B\u0107'),
-    ('Spoznienie', 'Spóźnienie'),
-)
 
 
 class AttendanceListStudent(models.Model):
@@ -491,7 +434,7 @@ class AttendanceListStudent(models.Model):
     attendance_list = models.ForeignKey(AttendanceList, on_delete=models.CASCADE, blank=False, null=False,
                                         related_name='attendance_list_student_group_relationship')
     student = models.ForeignKey(Student, on_delete=models.CASCADE, blank=False, null=False, )
-    attendance_status = models.CharField(max_length=64, choices=ATTENDANCE_STATUTES, null=True, blank=True,
+    attendance_status = models.CharField(max_length=64, choices=AttendanceStatutes.choices, null=True, blank=True,
                                          default="Obecnosc")
 
 
@@ -511,7 +454,7 @@ class Invoice(models.Model):
         return total
 
     def redirect_after_edit(self):
-        return f'/student/{self.student.id}?tab=Invoices'
+        return f'/invoice/{self.id}?tab=Details'
 
     def redirect_after_delete(self):
         return f'/student/{self.student.id}?tab=Invoices'
@@ -525,9 +468,24 @@ class Invoice(models.Model):
 
 class InvoiceItem(models.Model):
     id = PrefixedUUIDField(primary_key=True)
-    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, blank=False, null=False, )
-    name = models.CharField(max_length=255)
-    amount = models.IntegerField()
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, blank=False, null=False, verbose_name="Faktura")
+    name = models.CharField(max_length=255, verbose_name="Nazwa")
+    amount = models.IntegerField(verbose_name="Kwota")
     quantity = models.IntegerField()
+
+    def __str__(self):
+        return f"Pozycja \"{self.name}\""
+
+    def redirect_after_edit(self):
+        return f'/invoice/{self.invoice.id}?tab=Details'
+
+    def redirect_after_delete(self):
+        return f'/invoice/{self.invoice.id}?tab=Details'
+
+    def get_model_name(self, language):
+        names = {
+            "pl": "Pozycja faktury"
+        }
+        return names.get(language, self.__class__.__name__)
 
 

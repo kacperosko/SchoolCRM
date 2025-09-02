@@ -8,4 +8,4 @@ class AuthenticationConfig(AppConfig):
     def ready(self):
         import apps.authentication.signals
         from django.core.management import call_command
-        call_command('sync_group_permissions')
+        # call_command('sync_group_permissions')

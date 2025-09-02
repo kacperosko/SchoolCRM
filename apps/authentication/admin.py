@@ -2,7 +2,7 @@ from django.contrib import admin
 from apps.authentication.models import User
 from .forms import UserForm
 
-admin.site.site_header = "SzkolniQ"
+admin.site.site_header = "System CRM"
 
 
 @admin.register(User)

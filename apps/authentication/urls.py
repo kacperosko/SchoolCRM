@@ -10,5 +10,5 @@ urlpatterns = [
 
     path("user", authentication_views.users, name="crm-users"),
     # path("<str:model_name>/new", upsert_record, name="crm-user-page"),
-    path("user/<str:user_id>", authentication_views.UserPage.as_view(), name="crm-user-page")
+    path("user/view/<str:user_id>", authentication_views.UserPage.as_view(), name="crm-user-page")
 ]

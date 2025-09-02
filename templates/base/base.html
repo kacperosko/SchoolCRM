@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>SzkolniQ | {% block title %}{% endblock title %}</title>
+    <title>System CRM | {% block title %}{% endblock title %}</title>
 
     <!-- Favicon -->
     <link rel="shortcut icon" href="{% static 'images/favicon.ico' %}"/>
@@ -15,8 +15,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    {#    <link rel="stylesheet" href="../../static/css/backend-plugin.min.css">#}
-    {#    <link rel="stylesheet" href="../../static/css/backend.css?v=1.0.0">#}
+    <!-- Style strony oraz blok dla dodatkowych opcjonalnych styli -->
     <style>
         [data-letters]:before {
             content: attr(data-letters);
@@ -65,22 +64,21 @@
 </head>
 <body class=" color-light">
 
-<!-- loader Start -->
-{#<div id="loading">#}
-{#    <div id="loading-center">#}
-{#    </div>#}
-{#</div>#}
+<!-- Kontener do wyświetlania alertów (np. error, success, ...) -->
 <div class="container mt-5 fixed-top" style="z-index: 99999 !important;">
     <div class="row justify-content-center">
         <div id="alertContainer"></div>
     </div>
 </div>
-<!-- loader END -->
+<!-- kontener END -->
 
 <!-- Wrapper Start -->
 <div class="wrapper">
+    <!-- panel boczny -->
     {% include 'includes/sidebar.html' %}
+    <!-- nagłówek -->
     {% include 'includes/navbar.html' %}
+
     <div class="content-page">
         <div class="container-fluid">
             <div class="row">
@@ -93,23 +91,6 @@
     </div>
 </div>
 <!-- Wrapper End-->
-
-{#<footer class="iq-footer">#}
-{#    <div class="container-fluid">#}
-{#        <div class="row">#}
-{#            <div class="col-lg-6">#}
-{#            </div>#}
-{#            <div class="col-lg-6 text-right">#}
-{#                    <span class="mr-1">#}
-{#                        Copyright#}
-{#                        <script>document.write(new Date().getFullYear())</script>© <a href="#" class="">Datum</a>#}
-{#                        All Rights Reserved.#}
-{#                    </span>#}
-{#            </div>#}
-{#        </div>#}
-{#    </div>#}
-{#</footer>#}
-<!-- Backend Bundle JavaScript -->
 
 <script src="{% static '/js/backend-bundle.min.js' %}"></script>
 <script src="{% static '/js/app.js' %}"></script>

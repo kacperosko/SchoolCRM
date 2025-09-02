@@ -6,7 +6,7 @@
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="/student"><i
-                        class="ri-home-4-line mr-1 float-left"></i>Studenci</a></li>
+                        class="ri-home-4-line mr-1 float-left"></i>Uczniowie</a></li>
                 <li class="breadcrumb-item active"
                     aria-current="page"><a
                         href="/student/{{ student.id }}">{{ student.get_full_name }}</a>
@@ -58,7 +58,7 @@
                         </div>
                         <div class="person-input col-sm-6 d-none"></div>
                         <div class="form-group col-sm-6">
-                            <label for="student">Student:</label>
+                            <label for="student">Uczeń:</label>
                             <input type="text" class="form-control" id="student"
                                    value="{{ student.get_full_name }}" style="line-height: 20px;"
                                    readonly="" required>

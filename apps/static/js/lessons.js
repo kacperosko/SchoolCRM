@@ -11,7 +11,7 @@ LESSONS_STATUTES = {
 
 function isGroupPage() {
     const pathSegments = window.location.pathname.split('/').filter(Boolean);  // Podziel URL na fragmenty
-    return pathSegments[0] === 'group';  // Sprawdź, czy pierwszy fragment to 'group'
+    return pathSegments[0] === 'group';  // Sprawdzenie, czy pierwszy aktualna strona to grupa
 }
 
 function expandOpenedMonths() {
@@ -45,13 +45,9 @@ function get_lessons(record_id) {
 
                 const tableContainer = $('#table-container');
                 tableContainer.empty();
-                tableContainer.html(generateTable(response.lessons));
+                tableContainer.html(generateTable(response.lessons, response.attendance_lists));
 
                 open_months_url();
-
-                if (isGroupPage()) {
-                    modifyTable();
-                }
             } else {
                 handleResponse(response);
             }
@@ -67,7 +63,7 @@ function get_lessons(record_id) {
 }
 
 
-function generateTable(data) {
+function generateTable(data, attendanceLists) {
     // Creating table
     lessons_data = new Map();
 
@@ -79,7 +75,10 @@ function generateTable(data) {
     var headerRow = document.createElement('tr');
 
     // Creating header
-    var headers = ['Miesi\u0105c', 'Zaplanowane', 'Odwo\u0142ane - nauczyciel', 'Odwo\u0142ane - 24h przed', 'Nieobecne'];
+    var headers = ['Miesi\u0105c', 'Zaplanowane', 'Odwo\u0142ane - nauczyciel'];
+    if (!isGroupPage()) {
+        headers.push('Odwo\u0142ane - 24h przed', 'Nieobecne')
+    }
     headers.forEach(function (headerText) {
         var th = document.createElement('th');
         th.textContent = headerText;
@@ -132,15 +131,17 @@ function generateTable(data) {
         odwolaneTeacherCell.textContent = statutes[LESSONS_STATUTES.ODWOLANA_NAUCZYCIEL];
         row.appendChild(odwolaneTeacherCell);
 
-        var odwolane24hCell = document.createElement('td');
-        odwolane24hCell.classList.add('text-center', 'cancelled-24h-cells');
-        odwolane24hCell.textContent = statutes[LESSONS_STATUTES.ODWOLANA_24H_PRZED];
-        row.appendChild(odwolane24hCell);
+        if (!isGroupPage()) {
+            var odwolane24hCell = document.createElement('td');
+            odwolane24hCell.classList.add('text-center', 'cancelled-24h-cells');
+            odwolane24hCell.textContent = statutes[LESSONS_STATUTES.ODWOLANA_24H_PRZED];
+            row.appendChild(odwolane24hCell);
 
-        var canceledeCell = document.createElement('td');
-        canceledeCell.classList.add('text-warning', 'text-center', 'cancelled-cell');
-        canceledeCell.textContent = statutes[LESSONS_STATUTES.NIEOBECNOSC];
-        row.appendChild(canceledeCell);
+            var canceledeCell = document.createElement('td');
+            canceledeCell.classList.add('text-warning', 'text-center', 'cancelled-cell');
+            canceledeCell.textContent = statutes[LESSONS_STATUTES.NIEOBECNOSC];
+            row.appendChild(canceledeCell);
+        }
 
         tbody.appendChild(row);
 
@@ -283,15 +284,56 @@ function generateTable(data) {
 
                 const editLink = document.createElement('a');
                 editLink.appendChild(editSvg);
-                // editLink.className = 'bg-blue text-white p-1 rounded-sm font-size-12 menu-button text-center';
                 editLink.type = 'button';
-                // editLink.setAttribute('data-toggle', 'modal');
-                // editLink.setAttribute('data-target', '#editLessonModal');
                 editLink.setAttribute("onclick", `openEditLessonModal(event_id='${lesson.lesson_id}', startTime='${lesson.start_time}', endTime='${lesson.end_time}', lessonDate='${lesson.start_date}', studentName='', status='${lesson.status}');`);
 
 
                 editCell.appendChild(editLink);
                 lessonRow.appendChild(editCell);
+
+                // ATTENDANCE LIST -tylko dla grup
+                if (isGroupPage()) {
+                    const attendanceListCell = document.createElement('td');
+                    attendanceListCell.setAttribute('id', `at-${lesson.lesson_id}`);
+                    if (lesson.lesson_id in attendanceLists){
+                        console.log("LIST EXIST FOR LESSON: " + lesson.lesson_id)
+                        attendanceListCell.appendChild(attendanceListIcon(attendanceLists[lesson.lesson_id]));
+                    } else {
+
+                        const addListSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                        const addListPath = document.createElementNS(
+                            'http://www.w3.org/2000/svg',
+                            'path'
+                        );
+                        addListSvg.setAttribute('fill', 'none');
+                        addListSvg.setAttribute('viewBox', '0 0 24 24');
+                        addListSvg.setAttribute('stroke', 'currentColor');
+                        addListSvg.setAttribute('stroke-width', '1.5');
+                        addListSvg.classList.add('mr-1');
+                        addListSvg.setAttribute('width', '18px');
+
+                        addListPath.setAttribute('d', 'M12 4.5v15m7.5-7.5h-15');
+                        addListPath.setAttribute('stroke-linecap', 'round');
+                        addListPath.setAttribute('stroke-linejoin', 'round');
+
+                        addListSvg.setAttribute('data-content', 'Utwórz listę obecności');
+                        addListSvg.setAttribute('data-placement', 'bottom');
+                        addListSvg.setAttribute('data-trigger', 'hover');
+                        addListSvg.setAttribute('data-toggle', 'popover');
+                        addListSvg.setAttribute('data-html', 'true');
+                        $(addListSvg).popover();
+
+                        addListSvg.appendChild(addListPath);
+
+                        const addListLink = document.createElement('a');
+                        addListLink.appendChild(addListSvg);
+                        addListLink.type = 'button';
+                        addListLink.setAttribute("onclick", `createAttendanceList(event_id='${lesson.lesson_id}');`);
+
+                        attendanceListCell.appendChild(addListLink);
+                    }
+                    lessonRow.appendChild(attendanceListCell);
+                }
 
 
                 innerTbody.appendChild(lessonRow);
@@ -469,4 +511,69 @@ function calculateTimeDifference(startTime, endTime) {
     const differenceInMinutes = differenceInMilliseconds / (1000 * 60);
 
     return differenceInMinutes;
+}
+
+function createAttendanceList(event_id) {
+    addInformAlert("Tworzenie listy obecności...");
+
+    const formData = new FormData();
+    formData.append("event_id", event_id);
+    formData.append("group_id", recordId);
+    fetch("/crm_api/create-attendance-list/", {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': document.getElementById('attendance_list_form').querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: formData
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status) {
+                console.log("CHANGE ICON")
+                const iconTochange = document.getElementById(`at-${event_id}`);
+                iconTochange.removeChild(iconTochange.firstChild);
+                $('.popover').remove();
+
+                iconTochange.appendChild(attendanceListIcon(data.attendance_list_id));
+            }
+            handleResponse(data);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Wystąpił błąd przy tworzeniu listy obecności.');
+        });
+}
+
+function attendanceListIcon(attendance_list_id) {
+    const listSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    const listPath = document.createElementNS(
+        'http://www.w3.org/2000/svg',
+        'path'
+    );
+    listSvg.setAttribute('fill', 'none');
+    listSvg.setAttribute('viewBox', '0 0 24 24');
+    listSvg.setAttribute('stroke', 'currentColor');
+    listSvg.setAttribute('stroke-width', '1.5');
+    listSvg.setAttribute('width', '18px');
+
+    listPath.setAttribute('d', 'M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z');
+    listPath.setAttribute('stroke-linecap', 'round');
+    listPath.setAttribute('stroke-linejoin', 'round');
+
+    listSvg.setAttribute('data-content', 'Otwórz listę obecności');
+    listSvg.setAttribute('data-placement', 'bottom');
+    listSvg.setAttribute('data-trigger', 'hover');
+    listSvg.setAttribute('data-toggle', 'popover');
+    listSvg.setAttribute('data-html', 'true');
+    $(listSvg).popover();
+
+
+    listSvg.appendChild(listPath);
+
+    const addListLink = document.createElement('a');
+    addListLink.appendChild(listSvg);
+    addListLink.setAttribute("href", `/attendancelist/${attendance_list_id}`);
+
+    return addListLink;
 }

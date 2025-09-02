@@ -4,8 +4,6 @@ from .views_base import *
 WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
 
-
-
 def income_chart(request):
     today = dj_timezone.now().date()
     monthly_income = []
@@ -32,11 +30,11 @@ def income_chart(request):
     return monthly_income[::-1]
 
 
-def crmHomePage(request):
+def crm_home_page(request):
     today_day = dj_timezone.localtime(dj_timezone.now())
     lessons_today = get_today_teacher_lessons(request.user.id, today_day)
 
-    monthly_income = income_chart(request) if request.user.is_admin else []
+    monthly_income = income_chart(request) if request.user.groups.filter(name='Kierownik').exists() or request.user.is_superuser else []
 
     return render(request, "crm/index.html", {'today_lessons': lessons_today, 'today_day': today_day, 'monthly_income': monthly_income})
 
@@ -99,53 +97,14 @@ def calendar(request):
 
     if model_name == 'Location':
         selected_record = Location.objects.get(id=selected_record_id)
-        lesson_result = get_lessons_for_location_in_year(selected_record_id, selected_year)
+        lesson_result = get_location_lessons_in_year(selected_record_id, selected_year)
         locations = locations.exclude(id=selected_record_id)
     else:
         selected_record = User.objects.get(id=selected_record_id)
-        lesson_result = get_lessons_for_teacher_in_year(selected_record_id, selected_year)
+        lesson_result = get_teacher_lessons_in_year(selected_record_id, selected_year)
         teachers = teachers.exclude(id=selected_record_id)
 
-    lessons = lesson_result['lessons']
-    lesson_adjustments = lesson_result['adjustments']
-
-    # Construct a dictionary to hold lesson adjustments data
-    lesson_adjustments_data = {}
-    for l_adjustment in lesson_adjustments:
-        lesson_id = l_adjustment.lesson.id
-        if lesson_id not in lesson_adjustments_data:
-            lesson_adjustments_data[lesson_id] = []
-        lesson_adjustments_data[lesson_id].append({
-            'id': l_adjustment.id,
-            'lessonDate': str(l_adjustment.modified_start_time.date()),
-            'originalLessonDate': str(l_adjustment.original_lesson_date.date()),
-            'lessonScheduleId': l_adjustment.lesson.id,
-            'startTime': l_adjustment.modified_start_time.strftime('%H:%M'),
-            'endTime': l_adjustment.modified_end_time.strftime('%H:%M'),
-            'status': l_adjustment.status,
-            'teacher': l_adjustment.teacher.get_full_name(),
-            'description': l_adjustment.lesson.description,
-            'location': l_adjustment.location.get_full_name(),
-        })
-    # Construct a list of dictionaries with lesson data
-    lesson_data = []
-    for lesson in lessons:
-        lesson_adjustments_for_lesson = lesson_adjustments_data.get(lesson.id, [])
-        lesson_data.append({
-            'id': lesson.id,
-            'weekDay': WEEKDAYS[lesson.start_time.weekday()],
-            'startTime': lesson.start_time.strftime('%H:%M'),
-            'endTime': lesson.end_time.strftime('%H:%M'),
-            'startDate': str(lesson.start_time.date()),
-            'endDate': str(lesson.series_end_date) if lesson.series_end_date else 'null',
-            'student': lesson.student.get_full_name() if lesson.student else "[G] " + lesson.group.get_full_name(),
-            'student_id': lesson.student.id if lesson.student else lesson.group.id,
-            'teacher': lesson.teacher.get_full_name(),
-            'adjustments': lesson_adjustments_for_lesson,
-            'description': lesson.description,
-            'is_series': 'true' if lesson.is_series else 'false',
-            'location': lesson.location.get_full_name(),
-        })
+    lesson_data = lesson_result
 
     # Pass lesson_data to the template context
     context = {
@@ -164,45 +123,23 @@ def calendar(request):
     return render(request, "crm/calendar.html", context)
 
 
-@check_permission('crm.view_lesson')
-def view_lesson_series(request, record_id):
-    model_name = get_model_by_prefix(record_id[:3])
-    try:
-        if model_name == "Student":
-            lessons = Lesson.objects.filter(student_id=record_id).order_by('start_time')
-            record = Student.objects.get(id=record_id)
-        elif model_name == "Group":
-            lessons = Lesson.objects.filter(group_id=record_id).order_by('start_time')
-            record = Group.objects.get(id=record_id)
-    except ObjectDoesNotExist as e:
-        return custom_404(request, "Nie znaleziono lekcji powiązanych z id: {id}".format(id=record_id))
-    except Exception as e:
-        return custom_404(request, e)
-
-    context = {
-        'lessons': lessons,
-        'record': record,
-        'model_name': model_name
-    }
-
-    return render(request, "crm/record-lesson-series.html", context)
-
-
 def delete_record(request, record_id):
     context = {}
     redirect_url = None
     model_name = get_model_by_prefix(record_id[:3])
     if model_name is not None:
-        if not request.user.has_perm(f'crm.delete_{model_name.lower()}'):
-            messages.error(request, 'Brak uprawnie\u0144 do usuni\u0119cia rekordu')
-            return redirect(f'/{model_name.lower()}/{record_id}')
-
         model_object = get_model_object_by_prefix(record_id[:3])
         try:
             record = model_object.objects.get(id=record_id)
         except ObjectDoesNotExist:
-            # messages.error(f'Rekord z podanym id nie istnieje: {record_id}')
             return custom_404(request, f'Rekord z podanym id nie istnieje: {record_id}')
+
+        if not request.user.has_perm(f'crm.delete_{model_name.lower()}'):
+            messages.error(request, 'Brak uprawnień do usunięcia rekordu')
+            if callable(getattr(record, 'redirect_after_edit', None)):
+                return redirect(record.redirect_after_edit())
+            return redirect(f'/{model_name.lower()}/{record_id}')
+
         if callable(getattr(record, 'redirect_after_delete', None)):
             redirect_url = record.redirect_after_delete()
         if request.method == 'GET':
@@ -225,13 +162,13 @@ def delete_record(request, record_id):
 
         if request.method == 'POST':
             record.delete()
-            messages.success(request, 'Rekord usuni\u0119ty')
+            messages.success(request, 'Rekord usunięty')
             if redirect_url:
                 return redirect(redirect_url)
             else:
                 return redirect(f'/{model_name.lower()}')
     else:
-        return custom_404(request, "Nie mo\u017Cna usun\u0105\u0107 wybranego rekordu")
+        return custom_404(request, "Nie można usunąć wybranego rekordu")
 
 
 def upsert_record(request, model_name, record_id=None):
@@ -245,11 +182,13 @@ def upsert_record(request, model_name, record_id=None):
     }
 
     form_name = f"{model_name.capitalize()}Form"
+    print("upsert_record")
+    print("form_name", form_name)
 
     try:
         form_class = get_form_class(form_name)
-    except Exception as e:
-        messages.error(request, "Wyst\u0105pi\u0142 b\u0142\u0105d podczas \u0142adowania formularza.")
+    except Exception:
+        messages.error(request, "Wystąpił błąd podczas ładowania formularza.")
         return redirect(f'/{model_name.lower()}/{record_id}' if record_id else f'/{model_name.lower()}')
 
     context['title'] = form_class.get_name()
@@ -301,80 +240,13 @@ def upsert_record(request, model_name, record_id=None):
                 )
                 return redirect(redirect_url)
             except Exception as e:
+                print(e)
                 messages.error(request, f'Wyst\u0105pi\u0142 b\u0142\u0105d podczas zapisywania rekordu: {e}')
         else:
-
+            print(form.errors)
             context['message'] = form.errors
 
     return render(request, "crm/record-update-create.html", context)
-
-
-class AttendanceListPage(View):
-
-    @staticmethod
-    @check_permission('crm.change_attendancelist')
-    def post(request, *args, **kwargs):
-        pass
-
-    @staticmethod
-    @check_permission('crm.view_attendancelist')
-    def get(request, *args, **kwargs):
-        context = {}
-
-        attendance_list_id = kwargs.get('attendance_list_id')
-
-        request.GET = request.GET.copy()
-        request.GET.update({
-            'tab': "Details",
-        })
-
-        try:
-            attendance_list = AttendanceList.objects.get(id=attendance_list_id)
-            attendance_list_student = attendance_list.attendance_list_student_group_relationship.all()
-
-            context.update({
-                'record': attendance_list,
-                'attendances': attendance_list_student,
-            })
-
-        except AttendanceList.DoesNotExist as e:
-            return custom_404(request, f"Nie znaleziono listy obecności z takim id: {attendance_list_id}")
-
-
-        return render(request, "crm/attendance-list-page.html", context)
-
-
-IMPORT_FILES = {
-    'student': 'student_import_szablon.xlsx'
-}
-
-
-def import_records(request, model_name):
-    context = {}
-    if model_name not in IMPORT_FILES:
-        messages.error(request, f"Nie znaleziono opcji importu dla tego obiektu: {model_name}")
-        return redirect(f"/{model_name}")
-
-    template_file = IMPORT_FILES[model_name]
-    template_file_path = os.path.join(settings.MEDIA_ROOT, template_file)
-    context['template_file'] = template_file
-
-    # Obsługa pobierania pliku szablonu
-    if 'download' in request.GET:
-        if os.path.exists(template_file_path):
-            # Zwracanie pliku jako odpowiedzi FileResponse
-            return FileResponse(open(template_file_path, 'rb'), as_attachment=True, filename=template_file)
-        else:
-            messages.error(request, "Plik szablonu nie został znaleziony.")
-            return redirect(f"/{model_name}")
-
-    # Renderowanie strony import-records.html z kontekstem
-    return render(request, "crm/import-records.html", context)
-
-
-def download_template(request):
-    file_path = os.path.join(settings.MEDIA_ROOT, 'your_template.xlsx')
-    return FileResponse(open(file_path, 'rb'), as_attachment=True, filename='template.xlsx')
 
 
 VIEW_ALL_MODELS = {
@@ -410,7 +282,10 @@ VIEW_ALL_MODELS = {
 }
 
 
+# ============ BELOW ALL VIEWS TODO ============
+
 def view_all(request, model_name):
+    print("VIEW ALL")
     if model_name not in VIEW_ALL_MODELS:
         return custom_404(request, "Nie znaleziono takiej strony")
     try:

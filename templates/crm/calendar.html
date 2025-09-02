@@ -468,42 +468,48 @@
 
             function addDynamicLessons() {
                 var lessons = {{ lessons|safe }};
-                var weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-                var startDate = new Date(document.querySelector('.date-label').textContent);
+                {#var weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];#}
+                var weekDays = ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota', 'Niedziela'];
+                {#var startDate = selected_start_date;#}
                 var endDate = new Date(startDate);
                 endDate.setDate(endDate.getDate() + 6); // Set endDate to the end of the week
                 var today = new Date(); // Get today's date
+                var today_month_number = startDate.getMonth() + 1;
 
                 console.log('Lessons:', lessons);
                 console.log('Start Date:', startDate);
                 console.log('End Date:', endDate);
 
-                lessons.forEach(function (lesson) {
+                if (lessons[today_month_number].size < 1) {
+                    return;
+                }
+                console.log(today_month_number)
+                console.log(lessons[today_month_number])
+                for (let [key, lesson] of Object.entries(lessons[today_month_number]["Lessons"])) {
                     // Convert lesson start and end time to minutes
-                    var startTime = lesson.startTime.split(':');
-                    var endTime = lesson.endTime.split(':');
-                    var startMinutes = (parseInt(startTime[0]) - 7) * 60 + parseInt(startTime[1]);
-                    var endMinutes = (parseInt(endTime[0]) - 7) * 60 + parseInt(endTime[1]);
+                    const startTime = lesson.start_time.split(':');
+                    const endTime = lesson.end_time.split(':');
+                    const startMinutes = (parseInt(startTime[0]) - 7) * 60 + parseInt(startTime[1]);
+                    const endMinutes = (parseInt(endTime[0]) - 7) * 60 + parseInt(endTime[1]);
 
                     // Calculate duration of lesson in minutes
                     var durationMinutes = endMinutes - startMinutes;
 
                     // Find the index of the lesson's week day in the weekDays array
-                    var lessonWeekDayIndex = weekDays.indexOf(lesson.weekDay);
+                    var lessonWeekDayIndex = weekDays.indexOf(lesson.weekday);
                     console.log('Processing lesson:', lesson);
+                    console.log('lessonWeekDayIndex:', lessonWeekDayIndex);
 
                     if (lessonWeekDayIndex !== -1) {
                         // Calculate the date of the lesson in the current week
-                        var lessonDate = new Date(startDate);
+                        const lessonDate = new Date(startDate);
                         lessonDate.setDate(startDate.getDate() + lessonWeekDayIndex);
 
                         // Check if the lesson is within the current selected week
-                        let isWithinWeek
-                        if (lesson.is_series) {
-                            isWithinWeek = (new Date(lesson.startDate) <= endDate) && (lesson.endDate === null || new Date(lesson.endDate) >= startDate);
-                        } else {
-                            isWithinWeek = (new Date(lesson.startDate) <= endDate && new Date(lesson.startDate) >= startDate);
-                        }
+                        let isWithinWeek = (new Date(lesson.start_date) <= endDate && new Date(lesson.start_date) >= startDate);
+
+                        console.log("isWithinWeek: " + isWithinWeek)
+                        console.log("new Date(lesson.start_date): " + new Date(lesson.start_date))
                         if (isWithinWeek) {
                             // Create lesson element and set its position and duration
                             var lessonElement = document.createElement('div');
@@ -513,11 +519,12 @@
                             lessonElement.style.top = 'calc(' + (startMinutes / 15) * 10 + 'px)';
                             lessonElement.style.height = durationMinutes / 15 * 10 + 'px';
                             {#lessonElement.innerHTML = '<div class="time">' + lesson.startTime + '—' + lesson.endTime + '</div>' +#}
-                            const model = lesson.student_id.substring(0, 3) === '0ST' ? 'student' : 'group';
-                            lessonElement.innerHTML = `<a class="" href="/${model}/${lesson.student_id}">${lesson.student}</a>`;
+                            const model = lesson.assignee_id.substring(0, 3) === '0ST' ? 'student' : 'group';
+                            lessonElement.innerHTML = `<a class="" href="/${model}/${lesson.assignee_id}?tab=Lessons&opened_months=${today_month_number}">${lesson.assignee_name}</a>`;
+                            lessonElement.innerHTML += `<div>${lesson.start_time} - ${lesson.end_time}</div>`;
                             {# data-content="{{ teacher.get_full_name }}"#}
                             {#data-placement="bottom" data-trigger="hover" data-toggle="popover"#}
-                            lessonElement.setAttribute('data-content', lesson.startTime + '—' + lesson.endTime + '<br/>Opis: ' + lesson.description + '<br/>Nauczyciel: ' + lesson.teacher);
+                            lessonElement.setAttribute('data-content', 'Opis: ' + lesson.description + '<br/>Nauczyciel: ' + lesson.teacher + '<br/>Lokalizacja: ' + lesson.location);
                             lessonElement.setAttribute('data-placement', 'bottom');
                             lessonElement.setAttribute('data-trigger', 'hover');
                             lessonElement.setAttribute('data-toggle', 'popover');
@@ -526,7 +533,6 @@
                             // Add the appropriate class based on the date
                             lessonElement.classList.add('bg-success-light');
 
-
                             // Add the lesson element to the correct weekday container
                             var weekdayContainer = document.querySelectorAll('.day')[lessonWeekDayIndex];
                             weekdayContainer.querySelector('.slots').appendChild(lessonElement);
@@ -534,81 +540,82 @@
                             console.log('Added lesson:', lesson);
                         }
                     }
-                    if (lesson.adjustments && lesson.adjustments.length > 0) {
-                        lesson.adjustments.forEach(function (adjustment) {
-
-                            // Remove old lesson schedule element
-                            var oldLessonElementId = 'lesson_' + adjustment.lessonScheduleId + '_' + adjustment.originalLessonDate;
-                            var oldLessonElement = document.getElementById(oldLessonElementId);
-                            if (oldLessonElement) {
-                                oldLessonElement.remove();
-                                console.log('Removed old lesson:', oldLessonElementId);
-                            }
-
-                            // Convert adjustment start and end time to minutes
-                            var adjStartTime = adjustment.startTime.split(':');
-                            var adjEndTime = adjustment.endTime.split(':');
-                            var adjStartMinutes = (parseInt(adjStartTime[0]) - 7) * 60 + parseInt(adjStartTime[1]);
-                            var adjEndMinutes = (parseInt(adjEndTime[0]) - 7) * 60 + parseInt(adjEndTime[1]);
-
-                            // Calculate duration of adjustment in minutes
-                            var adjDurationMinutes = adjEndMinutes - adjStartMinutes;
-
-                            // Calculate the date of the adjustment in the current week
-                            var adjustmentDate = new Date(adjustment.lessonDate);
-
-                            if (adjustmentDate >= startDate && adjustmentDate <= endDate) {
-                                console.log('withinWeek TRUE')
-                                // Create adjustment element and set its position and duration
-                                var adjustmentElement = document.createElement('div');
-                                adjustmentElement.classList.add('event');
-                                adjustmentElement.id = 'adjustment_' + adjustment.id + '_' + formatDate(adjustmentDate); // Set ID using adjustment ID and date from JSON
-                                adjustmentElement.style.top = 'calc(' + (adjStartMinutes / 15) * 10 + 'px)';
-                                adjustmentElement.style.height = adjDurationMinutes / 15 * 10 + 'px';
-                                const model = lesson.student_id.substring(0, 3) === '0ST' ? 'student' : 'group';
-                                adjustmentElement.innerHTML = `<a class="" href="/${model}/${lesson.student_id}">${lesson.student}</a>`;
-                                adjustmentElement.setAttribute('data-content', adjustment.startTime + '—' + adjustment.endTime + '<br/>Opis: ' + lesson.description + '<br/>Nauczyciel: ' + lesson.teacher);
-                                adjustmentElement.setAttribute('data-placement', 'bottom');
-                                adjustmentElement.setAttribute('data-trigger', 'hover');
-                                adjustmentElement.setAttribute('data-toggle', 'popover');
-                                adjustmentElement.setAttribute('data-html', 'true');
-                                $(adjustmentElement).popover();
-
-                                // Add the appropriate class based on the date
-                                console.log('changing adjusmnent bg -> ' + adjustment.status);
-                                switch (adjustment.status) {
-                                    case 'Nieobecnosc':
-                                        adjustmentElement.classList.add('bg-danger-light');
-                                        break;
-                                    case 'Odwolana - nauczyciel':
-                                        adjustmentElement.classList.add('bg-orange-light');
-                                        break;
-                                    case 'Odwolana - 24h przed':
-                                        adjustmentElement.classList.add('bg-orange-light');
-                                        break;
-                                    case 'Zaplanowana':
-                                        adjustmentElement.classList.add('bg-success-light');
-                                        break;
-                                }
-
-
-                                // Add the adjustment element to the correct weekday container
-                                console.log('adjustmentDate.getDay() -> ' + adjustmentDate.getDay());
-                                let adjustmentWeekdayIndex = adjustmentDate.getDay()
-                                if (adjustmentWeekdayIndex === 0) {
-                                    adjustmentWeekdayIndex = 6
-                                } else {
-                                    adjustmentWeekdayIndex--;
-                                }
-                                console.log('adjustmentWeekdayIndex -> ' + adjustmentWeekdayIndex);
-                                var weekdayContainer = document.querySelectorAll('.day')[adjustmentWeekdayIndex]; // Get the weekday container using the adjustment date
-                                weekdayContainer.querySelector('.slots').appendChild(adjustmentElement);
-
-                                console.log('Added adjustment:', adjustment);
-                            }
-                        });
-                    }
-                });
+                    {#if (lesson.adjustments && lesson.adjustments.length > 0) {#}
+                    {#    lesson.adjustments.forEach(function (adjustment) {#}
+                    {##}
+                    {#        // Remove old lesson schedule element#}
+                    {#        var oldLessonElementId = 'lesson_' + adjustment.lessonScheduleId + '_' + adjustment.originalLessonDate;#}
+                    {#        var oldLessonElement = document.getElementById(oldLessonElementId);#}
+                    {#        if (oldLessonElement) {#}
+                    {#            oldLessonElement.remove();#}
+                    {#            console.log('Removed old lesson:', oldLessonElementId);#}
+                    {#        }#}
+                    {##}
+                    {#        // Convert adjustment start and end time to minutes#}
+                    {#        var adjStartTime = adjustment.startTime.split(':');#}
+                    {#        var adjEndTime = adjustment.endTime.split(':');#}
+                    {#        var adjStartMinutes = (parseInt(adjStartTime[0]) - 7) * 60 + parseInt(adjStartTime[1]);#}
+                    {#        var adjEndMinutes = (parseInt(adjEndTime[0]) - 7) * 60 + parseInt(adjEndTime[1]);#}
+                    {##}
+                    {#        // Calculate duration of adjustment in minutes#}
+                    {#        var adjDurationMinutes = adjEndMinutes - adjStartMinutes;#}
+                    {##}
+                    {#        // Calculate the date of the adjustment in the current week#}
+                    {#        var adjustmentDate = new Date(adjustment.lessonDate);#}
+                    {##}
+                    {#        if (adjustmentDate >= startDate && adjustmentDate <= endDate) {#}
+                    {#            console.log('withinWeek TRUE')#}
+                    {#            // Create adjustment element and set its position and duration#}
+                    {#            var adjustmentElement = document.createElement('div');#}
+                    {#            adjustmentElement.classList.add('event');#}
+                    {#            adjustmentElement.id = 'adjustment_' + adjustment.id + '_' + formatDate(adjustmentDate); // Set ID using adjustment ID and date from JSON#}
+                    {#            adjustmentElement.style.top = 'calc(' + (adjStartMinutes / 15) * 10 + 'px)';#}
+                    {#            adjustmentElement.style.height = adjDurationMinutes / 15 * 10 + 'px';#}
+                    {#            const model = lesson.student_id.substring(0, 3) === '0ST' ? 'student' : 'group';#}
+                    {#            adjustmentElement.innerHTML = `<a class="" href="/${model}/${lesson.student_id}">${lesson.student}</a>`;#}
+                    {#            adjustmentElement.setAttribute('data-content', adjustment.startTime + '—' + adjustment.endTime + '<br/>Opis: ' + lesson.description + '<br/>Nauczyciel: ' + lesson.teacher);#}
+                    {#            adjustmentElement.setAttribute('data-placement', 'bottom');#}
+                    {#            adjustmentElement.setAttribute('data-trigger', 'hover');#}
+                    {#            adjustmentElement.setAttribute('data-toggle', 'popover');#}
+                    {#            adjustmentElement.setAttribute('data-html', 'true');#}
+                    {#            $(adjustmentElement).popover();#}
+                    {##}
+                    {#            // Add the appropriate class based on the date#}
+                    {#            console.log('changing adjusmnent bg -> ' + adjustment.status);#}
+                    {#            switch (adjustment.status) {#}
+                    {#                case 'Nieobecnosc':#}
+                    {#                    adjustmentElement.classList.add('bg-danger-light');#}
+                    {#                    break;#}
+                    {#                case 'Odwolana - nauczyciel':#}
+                    {#                    adjustmentElement.classList.add('bg-orange-light');#}
+                    {#                    break;#}
+                    {#                case 'Odwolana - 24h przed':#}
+                    {#                    adjustmentElement.classList.add('bg-orange-light');#}
+                    {#                    break;#}
+                    {#                case 'Zaplanowana':#}
+                    {#                    adjustmentElement.classList.add('bg-success-light');#}
+                    {#                    break;#}
+                    {#            }#}
+                    {##}
+                    {##}
+                    {#            // Add the adjustment element to the correct weekday container#}
+                    {#            console.log('adjustmentDate.getDay() -> ' + adjustmentDate.getDay());#}
+                    {#            let adjustmentWeekdayIndex = adjustmentDate.getDay()#}
+                    {#            if (adjustmentWeekdayIndex === 0) {#}
+                    {#                adjustmentWeekdayIndex = 6#}
+                    {#            } else {#}
+                    {#                adjustmentWeekdayIndex--;#}
+                    {#            }#}
+                    {#            console.log('adjustmentWeekdayIndex -> ' + adjustmentWeekdayIndex);#}
+                    {#            var weekdayContainer = document.querySelectorAll('.day')[adjustmentWeekdayIndex]; // Get the weekday container using the adjustment date#}
+                    {#            weekdayContainer.querySelector('.slots').appendChild(adjustmentElement);#}
+                    {##}
+                    {#            console.log('Added adjustment:', adjustment);#}
+                    {#        }#}
+                    {#    });#}
+                    {##}
+                }
+                ;
             }
 
             if (!startDate) {

@@ -3,41 +3,43 @@ from django.views.decorators.csrf import csrf_exempt
 from ..forms import LessonCreateForm, EditLessonForm
 from ..lesson_handler import update_lesson
 from ..models import Event
-from apps.crm.templatetags.crm_tags import get_status_color
 
 
 def get_student_group_lessons(request, record_id):
     status = False
     selected_year = int(request.GET.get('selected_year',  dj_timezone.localtime(dj_timezone.now()).year))
     lessons_count = None
+    attendance_list_by_event = {}
     if get_model_by_prefix(record_id[:3]) == 'Student':
-        # lessons_count = count_lessons_for_student_in_year(record_id, selected_year)
         lessons_count = get_student_lessons_in_year(record_id, selected_year)
     elif get_model_by_prefix(record_id[:3]) == 'Group':
-        lessons_count = count_lessons_for_group_in_year(record_id, selected_year)
+        lessons_count = get_group_lessons_in_year(record_id, selected_year)
+        attendance_list = AttendanceList.objects.filter(group_id=record_id ,event__event_date__year=selected_year)
+        for attendance in attendance_list:
+            attendance_list_by_event[attendance.event_id] = attendance.id
 
     lessons_count_serializable = {}
     for key, value in lessons_count.items():
-        lessons = {k: v.to_dict() for k, v in value['Lessons'].items()}
+        lessons = {k: v for k, v in value['Lessons'].items()}
         lessons_count_serializable[key] = {
             LessonStatutes.ZAPLANOWANA: value[LessonStatutes.ZAPLANOWANA],
-            LessonStatutes.NIEOBECNOSC: value[LessonStatutes.NIEOBECNOSC],
             LessonStatutes.ODWOLANA_NAUCZYCIEL: value[LessonStatutes.ODWOLANA_NAUCZYCIEL],
-            LessonStatutes.ODWOLANA_24H_PRZED: value[LessonStatutes.ODWOLANA_24H_PRZED],
             'Lessons': lessons
         }
+        if  get_model_by_prefix(record_id[:3]) == 'Student':
+            lessons_count_serializable[key][LessonStatutes.NIEOBECNOSC] = value[LessonStatutes.NIEOBECNOSC],
+            lessons_count_serializable[key][LessonStatutes.ODWOLANA_24H_PRZED] = value[LessonStatutes.ODWOLANA_24H_PRZED],
     status = True
 
-    return JsonResponse({'status': status, 'lessons': lessons_count_serializable})
+    return JsonResponse({'status': status, 'lessons': lessons_count_serializable, 'attendance_lists': attendance_list_by_event})
 
 
 @csrf_exempt
+@check_permission('crm.add_lessondefinition')
 def create_lesson(request):
     if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         form = LessonCreateForm(request.POST)
         if form.is_valid():
-            print('VIEW create_lesson')
-            print('forms fields -> ' + str(form.fields))
             lesson = form.save()
             return JsonResponse({
                 'status': 'success',
@@ -52,16 +54,11 @@ def create_lesson(request):
 
 @csrf_exempt
 def edit_lesson(request):
-    print('start')
     if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        print('Headers OK')
-
         event_id = request.POST.get('event_id')
 
         try:
             event = Event.objects.get(pk=event_id)
-            print('event event_date', event.event_date)
-            print('event start_time', event.start_time)
         except Event.DoesNotExist:
             return JsonResponse({'status': 'error', 'message': 'Lekcja nie istnieje'})
 
@@ -75,8 +72,6 @@ def edit_lesson(request):
 
         if form.is_valid():
             edit_mode = form.cleaned_data['edit_mode']
-            print('event event_date', event.event_date)
-            print('event start_time', event.start_time)
             update_lesson(event, form, edit_mode, old_dates)
             return JsonResponse({
                 'status': 'success',
@@ -85,7 +80,6 @@ def edit_lesson(request):
         else:
             return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
 
-    print('zle')
     return JsonResponse({'status': 'error', 'message': 'Nieprawidłowe żądanie.'}, status=400)
 
 
@@ -105,6 +99,6 @@ def update_status(request):
                 'message': 'Status lekcji zaktualizowany pomyślnie.',
                 'status_display': event.get_status_display()
             })
-        except Lesson.DoesNotExist:
-            return JsonResponse({'status': False, 'message': 'Event nie znaleziony'})
+        except Event.DoesNotExist:
+            return JsonResponse({'status': False, 'message': 'Lekcja nie znaleziona'})
     return JsonResponse({'status': False, 'message': 'Niepoprawne zawołanie'})

@@ -1,3 +1,5 @@
+{% load crm_tags %}
+
 <div class="modal fade" id="createEventModalCenter" tabindex="-1" role="dialog"
      aria-labelledby="createEventModalCenterTitle" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
@@ -48,8 +50,8 @@
                         </div>
 
                         <div class="form-group col-sm-6">
-                            <label for="studentForm_cancelForm">Student <span class="text-danger">*</span></label>
-                            <input class="form-control" id="studentForm_cancelForm"
+                            <label for="record_createLesson">{% if record.id|get_model_name_by_id == 'Student' %}Student{% else %}Grupa{% endif %}<span class="text-danger">*</span></label>
+                            <input class="form-control" id="record_createLesson"
                                    value="{{ record.get_full_name }}" required readonly="">
                         </div>
 
@@ -80,7 +82,7 @@
 
                         <div class="form-group col-sm-6" style="display: none;">
                             <label>
-                                <input name="student" class="form-control" value="{{ record.id }}" required readonly="">
+                                <input name="{% if record.id|get_model_name_by_id == 'Student' %}student{% else %}group{% endif %}" class="form-control" value="{{ record.id }}" required readonly="">
                             </label>
                         </div>
                     </div>

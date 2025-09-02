@@ -2,7 +2,7 @@ from django.shortcuts import render
 from .middleware.login_required_middleware import login_exempt
 from .forms import UserCreationForm, LoginForm, UserAvatarForm
 from .models import User
-from apps.crm.models import Lesson, Student
+from apps.crm.models import Student, Event
 from django.contrib.auth import authenticate, login, logout
 from time import sleep
 from django.shortcuts import render, redirect
@@ -55,17 +55,20 @@ class UserPage(View):
     @staticmethod
     def get(request, *args, **kwargs):
         context = {}
+        user_id = kwargs.get('user_id')
 
         try:
-            user_id = kwargs.get('user_id')
             user = User.objects.get(pk=user_id)
             context['user'] = user
 
-            lessons_with_teacher = Lesson.objects.filter(teacher_id=user_id)
-            student_ids = lessons_with_teacher.values_list('student_id', flat=True).distinct()
+            lessons_with_teacher = Event.objects.filter(teacher__id=user_id)
+            student_ids = lessons_with_teacher.values_list('lesson_definition__student_id', flat=True).distinct()
             students = Student.objects.filter(id__in=student_ids).order_by('first_name')
             context['students'] = students
 
+        except User.DoesNotExist as e:
+            messages.error(request, 'Nie znaleziono uzytkownika z takim id: {user_id}'.format(user_id=user_id))
+            return redirect("/user")
         except Exception as e:
             messages.error(request, 'Wystąpił błąd: {e}'.format(e=e))
             return redirect("/user")
@@ -102,4 +105,4 @@ class UserPage(View):
 
         except Exception as e:
             messages.error(request, f"Bład podczas zapisywania zdjęcia: {e}")
-        return redirect(f'/user/{request.user.id}')
+        return redirect(f'/user/view/{request.user.id}')

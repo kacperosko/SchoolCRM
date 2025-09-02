@@ -8,114 +8,51 @@ def all_students(request):
     return render(request, "crm/students.html", context)
 
 
-class StudentPage(View):
-    @staticmethod
-    @check_permission('crm.view_student')
-    def post(request, *args, **kwargs):
-        student_id = kwargs['student_id']
-        tab_name = request.GET.get("tab", "Details")
-        opened_months = request.GET.get("opened_months", "")
-        selected_year = request.GET.get("selected_year", datetime.now().year)
-        if request.method == 'POST':
-            if 'edit_form_submit' in request.POST:
-                form = LessonModuleForm(request.POST)
-                if form.is_valid():
+@check_permission('crm.view_student')
+def view_student(request, student_id):
+    context = {}
 
-                    create_lesson_adjustment(form, is_edit=form.cleaned_data['isAdjustment'])
+    tab_name = request.GET.get("tab", "Details")
+    opened_months = request.GET.get("opened_months", "")
+    selected_year = int(request.GET.get("selected_year", datetime.now().year))
 
-                    lesson_date = dj_timezone.make_aware(
-                        datetime.combine(form.cleaned_data['lessonDate'], datetime.min.time()))
+    request.GET = request.GET.copy()
+    request.GET.update({
+        'tab': tab_name,
+        'opened_months': opened_months,
+        'selected_year': selected_year,
+    })
+    try:
+        student = Student.objects.get(id=student_id)
 
-                    messages.success(request, 'Zaktualizowano lekcje pomy\u015Blnie!')
+        student_persons = StudentPerson.objects.filter(student_id=student_id)
 
-                else:
-                    messages.error(request, f'B\u0142\u0105d podczas zapisywania: {form.errors}')
-                return redirect(
-                    f'/student/{student_id}?tab={tab_name}&opened_months={opened_months}&selected_year={selected_year}')
-            elif 'create_lesson_form_submit' in request.POST:
-                form = LessonCreateForm(request.POST)
-                if form.is_valid():
-                    start_time = form.cleaned_data['startTime']
-                    lesson_duration = int(form.cleaned_data['lessonDuration'])
-                    lesson_date = form.cleaned_data['lessonDate']
-                    repeat = form.cleaned_data['repeat']
-                    is_series = repeat != 'never'
-                    description = form.cleaned_data['description']
-                    teacher_id = form.cleaned_data['teacher']
-                    location_id = form.cleaned_data['location']
-                    end_series = None
-                    if is_series:
-                        end_series = form.cleaned_data['end_series']
+        model_name = get_model_by_prefix(student.id[:3])
+        user_watch_record = WatchRecord.objects.filter(
+            user=request.user, content_type__model=model_name.lower(), object_id=student_id
+        ).first()
+        invoices = Invoice.objects.filter(student_id=student_id).order_by('-invoice_date')[:10]
 
-                    start_datetime = dj_timezone.make_aware(datetime.combine(lesson_date, start_time),
-                                                            dj_timezone.get_current_timezone())
-
-                    lesson = LessonDefinition.objects.create(student_id=student_id, start_time=start_time,
-                                                             duration=lesson_duration, description=description,
-                                                             is_series=is_series, teacher_id=teacher_id,
-                                                             location_id=location_id, series_end_date=end_series,
-                                                             lesson_date=lesson_date)
-
-                    lesson_msg = 'Seria lekcji' if is_series else 'Lekcja'
-                    messages.success(request, f'{lesson_msg} dodana pomy\u015Blnie!')
-                else:
-                    messages.error(request, f'B\u0142ad podczas zapisywania: {form.errors}')
-                return redirect(
-                    f'/student/{student_id}?tab={tab_name}&opened_months={opened_months}&selected_year={selected_year}')
-            else:
-                messages.error(request, f'Nieobs\u0142ugiwany formularz: {request.POST}')
-                return render(request, "crm/student-page.html", context)
-
-    @staticmethod
-    @check_permission('crm.view_student')
-    def get(request, *args, **kwargs):
-        context = {}
-
-        student_id = kwargs.get('student_id')
-        tab_name = request.GET.get("tab", "Details")
-        opened_months = request.GET.get("opened_months", "")
-        selected_year = int(request.GET.get("selected_year", datetime.now().year))
-
-        request.GET = request.GET.copy()
-        request.GET.update({
-            'tab': tab_name,
-            'opened_months': opened_months,
-            'selected_year': selected_year,
+        notes = student.notes.all().order_by('-created_at')
+        history = student.history.all().order_by('-changed_at')[:10]
+        context.update({
+            'record': student,
+            'notes': notes,
+            'field_history': history,
+            'student_persons': student_persons,
+            'watch_record': user_watch_record,
+            'users': User.objects.all(),
+            'locations': Location.objects.all(),
+            'user': request.user,
+            'invoices': invoices,
         })
+    except Student.DoesNotExist:
+        messages.error(request, f'Nie znaleziono Studenta z id {student_id}')
+        return redirect('/student')
+    except Exception as e:
+        return custom_404(request, e)
 
-        try:
-            student = Student.objects.get(id=student_id)
-
-            student_persons = StudentPerson.objects.filter(student_id=student_id)
-
-            model_name = get_model_by_prefix(student.id[:3])
-            user_watch_record = WatchRecord.objects.filter(
-                user=request.user, content_type__model=model_name.lower(), object_id=student_id
-            ).first()
-
-            invoices = Invoice.objects.filter(student_id=student_id).order_by('-invoice_date')[:10]
-
-            notes = student.notes.all().order_by('-created_at')
-            history = student.history.all().order_by('-changed_at')[:10]
-            context.update({
-                'record': student,
-                'notes': notes,
-                'field_history': history,
-                'student_persons': student_persons,
-                'watch_record': user_watch_record,
-                'users': User.objects.all(),
-                'locations': Location.objects.all(),
-                'user': request.user,
-                'invoices': invoices,
-            })
-        except Student.DoesNotExist as e:
-            messages.error(request, f'Nie znaleziono Studenta z id {student_id}')
-            return redirect('/student')
-        except Exception as e:
-            # messages.error(request, f'StudentPage exception: {e}')
-            return custom_404(request, e)
-
-        return render(request, "crm/student-page.html", context)
+    return render(request, "crm/student-page.html", context)
 
 
 class StudentPersonCreate(View):
@@ -166,3 +103,26 @@ class StudentPersonCreate(View):
             return custom_404(request, e)
 
         return render(request, "crm/student-person-create.html", context)
+
+
+@check_permission('crm.view_invoice')
+def view_invoice(request, invoice_id):
+    context = {}
+
+    request.GET = request.GET.copy()
+    request.GET.update({
+        'tab': "Details",
+    })
+
+    try:
+        invoice = Invoice.objects.get(id=invoice_id)
+        invoice.invoiceitem_set.all()
+
+        context.update({
+            'record': invoice
+        })
+
+    except Invoice.DoesNotExist as e:
+        return custom_404(request, f"Nie znaleziono faktury z takim id: {invoice_id}")
+
+    return render(request, "crm/invoice-page.html", context)
