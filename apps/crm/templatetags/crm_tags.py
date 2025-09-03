@@ -3,6 +3,8 @@ import json
 from django.utils.safestring import mark_safe
 import calendar
 from apps.service_helper import get_model_by_prefix
+from ..models import LessonStatutes
+import re
 
 register = template.Library()
 WEEKDAYS_NAMES = ['Poniedzia\u0142ek', 'Wtorek', '\u015Aroda', 'Czwartek', 'Pi\u0105tek', 'Sobota', 'Niedziela']
@@ -104,3 +106,32 @@ def get_model_name_by_id(model_id):
 def get_first_segment(value):
     segments = value.split('/')
     return segments[1] if len(segments) > 1 else ''
+
+
+@register.filter(name='get_status_color')
+def get_status_color(status):
+    if status == LessonStatutes.NIEOBECNOSC:
+        return 'bg-danger-light text-danger'
+    if status == LessonStatutes.ZAPLANOWANA:
+        return 'bg-primary-light text-primary'
+    if status == LessonStatutes.ODWOLANA_NAUCZYCIEL or status == LessonStatutes.ODWOLANA_24H_PRZED:
+        return 'bg-warning-light text-warning'
+
+
+@register.filter(name="phone_format")
+def phone_format(value: str):
+    if not value:
+        return ""
+
+    cleaned = re.sub(r"[^\d+]", "", str(value))
+
+    if cleaned.startswith("+48") and len(cleaned) == 12:
+        return f"+48 {cleaned[3:6]} {cleaned[6:9]} {cleaned[9:]}"
+
+    if cleaned.startswith("48") and len(cleaned) == 11:
+        return f"+48 {cleaned[2:5]} {cleaned[5:8]} {cleaned[8:]}"
+
+    if len(cleaned) == 9:
+        return f"{cleaned[0:3]} {cleaned[3:6]} {cleaned[6:]}"
+
+    return cleaned

@@ -1,0 +1,145 @@
+{% load crm_tags %}
+
+<div class="modal fade" id="createEventModalCenter" tabindex="-1" role="dialog"
+     aria-labelledby="createEventModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createEventModalCenterTitle">Dodawanie nowej lekcji</h5>
+                <button id="closeCreateLessonModal" type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form method="post" name="create_form" id="create_lesson_form" data-url="{% url 'crm_create_lesson' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="row align-items-center">
+                        <div class="form-group col-sm-6">
+                            <label for="starTime_createLesson">Godzina Rozpoczęcia <span
+                                    class="text-danger">*</span></label>
+                            <input name="start_time" type="time" class="form-control" id="starTime_createLesson"
+                                   value="" style="line-height: 20px;" required>
+                        </div>
+
+                        <div class="form-group col-sm-6">
+                            <label for="lessonDuration_createLesson">Czas trwania <span
+                                    class="text-danger">*</span></label>
+                            <select name="duration" class="form-control" id="lessonDuration_createLesson"
+                                    required>
+                                <option value="30">30 min</option>
+                                <option value="45">45 min</option>
+                                <option value="60" selected>60 min</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group col-sm-6">
+                            <label for="lessonDate_createLesson">Data Lekcji <span class="text-danger">*</span></label>
+                            <input name="lesson_date" type="date" class="form-control" id="lessonDate_createLesson"
+                                   value="" style="line-height: 20px;" required>
+                        </div>
+
+                        <div class="form-group col-sm-6">
+                            <label for="repeating_createLesson">Powtarzanie <span class="text-danger">*</span></label>
+                            <input name="is_series" type="checkbox" class="form-control" id="repeating_createLesson" style="line-height: 20px;" required>
+                        </div>
+
+                        <div class="form-group col-sm-6">
+                            <label for="description_createLesson">Opis <span class="text-danger">*</span></label>
+                            <input name="description" type="text" class="form-control" id="description_createLesson"
+                                   value="" style="line-height: 20px;" required>
+                        </div>
+
+                        <div class="form-group col-sm-6">
+                            <label for="record_createLesson">{% if record.id|get_model_name_by_id == 'Student' %}Student{% else %}Grupa{% endif %}<span class="text-danger">*</span></label>
+                            <input class="form-control" id="record_createLesson"
+                                   value="{{ record.get_full_name }}" required readonly="">
+                        </div>
+
+                        <div class="form-group col-sm-6">
+                            <label for="teacher_createLesson">Nauczyciel <span class="text-danger">*</span></label>
+                            <select class="form-control" id="teacher_createLesson" name="teacher" required>
+                                {% for user in users %}
+                                    <option value="{{ user.id }}">{{ user.get_full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group col-sm-6">
+                            <label for="location_createLesson">Lokalizacja <span class="text-danger">*</span></label>
+                            <select class="form-control" id="location_createLesson" name="location" required>
+                                {% for location in locations %}
+                                    <option value="{{ location.id }}">{{ location.get_full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group col-sm-6 d-none" id="lessonDate_endSeries_div">
+                            <label for="lessonDate_endSeries">Koniec Serii</label>
+                            <input name="series_end_date" type="date" class="form-control" id="lessonDate_endSeries"
+                                   value="" style="line-height: 20px;" data-toggle="tooltip" data-placement="right"
+                                   title="Podaj datę ostatniej lekcji z serii. Może być puste">
+                        </div>
+
+                        <div class="form-group col-sm-6" style="display: none;">
+                            <label>
+                                <input name="{% if record.id|get_model_name_by_id == 'Student' %}student{% else %}group{% endif %}" class="form-control" value="{{ record.id }}" required readonly="">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Anuluj</button>
+                    <button type="button" id="create_lesson_form_btn" class="btn btn-primary">Utwórz lekcję</button>
+                </div>
+            </form>
+
+            <div id="message" class="mt-3"></div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('create_lesson_form');
+        const submitButton = document.getElementById('create_lesson_form_btn');
+        const messageDiv = document.getElementById('message');
+        const close_modal_btn = document.getElementById('closeCreateLessonModal');
+
+        submitButton.addEventListener('click', function () {
+            console.log('SUBMIT')
+            const url = form.getAttribute('data-url');
+            const formData = new FormData(form);
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        close_modal_btn.click();
+                        handleResponse(data);
+                        get_lessons('{{ record.id }}');
+                        form.reset();
+                        messageDiv.innerHTML = '';
+                    } else {
+                        let errors = '';
+                        for (const [key, value] of Object.entries(data.errors)) {
+                            errors += `<p>${key}: ${value.join(', ')}</p>`;
+                        }
+                        messageDiv.innerHTML = `<div class="alert alert-danger">${errors}</div>`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    messageDiv.innerHTML = `<div class="alert alert-danger">Wystąpił błąd. Spróbuj ponownie.</div>`;
+                });
+        });
+    });
+</script>

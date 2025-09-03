@@ -1,9 +1,8 @@
 const alertStack = [];
 
 function handleResponse(response) {
-    const alertContainer = document.getElementById('alertContainer');
     let alertHTML = '';
-    if (response.status === true) {
+    if (response.status === true || response.status === 'success') {
         alertHTML = `
             <div class="alert text-white bg-success" role="alert">
                 <div class="iq-alert-text">` + response.message + `</div>
@@ -17,6 +16,16 @@ function handleResponse(response) {
         `;
     }
 
+    alertStack.push(alertHTML);
+    renderAlerts();
+}
+
+function addInformAlert(message) {
+    let alertHTML = `
+            <div class="alert text-white bg-info" role="alert">
+                <div class="iq-alert-text">` + message + `</div>
+            </div>
+        `;
     alertStack.push(alertHTML);
     renderAlerts();
 }

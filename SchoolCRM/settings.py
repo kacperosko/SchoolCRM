@@ -24,11 +24,6 @@ SESSION_SAVE_EVERY_REQUEST = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 
-SECURE_HSTS_SECONDS = 31536000  # 1 year
-SECURE_SSL_REDIRECT = True
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
-
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -61,14 +56,10 @@ MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
 ROOT_URLCONF = 'SchoolCRM.urls'
 
 # Email sending configuration
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
-DEFAULT_FROM_EMAIL = 'biuro@warsztat-muzyczny.kacperosko.hmcloud.pl'
-EMAIL_HOST = 'mx1.hitme.net.pl'
-EMAIL_HOST_PORT = 465
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'biuro@warsztat-muzyczny.kacperosko.hmcloud.pl'
-EMAIL_HOST_PASSWORD = 'K@cper123!'
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+DEFAULT_FROM_EMAIL = 'biuro@system-crm.pl'
+
 
 
 TEMPLATE_DIR = os.path.join(CORE_DIR, "templates")  # ROOT dir for _templates
@@ -91,16 +82,18 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'SchoolCRM.wsgi.application'
 
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'warsztat6_warsztat_muzyczny',
-        'USER': 'warsztat6_warsztat_muzyczny',
-        'PASSWORD': 'fygdeX-8worwu-tifdov',
-        'HOST': 'localhost',
-        'PORT': '',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('DB_NAME', 'crmdb'),
+        'USER': os.environ.get('DB_USER', 'crmuser'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'crmpassword'),
+        'HOST': os.environ.get('DB_HOST', 'db'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
     }
 }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -138,9 +131,8 @@ USE_I18N = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 STATIC_URL = '/static/'
-STATIC_ROOT = '/home/warsztat6/domains/warsztat-muzyczny.kacperosko.hmcloud.pl/warsztat-crm/static'
-MEDIA_ROOT = '/home/warsztat6/domains/warsztat-muzyczny.kacperosko.hmcloud.pl/warsztat-crm//media'
-
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, '')
 
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'apps/static'),
@@ -150,3 +142,70 @@ STATICFILES_DIRS = (
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+GROUP_PERMISSIONS = {
+    "Nauczyciel": [
+        "crm.view_attendancelist",
+        "crm.add_attendancelist",
+        "crm.view_group",
+        "crm.view_lessondefinition",
+        "crm.view_event",
+        "crm.view_location",
+        "crm.view_note",
+        "crm.change_note",
+        "crm.add_note",
+        "crm.view_person",
+        "crm.view_student",
+    ],
+    "Kierownik": [
+        "crm.view_attendancelist",
+        "crm.change_attendancelist",
+        "crm.add_attendancelist",
+        "crm.delete_attendancelist",
+        "crm.view_group",
+        "crm.change_group",
+        "crm.add_group",
+        "crm.delete_group",
+        "crm.view_groupstudent",
+        "crm.change_groupstudent",
+        "crm.add_groupstudent",
+        "crm.delete_groupstudent",
+        "crm.view_lessondefinition",
+        "crm.change_lessondefinition",
+        "crm.add_lessondefinition",
+        "crm.delete_lessondefinition",
+        "crm.view_event",
+        "crm.change_event",
+        "crm.add_event",
+        "crm.delete_event",
+        "crm.view_location",
+        "crm.change_location",
+        "crm.add_location",
+        "crm.delete_location",
+        "crm.view_note",
+        "crm.change_note",
+        "crm.add_note",
+        "crm.delete_note",
+        "crm.view_person",
+        "crm.change_person",
+        "crm.add_person",
+        "crm.delete_person",
+        "crm.view_student",
+        "crm.change_student",
+        "crm.add_student",
+        "crm.delete_student",
+        "crm.view_invoice",
+        "crm.change_invoice",
+        "crm.add_invoice",
+        "crm.delete_invoice",
+        "crm.view_invoiceitem",
+        "crm.change_invoiceitem",
+        "crm.add_invoiceitem",
+        "crm.delete_invoiceitem",
+        "auth.view_user",
+        "auth.change_user",
+        "auth.add_user"
+    ],
+    "Administrator": [] # Po wybraniu roli administratora Django automatycznie ustawia flage is_superuser nadajaca wymagane uprawnienia
+}

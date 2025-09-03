@@ -30,5 +30,5 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-handler404 = 'apps.crm.views.custom_404'
-handler500 = 'apps.crm.views.custom_500'
+handler404 = 'apps.crm.views.views_general.custom_404'
+handler500 = 'apps.crm.views.views_general.custom_500'

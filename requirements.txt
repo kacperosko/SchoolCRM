@@ -1,5 +1,6 @@
 Django~=4.2.4
 Babel~=2.15.0
 pymysql
-mysqlclient
 pillow
+faker
+psycopg2-binary

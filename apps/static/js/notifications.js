@@ -38,7 +38,7 @@ function fetchNotifications() {
                                                   <svg xmlns="http://www.w3.org/2000/svg" class="text-secondary mr-1" width="15" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                                   </svg>
-                                              ${notification.created_at}</small>
+                                              ${notification.created_at} temu</small>
                                           </p>
                                       </div>
                                      </div>                                                
@@ -46,9 +46,9 @@ function fetchNotifications() {
                             `;
                     notificationContainer.append(notificationElement);
                 });
-                if (max_pages === 1){
+                if (max_pages === 1) {
                     notificationShowMore.remove();
-                }else{
+                } else {
                     notification_page++; // increase to go on the next page of notifications
                 }
 
@@ -58,9 +58,13 @@ function fetchNotifications() {
                     const notificationHref = $(this).attr('notification-href');
                     $('#notificationRead_' + notificationId).hide();
                     if (isRead !== 'true') {
-                        markNotificationAsRead(notificationId);
-                    }
-                    if (notificationHref){
+                        markNotificationAsRead(notificationId, () => {
+                            if (notificationHref) {
+                                location.href = notificationHref;
+                            }
+                        });
+                    } else if (notificationHref) {
+                        // już przeczytane, od razu przekieruj
                         location.href = notificationHref;
                     }
                 });
@@ -76,20 +80,17 @@ function fetchNotifications() {
         },
         error: function (error) {
             console.error('Error fetching notifications:');
-            handleResponse({message:'B\u0142\u0105d podczas pobierania powiadomie\u0144', status:false})
+            handleResponse({message: 'B\u0142\u0105d podczas pobierania powiadomie\u0144', status: false})
         }
     });
 }
 
-function markNotificationAsRead(notificationId) {
+function markNotificationAsRead(notificationId, callback) {
     $.ajax({
         data: {
             csrfmiddlewaretoken: $(csrf_token).val(),
         },
         dataType: 'json',
-        error: function (error) {
-            console.error('Error marking notification as read:', error);
-        },
         success: function (data) {
             if (data.success) {
                 const notification_count = $('#notification_count');
@@ -100,6 +101,11 @@ function markNotificationAsRead(notificationId) {
             } else {
                 alert('Error marking notification as read.');
             }
+            if (callback) callback();
+        },
+        error: function (error) {
+            console.error('Error marking notification as read:', error);
+            if (callback) callback();
         },
         type: 'POST',
         url: `/crm_api/notifications/read/${notificationId}/`

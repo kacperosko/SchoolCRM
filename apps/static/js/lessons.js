@@ -1,9 +1,35 @@
 const lessons_tbody = $("#lessons_tbody");
 let openedMonths = [];
+let lessons_data = new Map();
+
+LESSONS_STATUTES = {
+    ZAPLANOWANA: 'zaplanowana',
+    NIEOBECNOSC: 'nieobecnosc',
+    ODWOLANA_NAUCZYCIEL: 'odwolana_nauczyciel',
+    ODWOLANA_24H_PRZED: 'odwolana_24h_przed',
+}
 
 function isGroupPage() {
     const pathSegments = window.location.pathname.split('/').filter(Boolean);  // Podziel URL na fragmenty
-    return pathSegments[0] === 'group';  // Sprawdź, czy pierwszy fragment to 'group'
+    return pathSegments[0] === 'group';  // Sprawdzenie, czy pierwszy aktualna strona to grupa
+}
+
+function expandOpenedMonths() {
+    let urlParams = new URLSearchParams(window.location.search);
+    openedMonths = urlParams.get('opened_months');
+    if (!openedMonths) {
+        openedMonths = [];
+        return
+    }
+    console.log('listener openedMonths ' + openedMonths)
+    openedMonths = openedMonths.split(',');
+    openedMonths.forEach(function (monthNumber) {
+        let collapsibleDiv = document.getElementById('collaps_' + monthNumber);
+        console.log('listener collapsibleDiv ' + collapsibleDiv)
+        if (collapsibleDiv) {
+            collapsibleDiv.classList.add('show');
+        }
+    });
 }
 
 function get_lessons(record_id) {
@@ -19,13 +45,9 @@ function get_lessons(record_id) {
 
                 const tableContainer = $('#table-container');
                 tableContainer.empty();
-                tableContainer.html(generateTable(response.lessons));
+                tableContainer.html(generateTable(response.lessons, response.attendance_lists));
 
                 open_months_url();
-
-                if (isGroupPage()) {
-                    modifyTable();
-                }
             } else {
                 handleResponse(response);
             }
@@ -41,8 +63,10 @@ function get_lessons(record_id) {
 }
 
 
-function generateTable(data) {
+function generateTable(data, attendanceLists) {
     // Creating table
+    lessons_data = new Map();
+
     var table = document.createElement('table');
     table.classList.add('table', 'table-bordered', 'table-striped');
     table.id = "lesson_table";
@@ -51,7 +75,10 @@ function generateTable(data) {
     var headerRow = document.createElement('tr');
 
     // Creating header
-    var headers = ['Miesi\u0105c', 'Zaplanowane', 'Odwo\u0142ane - nauczyciel', 'Odwo\u0142ane - 24h przed', 'Nieobecne'];
+    var headers = ['Miesi\u0105c', 'Zaplanowane', 'Odwo\u0142ane - nauczyciel'];
+    if (!isGroupPage()) {
+        headers.push('Odwo\u0142ane - 24h przed', 'Nieobecne')
+    }
     headers.forEach(function (headerText) {
         var th = document.createElement('th');
         th.textContent = headerText;
@@ -67,6 +94,8 @@ function generateTable(data) {
 
     // Iterating all months and statutes (e.g. 1: {Cancelled: 1, Planned: 0}, 2: : {Cancelled: 0, Planned: 0} 3: ....)
     Object.entries(data).forEach(function ([month_number, statutes]) {
+
+
         var row = document.createElement('tr');
 
         var monthCell = document.createElement('th');
@@ -93,24 +122,26 @@ function generateTable(data) {
 
         var zaplanowaneCell = document.createElement('td');
         zaplanowaneCell.classList.add('text-center');
-        zaplanowaneCell.textContent = statutes['Zaplanowana'];
+        zaplanowaneCell.textContent = statutes[LESSONS_STATUTES.ZAPLANOWANA];
         row.appendChild(zaplanowaneCell);
 
 
         var odwolaneTeacherCell = document.createElement('td');
         odwolaneTeacherCell.classList.add('text-center');
-        odwolaneTeacherCell.textContent = statutes['Odwolana - nauczyciel'];
+        odwolaneTeacherCell.textContent = statutes[LESSONS_STATUTES.ODWOLANA_NAUCZYCIEL];
         row.appendChild(odwolaneTeacherCell);
 
-        var odwolane24hCell = document.createElement('td');
-        odwolane24hCell.classList.add('text-center', 'cancelled-24h-cells');
-        odwolane24hCell.textContent = statutes["Odwolana - 24h przed"];
-        row.appendChild(odwolane24hCell);
+        if (!isGroupPage()) {
+            var odwolane24hCell = document.createElement('td');
+            odwolane24hCell.classList.add('text-center', 'cancelled-24h-cells');
+            odwolane24hCell.textContent = statutes[LESSONS_STATUTES.ODWOLANA_24H_PRZED];
+            row.appendChild(odwolane24hCell);
 
-        var canceledeCell = document.createElement('td');
-        canceledeCell.classList.add('text-warning', 'text-center', 'cancelled-cell');
-        canceledeCell.textContent = statutes['Nieobecnosc'];
-        row.appendChild(canceledeCell);
+            var canceledeCell = document.createElement('td');
+            canceledeCell.classList.add('text-warning', 'text-center', 'cancelled-cell');
+            canceledeCell.textContent = statutes[LESSONS_STATUTES.NIEOBECNOSC];
+            row.appendChild(canceledeCell);
+        }
 
         tbody.appendChild(row);
 
@@ -131,21 +162,24 @@ function generateTable(data) {
 
         if (!jQuery.isEmptyObject(statutes['Lessons'])) {
             Object.entries(statutes['Lessons']).forEach(function ([key, lesson]) {
+
+                lessons_data.set(lesson.lesson_id, lesson);
+
                 const lessonRow = document.createElement('tr');
 
                 const lessonDateCell = document.createElement('td');
                 lessonDateCell.textContent = lesson['start_date'] + ' (' + lesson['weekday'] + ')';
 
-                if (lesson['original_date'] !== lesson['start_date'] && lesson['is_adjustment']) {
+                if (lesson['original_date'] !== lesson['start_date']) {
                     lessonDateCell.textContent += ' (przeniesione z ' + lesson['original_date'] + ' ' + lesson['original_time'] + ')';
-                } else if (lesson['original_time'] !== lesson['start_time'] && lesson['is_adjustment']) {
+                } else if (lesson['original_time'] !== lesson['start_time']) {
                     lessonDateCell.textContent += ' (przeniesione z ' + lesson['original_time'] + ')';
                 }
 
-                if (lesson.status === "Zaplanowana") {
+                if (lesson.status === "zaplanowana") {
                     lessonRow.classList.add("bg-primary-light");
                 } else {
-                    if (lesson.status === 'Nieobecnosc') {
+                    if (lesson.status === 'nieobecnosc') {
                         lessonRow.classList.add("bg-danger-light");
                     } else {
                         lessonRow.classList.add("bg-orange-light");
@@ -163,7 +197,7 @@ function generateTable(data) {
                 lessonRow.appendChild(lessonDescriptionCell);
 
                 const teacherCell = document.createElement('td');
-                teacherCell.classList.add('d-flex');
+                // teacherCell.classList.add('d-flex');
                 const teacherSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
                 const teacherPath = document.createElementNS(
                     'http://www.w3.org/2000/svg',
@@ -225,21 +259,81 @@ function generateTable(data) {
                 lessonRow.appendChild(locationCell);
 
                 var lessonStatusCell = document.createElement('td');
-                lessonStatusCell.textContent = lesson['status'];
+                lessonStatusCell.textContent = lesson.status_label;
                 lessonRow.appendChild(lessonStatusCell);
 
                 const editCell = document.createElement('td');
+                // teacherCell.classList.add('d-flex');
+                const editSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                const editPath = document.createElementNS(
+                    'http://www.w3.org/2000/svg',
+                    'path'
+                );
+                editSvg.setAttribute('fill', 'none');
+                editSvg.setAttribute('viewBox', '0 0 24 24');
+                editSvg.setAttribute('stroke', 'currentColor');
+                editSvg.setAttribute('stroke-width', '2');
+                editSvg.classList.add('mr-1');
+                editSvg.setAttribute('width', '18px');
+
+                editPath.setAttribute('d', 'M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z');
+                editPath.setAttribute('stroke-linecap', 'round');
+                editPath.setAttribute('stroke-linejoin', 'round');
+
+                editSvg.appendChild(editPath);
+
                 const editLink = document.createElement('a');
-                editLink.text = 'Edytuj'
-                editLink.className = 'bg-blue text-white p-1 rounded-sm font-size-12 menu-button text-center';
+                editLink.appendChild(editSvg);
                 editLink.type = 'button';
-                editLink.setAttribute('data-toggle', 'modal');
-                editLink.setAttribute('data-target', '#editEventModalCenter');
-                editLink.setAttribute("onclick", `modifyEvent(lesson_schedule_id='${lesson.lesson_id}', startTime='${lesson.start_time}', endTime='${lesson.end_time}', lessonDate='${lesson.start_date}', studentName='', status='${lesson.status}', isAdjustment=${lesson.is_adjustment});`);
+                editLink.setAttribute("onclick", `openEditLessonModal(event_id='${lesson.lesson_id}', startTime='${lesson.start_time}', endTime='${lesson.end_time}', lessonDate='${lesson.start_date}', studentName='', status='${lesson.status}');`);
 
 
                 editCell.appendChild(editLink);
                 lessonRow.appendChild(editCell);
+
+                // ATTENDANCE LIST -tylko dla grup
+                if (isGroupPage()) {
+                    const attendanceListCell = document.createElement('td');
+                    attendanceListCell.setAttribute('id', `at-${lesson.lesson_id}`);
+                    if (lesson.lesson_id in attendanceLists){
+                        console.log("LIST EXIST FOR LESSON: " + lesson.lesson_id)
+                        attendanceListCell.appendChild(attendanceListIcon(attendanceLists[lesson.lesson_id]));
+                    } else {
+
+                        const addListSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                        const addListPath = document.createElementNS(
+                            'http://www.w3.org/2000/svg',
+                            'path'
+                        );
+                        addListSvg.setAttribute('fill', 'none');
+                        addListSvg.setAttribute('viewBox', '0 0 24 24');
+                        addListSvg.setAttribute('stroke', 'currentColor');
+                        addListSvg.setAttribute('stroke-width', '1.5');
+                        addListSvg.classList.add('mr-1');
+                        addListSvg.setAttribute('width', '18px');
+
+                        addListPath.setAttribute('d', 'M12 4.5v15m7.5-7.5h-15');
+                        addListPath.setAttribute('stroke-linecap', 'round');
+                        addListPath.setAttribute('stroke-linejoin', 'round');
+
+                        addListSvg.setAttribute('data-content', 'Utwórz listę obecności');
+                        addListSvg.setAttribute('data-placement', 'bottom');
+                        addListSvg.setAttribute('data-trigger', 'hover');
+                        addListSvg.setAttribute('data-toggle', 'popover');
+                        addListSvg.setAttribute('data-html', 'true');
+                        $(addListSvg).popover();
+
+                        addListSvg.appendChild(addListPath);
+
+                        const addListLink = document.createElement('a');
+                        addListLink.appendChild(addListSvg);
+                        addListLink.type = 'button';
+                        addListLink.setAttribute("onclick", `createAttendanceList(event_id='${lesson.lesson_id}');`);
+
+                        attendanceListCell.appendChild(addListLink);
+                    }
+                    lessonRow.appendChild(attendanceListCell);
+                }
 
 
                 innerTbody.appendChild(lessonRow);
@@ -276,15 +370,11 @@ function getMonthName(monthNumber) {
     return months[monthNumber - 1];
 }
 
-function toggleDetails(element) {
-    var targetId = element.children[0].getAttribute('data-target');
-    var target = document.querySelector(targetId);
-    target.classList.toggle('show');
-}
 
 function open_months_url() {
     let urlParams = new URLSearchParams(window.location.search);
     openedMonths = urlParams.get('opened_months');
+    console.log('openedMonths -> ' + openedMonths);
     if (openedMonths) {
         openedMonths = openedMonths.split(',');
         openedMonths.forEach(function (monthNumber) {
@@ -296,4 +386,194 @@ function open_months_url() {
     } else {
         openedMonths = [];
     }
+}
+
+let lessonsLoaded = false;
+let selected_year_div = document.getElementById("selected-year");
+let nextYearBTn = document.getElementById("nextYearBTn");
+let prevYearBtn = document.getElementById("prevYearBtn");
+
+
+const delay = (delayInms) => {
+    return new Promise(resolve => setTimeout(resolve, delayInms));
+};
+
+
+function generate_lessons() {
+    if (!lessonsLoaded) {
+        get_lessons(recordId)
+        lessonsLoaded = true;
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    let urlParams = new URLSearchParams(window.location.search);
+
+    let selected_year = urlParams.get('selected_year');
+    if (!selected_year) {
+        const current_year = new Date().getFullYear();
+        selected_year = current_year;
+        addParamToURL('selected_year', current_year)
+    }
+    selected_year_div.innerHTML = selected_year
+
+
+    const tab = urlParams.get('tab');
+    if (tab !== undefined) {
+        if (tab === 'Lessons' && !lessonsLoaded) {
+            generate_lessons();
+        }
+    }
+})
+
+function setNextYear() {
+    setQueryYear(1);
+}
+
+function setPrevYear() {
+    setQueryYear(-1);
+}
+
+function setQueryYear(value) {
+    selected_year_div.innerHTML = parseInt(selected_year_div.innerHTML) + value;
+    const currentURL = window.location.href;
+    let urlSearchParams = new URLSearchParams(window.location.search);
+    urlSearchParams.set('selected_year', selected_year_div.innerHTML);
+    urlSearchParams.set('opened_months', '');
+    window.history.pushState({}, document.title, '?' + urlSearchParams.toString());
+    get_lessons(recordId);
+
+    // window.location.href = currentURL.split('?')[0] + '?' + urlSearchParams.toString();
+
+}
+
+function setQueryYearNow() {
+    selected_year_div.innerHTML = new Date().getFullYear();
+
+    const currentURL = window.location.href;
+    let urlSearchParams = new URLSearchParams(window.location.search);
+    urlSearchParams.set('selected_year', selected_year_div.innerHTML);
+    window.history.pushState({}, document.title, '?' + urlSearchParams.toString());
+    get_lessons(recordId);
+
+    // window.location.href = currentURL.split('?')[0] + '?' + urlSearchParams.toString();
+}
+
+function toggleDetails(element) {
+    let detailsRow = element.parentElement.nextElementSibling;
+    if (detailsRow.classList.contains('details')) {
+        if (detailsRow.style.maxHeight === 0) {
+            // detailsRow.style.display = 'table-row';
+            detailsRow.style.maxHeight = 1000 + 'px';
+        } else {
+            detailsRow.style.maxHeight = '0px';
+
+        }
+    }
+}
+
+async function refreshOpenedMonths() {
+    let delayres = await delay(1000);
+    let divElements = document.querySelectorAll('[id^="collaps_"]');
+    console.log('refreshing months')
+    openedMonths = [];
+    divElements.forEach(function (div) {
+        let monthNumber = div.id.split('_')[1];
+        if (div.classList.contains('show')) {
+            openedMonths.push(monthNumber);
+            console.log('checking ' + monthNumber);
+        }
+    });
+
+    let urlParams = new URLSearchParams(window.location.search);
+    urlParams.set('opened_months', openedMonths.join(','));
+    window.history.replaceState({}, '', window.location.pathname + '?' + urlParams.toString());
+}
+
+document.getElementById('repeating_createLesson').addEventListener("change", function () {
+    if (!document.getElementById('repeating_createLesson').checked) {
+        document.getElementById('lessonDate_endSeries_div').classList.add('d-none');
+        document.getElementById('lessonDate_endSeries').value = null;
+    } else {
+        document.getElementById('lessonDate_endSeries_div').classList.remove('d-none');
+    }
+});
+
+function calculateTimeDifference(startTime, endTime) {
+    // Parsowanie godzin na obiekty Date
+    const start = new Date(`1970-01-01T${startTime}:00`);
+    const end = new Date(`1970-01-01T${endTime}:00`);
+
+    // Obliczenie r\u00F3\u017Cnicy w milisekundach
+    const differenceInMilliseconds = end - start;
+
+    // Konwersja milisekund na minuty
+    const differenceInMinutes = differenceInMilliseconds / (1000 * 60);
+
+    return differenceInMinutes;
+}
+
+function createAttendanceList(event_id) {
+    addInformAlert("Tworzenie listy obecności...");
+
+    const formData = new FormData();
+    formData.append("event_id", event_id);
+    formData.append("group_id", recordId);
+    fetch("/crm_api/create-attendance-list/", {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': document.getElementById('attendance_list_form').querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: formData
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status) {
+                console.log("CHANGE ICON")
+                const iconTochange = document.getElementById(`at-${event_id}`);
+                iconTochange.removeChild(iconTochange.firstChild);
+                $('.popover').remove();
+
+                iconTochange.appendChild(attendanceListIcon(data.attendance_list_id));
+            }
+            handleResponse(data);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Wystąpił błąd przy tworzeniu listy obecności.');
+        });
+}
+
+function attendanceListIcon(attendance_list_id) {
+    const listSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    const listPath = document.createElementNS(
+        'http://www.w3.org/2000/svg',
+        'path'
+    );
+    listSvg.setAttribute('fill', 'none');
+    listSvg.setAttribute('viewBox', '0 0 24 24');
+    listSvg.setAttribute('stroke', 'currentColor');
+    listSvg.setAttribute('stroke-width', '1.5');
+    listSvg.setAttribute('width', '18px');
+
+    listPath.setAttribute('d', 'M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z');
+    listPath.setAttribute('stroke-linecap', 'round');
+    listPath.setAttribute('stroke-linejoin', 'round');
+
+    listSvg.setAttribute('data-content', 'Otwórz listę obecności');
+    listSvg.setAttribute('data-placement', 'bottom');
+    listSvg.setAttribute('data-trigger', 'hover');
+    listSvg.setAttribute('data-toggle', 'popover');
+    listSvg.setAttribute('data-html', 'true');
+    $(listSvg).popover();
+
+
+    listSvg.appendChild(listPath);
+
+    const addListLink = document.createElement('a');
+    addListLink.appendChild(listSvg);
+    addListLink.setAttribute("href", `/attendancelist/${attendance_list_id}`);
+
+    return addListLink;
 }

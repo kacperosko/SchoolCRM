@@ -1,7 +1,7 @@
 from django.dispatch import receiver
 from django.db.models.signals import post_save
 from .models import User
-from SchoolCRM.settings import SITE_URL, EMAIL_HOST_USER
+from SchoolCRM.settings import SITE_URL
 from django.core.mail import send_mail
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.http import urlsafe_base64_encode
@@ -32,7 +32,7 @@ def send_password_reset_email(sender, instance, created, **kwargs):
             send_mail(
                 subject=subject,
                 message=message,
-                from_email=EMAIL_HOST_USER,
+                from_email="test@mail.com",
                 recipient_list=[user.email],
                 fail_silently=False,
             )
@@ -51,7 +51,7 @@ def send_password_reset_email(sender, instance, created, **kwargs):
                     subject="Twoje haslo zostalo zmienione",
                     message=f"Hej {user.first_name}, dostajesz tego maila poniewa\u017C"
                             f" Twoje has\u0142o na {SITE_URL} zosta\u0142o zmienione.\nJe\u015Bli nie zmienia\u0142e\u015B/a\u015B has\u0142a niezw\u0142ocznie skontaktuj si\u0119 z administratorem strony",
-                    from_email=EMAIL_HOST_USER,
+                    from_email="test@mail.com",
                     recipient_list=[user.email],
                     fail_silently=False,
                 )

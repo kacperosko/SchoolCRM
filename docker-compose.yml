@@ -1,0 +1,34 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_DB: crmdb
+      POSTGRES_USER: crmuser
+      POSTGRES_PASSWORD: crmpassword
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  web:
+    build: .
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DJANGO_SETTINGS_MODULE=SchoolCRM.settings
+      - DB_NAME=crmdb
+      - DB_USER=crmuser
+      - DB_PASSWORD=crmpassword
+      - DB_HOST=db
+      - DB_PORT=5432
+    command: bash entrypoint.sh
+
+volumes:
+  postgres_data:

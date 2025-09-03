@@ -5,7 +5,7 @@
     </style>
 {% endblock style %}
 {% block content %}
-    {% load crm_tags %}
+{% load crm_tags %}
 
     <div class="card">
         <div class="card-header d-flex justify-content-between">
@@ -71,7 +71,7 @@
                             </div>
                             <div class="form-group col-sm-6">
                                 <label for="student_phone">Telefon:</label>
-                                <p class="pb-1 field">{{ person.phone|default:"-" }}</p>
+                                <p class="pb-1 field">{{ person.phone|phone_format|default:"-" }}</p>
                             </div>
                         </div>
                     </form>

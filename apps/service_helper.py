@@ -3,19 +3,21 @@ import uuid
 from django.db import models
 
 from apps.authentication.models import User
+from functools import wraps
+from django.contrib import messages
+from django.shortcuts import render
+from django.http import HttpRequest
+from django.http.response import JsonResponse
 
 
 def get_model_object_by_prefix(prefix):
-    from apps.crm.models import Person, Student, StudentPerson, Lesson, LessonAdjustment, Location, Note, WatchRecord, \
-        Notification, Group, GroupStudent, AttendanceList, Invoice
-
+    from apps.crm.models import Person, Student, StudentPerson, Location, Note, WatchRecord, \
+        Notification, Group, GroupStudent, AttendanceList, Invoice,  LessonDefinition, Event, InvoiceItem
 
     prefixes = {
         '0PR': Person,
         '0ST': Student,
         '0SP': StudentPerson,
-        '0LS': Lesson,
-        '0LA': LessonAdjustment,
         '0LC': Location,
         '0NT': Note,
         '0WR': WatchRecord,
@@ -25,6 +27,9 @@ def get_model_object_by_prefix(prefix):
         '0GS': GroupStudent,
         '0AS': AttendanceList,
         '0IV': Invoice,
+        '0LD': LessonDefinition,
+        '0LE': Event,
+        '0IT': InvoiceItem
     }
     return prefixes.get(prefix, None)
 
@@ -44,7 +49,10 @@ def get_model_by_prefix(prefix):
         '0GR': 'Group',
         '0GS': 'GroupStudent',
         '0AS': 'AttendanceList',
-        '0IV': 'Invoice'
+        '0IV': 'Invoice',
+        '0LD': 'LessonDefinition',
+        '0LE': 'Event',
+        '0IT': 'InvoiceItem'
     }
     return prefixes.get(prefix, None)
 
@@ -65,6 +73,9 @@ def get_prefix_by_model(model_name):
         'GroupStudent': '0GS',
         'AttendanceList': '0AS',
         'Invoice': '0IV',
+        'LessonDefinition': '0LD',
+        'Event': '0LE',
+        'InvoiceItem': '0IT'
     }
     return prefixes.get(model_name, '0EX')
 
@@ -86,3 +97,40 @@ class PrefixedUUIDField(models.CharField):
             setattr(model_instance, self.attname, value)
             return value
         return super().pre_save(model_instance, add)
+
+
+def custom_404(request, exception):
+    messages.error(request, exception)
+    return render(request, 'auth/404.html', status=404)
+
+
+def custom_500(request):
+    return render(request, 'auth/404.html', status=505)
+
+def is_admin(request):
+    return request.user.is_superuser or request.user.groups.filter(name='Kierownik').exists()
+
+def check_is_admin(func):
+    @wraps(func)
+    def wrapper(request, *args, **kwargs):
+        if not is_admin(request):
+            return custom_404(request, "Nie masz odpowiednich uprawnień")
+        return func(request, *args, **kwargs)
+    return wrapper
+
+def is_ajax_or_fetch(request: HttpRequest) -> bool:
+    return request.headers.get('x-requested-with') == 'XMLHttpRequest'
+
+def check_permission(perm_name):
+    def decorator(view_func):
+        @wraps(view_func)
+        def _wrapped_view(request, *args, **kwargs):
+            if not request.user.has_perm(perm_name):
+                if is_ajax_or_fetch(request):
+                    return JsonResponse({'status': False, 'message': "Nie masz odpowiednich uprawnie\u0144"})
+                return custom_404(request, "Nie masz odpowiednich uprawnie\u0144")
+            return view_func(request, *args, **kwargs)
+
+        return _wrapped_view
+
+    return decorator

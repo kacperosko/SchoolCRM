@@ -9,8 +9,8 @@
                     <div class="card">
                         <div class="card-body">
                             <div class="auth-logo">
-                                <img src="{% static '/images/warsztat-logo.jpeg' %}"
-                                     class="img-fluid rounded-normal w-25 h-25" alt="logo">
+{#                                <img src="{% static '/images/warsztat-logo.jpeg' %}"#}
+{#                                     class="img-fluid rounded-normal w-25 h-25" alt="logo">#}
                             </div>
                             <h2 class="mb-2 text-center">Logowanie</h2>
                             <p class="text-center">Zaloguj si&#281;, by kontynuowa&#263;</p>
@@ -22,14 +22,14 @@
                                         <div class="form-group">
                                             <label for="signin_username">Email</label>
                                             <input value="{{ form.email.value|default_if_none:"" }}" id="signin_username" name="email" class="form-control" type="email"
-                                                   placeholder="" required>
+                                                   placeholder="Email" required>
                                         </div>
                                     </div>
                                     <div class="col-lg-12">
                                         <div class="form-group">
                                             <label for="signin_passowrd">Hasło</label>
                                             <input id="signin_passowrd" name="password" class="form-control"
-                                                   type="password" placeholder="" required>
+                                                   type="password" placeholder="Hasło" required>
                                         </div>
                                     </div>
                                 </div>

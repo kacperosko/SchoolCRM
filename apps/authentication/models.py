@@ -137,5 +137,10 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name = "User"
         verbose_name_plural = "Users"
 
+    def redirect_after_edit(self):
+        return f'/user/view/{self.id}'
+
+    def is_admin_or_manager(self):
+        return self.is_superuser or self.groups.filter(name='Kierownik').exists()
 
     objects = UserManager()

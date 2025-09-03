@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Person, Student, Lesson, LessonAdjustment, StudentPerson, Note, Location, Notification, WatchRecord, Group, GroupStudent, AttendanceList, AttendanceListStudent, Invoice, InvoiceItem
+from .models import Person, Student, StudentPerson, Note, Location, Notification, WatchRecord, Group, GroupStudent, AttendanceList, AttendanceListStudent, Invoice, InvoiceItem, Event, LessonDefinition
 from django.contrib.contenttypes.admin import GenericTabularInline
 
 
@@ -22,30 +22,6 @@ class StudentAdmin(admin.ModelAdmin):
     inlines = [
         NoteItemInline,
     ]
-
-
-class LessonAdjustment_ItemInline(admin.TabularInline):
-    model = LessonAdjustment
-    extra = 0
-    can_delete = False
-    show_change_link = True
-    # readonly_fields = ['', ]
-
-
-@admin.register(Lesson)
-class LessonAdmin(admin.ModelAdmin):
-    list_display = ('id', 'start_time', 'end_time', 'series_end_date', 'student', 'is_series', 'teacher')
-    list_filter = ('start_time', 'end_time', 'teacher')
-    search_fields = ('student__firstName', 'student__lastName', 'teacher__username')
-
-    inlines = [
-        LessonAdjustment_ItemInline,
-    ]
-
-
-@admin.register(LessonAdjustment)
-class LessonAdjustmentAdmin(admin.ModelAdmin):
-    list_display = ('id', 'original_lesson_date', 'modified_start_time', 'modified_end_time', 'lesson', 'status')
 
 
 @admin.register(StudentPerson)
@@ -84,7 +60,7 @@ class GroupStudentdAdmin(admin.ModelAdmin):
     list_display = ('group', 'student')
 
 
-class AttendanceListStudent_ItemInline(admin.TabularInline):
+class AttendanceListStudentItemInline(admin.TabularInline):
     model = AttendanceListStudent
     extra = 0
     can_delete = False
@@ -94,15 +70,15 @@ class AttendanceListStudent_ItemInline(admin.TabularInline):
 
 @admin.register(AttendanceList)
 class AttendanceListAdmin(admin.ModelAdmin):
-    list_display = ('group', 'lesson_date')
+    list_display = ('group', 'event')
 
 
     inlines = [
-        AttendanceListStudent_ItemInline,
+        AttendanceListStudentItemInline,
     ]
 
 
-class InvoiceItemStudent_ItemInline(admin.TabularInline):
+class InvoiceItemStudentItemInline(admin.TabularInline):
     model = InvoiceItem
     extra = 0
     can_delete = False
@@ -116,10 +92,29 @@ class InvoiceAdmin(admin.ModelAdmin):
 
 
     inlines = [
-        InvoiceItemStudent_ItemInline,
+        InvoiceItemStudentItemInline,
     ]
 
 
-# Uncomment the following lines if you decide to use LessonException model
-# from .models import LessonException
-# admin.site.register(LessonException)
+class EventItemInline(admin.TabularInline):
+    model = Event
+    extra = 0
+    can_delete = False
+    show_change_link = True
+    ordering = ('event_date',)
+
+
+@admin.register(LessonDefinition)
+class LessonDefinitionAdmin(admin.ModelAdmin):
+    list_display = ('id',)
+
+
+    inlines = [
+        EventItemInline,
+    ]
+
+
+@admin.register(Event)
+class EventAdmin(admin.ModelAdmin):
+    list_display = ('id', 'start_time', 'duration', 'event_date', 'lesson_definition')
+
