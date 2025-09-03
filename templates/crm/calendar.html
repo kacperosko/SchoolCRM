@@ -465,6 +465,12 @@
                 return year + '-' + month + '-' + day;
             }
 
+            function toDateOnly(date) {
+                const d = new Date(date);
+                d.setHours(0, 0, 0, 0); // zerujemy czas
+                return d;
+            }
+
 
             function addDynamicLessons() {
                 var lessons = {{ lessons|safe }};
@@ -506,10 +512,17 @@
                         lessonDate.setDate(startDate.getDate() + lessonWeekDayIndex);
 
                         // Check if the lesson is within the current selected week
-                        let isWithinWeek = (new Date(lesson.start_date) <= endDate && new Date(lesson.start_date) >= startDate);
+                        {#let isWithinWeek = (new Date(lesson.start_date) <= endDate && new Date(lesson.start_date) >= startDate);#}
+                        let start = toDateOnly(startDate);
+                        let end = toDateOnly(endDate);
+                        let lessonDateFormatted = toDateOnly(lessonDate);
+
+                        let isWithinWeek = (lessonDateFormatted >= start && lessonDateFormatted <= end);
 
                         console.log("isWithinWeek: " + isWithinWeek)
-                        console.log("new Date(lesson.start_date): " + new Date(lesson.start_date))
+                        console.log("lessonDateFormatted: " + lessonDateFormatted)
+                        console.log("start: " + start)
+                        console.log("end: " + end)
                         if (isWithinWeek) {
                             // Create lesson element and set its position and duration
                             var lessonElement = document.createElement('div');

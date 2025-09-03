@@ -72,7 +72,7 @@
                         </a>
                     </li>
                 {% endif %}
-                {% if perms.crm.view_user %}
+                {% if request.user.is_admin_or_manager %}
                     <li class="sidebar-layout {% if request.path|get_first_segment == 'user' %}active{% endif %}">
                         <a href="/user" class="svg-icon">
                             <i class="">
@@ -87,7 +87,7 @@
                         </a>
                     </li>
                 {% endif %}
-                {% if perms.crm.view_lesson %}
+                {% if perms.crm.view_event %}
                     <li class="sidebar-layout {% if request.path|get_first_segment == 'calendar' %}active{% endif %}">
                         <a href="/calendar" class="svg-icon">
                             <i class="">
@@ -116,7 +116,7 @@
                         </a>
                     </li>
                 {% endif %}
-                {% if request.user.admin %}
+                {% if request.user.is_superuser %}
                     <li class="sidebar-layout {% if request.path|get_first_segment == 'report' %}active{% endif %}">
                         <a href="/report" class="svg-icon">
                             <i class="">

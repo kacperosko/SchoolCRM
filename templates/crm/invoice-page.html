@@ -114,7 +114,7 @@
                                         {% for invoice_item in record.invoiceitem_set.all %}
                                             <tr>
                                                 <td class="text-center">{{ invoice_item.name }}</td>
-                                                <td class="text-center">{{ invoice_item.amount }}</td>
+                                                <td class="text-center">{{ invoice_item.amount }} zł</td>
                                                 <td class="text-center">{{ invoice_item.quantity }}</td>
                                                 <td class="text-center">
                                                     <a href="/invoiceItem/edit/{{ invoice_item.id }}"

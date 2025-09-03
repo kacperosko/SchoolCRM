@@ -193,14 +193,8 @@ def create_attendance_list_student(request):
         print("group_id", group_id)
         attendance_list = AttendanceList.objects.create(group_id=group_id, event_id=event_id)
 
-        group_students = GroupStudent.objects.filter(group_id=group_id)
-        attendances = []
-
-        for group_student in group_students:
-            attendances.append(
-                AttendanceListStudent(attendance_list=attendance_list, student_id=group_student.student.id))
-
-        AttendanceListStudent.objects.bulk_create(attendances)
+        # Asocjacje AttendanceListStudent sa tworzone automatycznie poprzez trigger i proceduer
+        # umieszczone w bazie danych PostgreSQL
 
         attendance_list_id = attendance_list.id
     except Exception as e:

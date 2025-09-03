@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
+from apps.authentication.models import Group as AuthGroup
 from django.forms import ModelForm
 from django.test import override_settings
 from django.core.exceptions import ValidationError
@@ -184,29 +185,50 @@ class UserForm(forms.ModelForm):
     class Meta:
         model = User
         fields = "__all__"
-        exclude = ('id', 'password', 'is_active', 'is_staff', 'is_superuser', 'staff', 'admin', 'user_permissions', 'last_login', 'user_avatar')
+        exclude = ('id', 'password', 'is_active', 'is_staff', 'is_superuser', 'staff', 'admin', 'user_permissions', 'last_login', 'user_avatar', 'groups')
 
 
-    # groups = forms.ChoiceField(label='Rola', choices=ROLES, required=False)
+    group = forms.ModelChoiceField(queryset=AuthGroup.objects.all(), label='Rola', required=True)
     email = forms.CharField(label='Email', disabled=True)
     first_name = forms.CharField(label='Imi\u0119')
     last_name = forms.CharField(label='Nazwisko')
     phone = forms.CharField(label='Telefon', max_length=20, required=False)
     avatar_color = forms.CharField(label='Kolor awatara', widget=forms.TextInput(attrs={'type': 'color'}))
 
+    def save(self, commit=True):
+        instance = super(UserForm, self).save(commit=False)
+        new_group = self.cleaned_data.get('group')
+
+        is_administrator = new_group and new_group.name == "Administrator"
+        instance.is_superuser = is_administrator
+        instance.admin = is_administrator
+        instance.staff = is_administrator
+
+        if commit:
+            instance.save()
+
+            instance.groups.clear()
+            if new_group:
+                instance.groups.add(new_group)
+
+        return instance
+
     def __init__(self, *args, **kwargs):
+        print("$$$$$$ UserForm")
         initial = kwargs.get('initial', None)
         instance = kwargs.get('instance', None)
 
         # Initialize the form
         super(UserForm, self).__init__(*args, **kwargs)
-        self.fields['groups'].label = "Rola"
+        # self.fields['groups'].label = "Rola"
+        # self.fields['groups'].required = True
 
         # Check if 'initial' is provided or if an 'instance' is provided
+        self.fields['phone'].initial = "2137"
         if initial or instance:
             self.fields['email'].disabled = True
-            self.fields['groups'].initial = instance.groups.first()
-            print("INSTANCEEE", self.fields['groups'].initial)
+            self.fields['group'].initial = instance.groups.first()
+            print("INSTANCEEE", self.fields['group'].initial)
         else:
             # Ensure the 'student' field is not disabled
             self.fields['email'].disabled = False
@@ -250,53 +272,6 @@ class GroupstudentForm(forms.ModelForm):
         super(GroupstudentForm, self).__init__(*args, **kwargs)
         self.fields['student'].label = 'Uczeń'
         self.fields['group'].disabled = False
-
-
-
-class AttendancelistForm(forms.ModelForm):
-    @staticmethod
-    def get_name():
-        return "Lista Obecności"
-
-    class Meta:
-        model = AttendanceList
-        fields = "__all__"
-        exclude = ('id', 'created_by', 'modified_by', 'created_date', 'modified_date')
-
-    group = forms.ModelChoiceField(label='Grupa', queryset=Group.objects.all())
-    event = forms.ModelChoiceField(label='Lekcja', queryset=Event.objects.all())
-
-
-    def update_form(self, data):
-        group_id = data.get('group')
-        print('updating group')
-        if group_id:
-            try:
-                group = Group.objects.get(pk=group_id)
-                self.fields['group'].initial = group
-            except Exception:
-                pass
-
-    def __init__(self, *args, **kwargs):
-        super(AttendancelistForm, self).__init__(*args, **kwargs)
-        if kwargs.get('instance', None):
-            pass
-
-    def save(self, commit=True):
-        instance = super(AttendancelistForm, self).save(commit=False)
-
-        if commit:
-            instance.save()
-
-            group_students = GroupStudent.objects.filter(group_id=self.cleaned_data['group'])
-            attendance_list_student = []
-            for group_student in group_students:
-                attendance_list_student.append(
-                    AttendanceListStudent(student_id=group_student.student.id, attendance_list=instance)
-                )
-            AttendanceListStudent.objects.bulk_create(attendance_list_student)
-
-        return instance
 
 
 

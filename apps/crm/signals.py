@@ -75,11 +75,17 @@ def get_record_watchers(content_type, object_id):
 def create_notifications(sender, instance, created, **kwargs):
     watch_records = get_record_watchers(instance.content_type, instance.object_id)
     notifications = []
+    print("======= NOTE SIGNAL ========")
     if created:
+        print('created')
+        print('instance.created_by.id', instance.created_by.id)
+        print('instance.created_by.id', instance.created_by.id)
         for watch_record in watch_records:
             if watch_record.user.id == instance.created_by.id:
+                print('continue')
                 continue  # skip creating notification for user who triggered signals
             dots = "..." if len(instance.content) > 16 else ""
+            print('append notification for: ', watch_record.user.email)
             notifications.append(
                 Notification(
                     user=watch_record.user,
@@ -148,9 +154,11 @@ def set_created_by_modified_by(instance, user=None):
     user = get_current_user() if not user else user
     if not instance.pk:  # Check if the record is new
         instance.created_date = timezone.now()
-        instance.created_by = user
+        if user:
+            instance.created_by = user
     instance.modified_date = timezone.now()
-    instance.modified_by = user
+    if user:
+        instance.modified_by = user
 
 
 @receiver(pre_save, sender=Student)

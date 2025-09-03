@@ -46,7 +46,7 @@ urlpatterns = [
     path("crm_api/create-note", crm_views.upsert_note, name="crm-create_note"),
     path("crm_api/delete-note", crm_views.delete_note, name="crm-delet_note"),
 
-    path('crm_api/notifications/', crm_views.get_notifications, name='get_notifications'),
+    path('crm_api/notifications', crm_views.get_notifications, name='get_notifications'),
     path('crm_api/notifications/read/<str:notification_id>/', crm_views.mark_notification_as_read,
          name='mark_notification_as_read'),
 

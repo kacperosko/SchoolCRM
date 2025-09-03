@@ -14,7 +14,7 @@ import base64
 from django.core.files.base import ContentFile
 from io import BytesIO
 import os
-from apps.service_helper import check_permission
+from apps.service_helper import check_permission, is_admin, custom_404, check_is_admin
 
 
 @login_exempt
@@ -40,7 +40,7 @@ def user_login(request):
     return render(request, 'auth/auth-sign-in.html', {'form': form, 'message': message})
 
 
-@check_permission('crm.view_user')
+@check_is_admin
 def users(request):
     users_all = None
     try:
@@ -56,6 +56,9 @@ class UserPage(View):
     def get(request, *args, **kwargs):
         context = {}
         user_id = kwargs.get('user_id')
+
+        if user_id != request.user.id and not is_admin(request):
+            return custom_404(request, 'Brak uprawnień do wyświetlenia tej strony')
 
         try:
             user = User.objects.get(pk=user_id)

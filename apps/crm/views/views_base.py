@@ -12,7 +12,7 @@ import json
 from django.contrib.auth import authenticate, login, logout
 from apps.crm.forms import PersonForm, LessonModuleForm, LessonPlanForm, LessonCreateForm, \
     StudentPersonAddForm, LocationForm, StudentForm, get_form_class, StudentpersonForm, GroupstudentForm, \
-    AttendancelistForm, InvoiceForm, InvoiceitemForm
+    InvoiceForm, InvoiceitemForm
 from apps.authentication.models import User
 from datetime import datetime, timedelta, date, time
 from time import sleep

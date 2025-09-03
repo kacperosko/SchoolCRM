@@ -210,7 +210,7 @@ class Location(models.Model):
     notes = GenericRelation(Note)
 
     def get_full_name(self):
-        return self.city + ", ul. " + self.street
+        return self.name + ", ul. " + self.street
 
     def get_model_name(self, language):
         names = {
@@ -427,6 +427,8 @@ class AttendanceStatutes(models.TextChoices):
     NIEOBECNOSC = 'Nieobecnosc', 'Nieobecność'
     SPOZNIENIE = 'Spoznienie', 'Spóźnienie'
 
+    def __str__(self):
+        return self.value
 
 
 class AttendanceListStudent(models.Model):

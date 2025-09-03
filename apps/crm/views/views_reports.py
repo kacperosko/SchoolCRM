@@ -34,7 +34,7 @@ def view_student_report(request):
                 })
 
         context['students'] = students_report
-        context['month'] = month
+        context['month'] = month.zfill(2)
         context['year'] = year
 
     return render(request, "crm/report-student-month.html", context)
@@ -73,5 +73,7 @@ def view_students_in_group_report(request):
             result[attendance.student.id][attendance.attendance_status] += 1
 
         context["result"] = result
+        context["year"] = year
+        context["month"] = month.zfill(2)
 
     return render(request, "crm/report-student-group-month.html", context)

@@ -223,21 +223,13 @@
 {% endblock content %}
 
 {% block javascript %}
-    {% if request.user.is_admin %}
         <script>
 
-            document.addEventListener("DOMContentLoaded", function () {
-                {#const selectElements = document.querySelectorAll('.select-form');#}
-                {#selectElements.forEach(function (selectElement) {#}
-                {#    if (selectElement.choicesInstance) {#}
-                {#        selectElement.choicesInstance.destroy();#}
-                {#    }#}
-                {#    selectElement.choicesInstance = new Choices(selectElement, {#}
-                {#        shouldSort: false,#}
-                {#        removeItemButton: true#}
-                {#    });#}
 
-                // Dane, które przekażemy do wykresu
+            document.addEventListener("DOMContentLoaded", function () {
+
+            {% if request.user.is_superuser or request.user.groups.first == 'Kierownik' %}
+                // Dane do wykresu
                 const incomeData = {{ monthly_income|safe }};
 
                 const labels = incomeData.map(item => item.month);
@@ -274,6 +266,7 @@
                         }
                     }
                 });
+            {% endif %}
 
                 function getCSRFToken() {
                     return document.querySelector('[name=csrfmiddlewaretoken]').value;
@@ -444,5 +437,4 @@
 
             });
         </script>
-    {% endif %}
 {% endblock javascript %}

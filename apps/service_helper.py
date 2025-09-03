@@ -107,11 +107,13 @@ def custom_404(request, exception):
 def custom_500(request):
     return render(request, 'auth/404.html', status=505)
 
+def is_admin(request):
+    return request.user.is_superuser or request.user.groups.filter(name='Kierownik').exists()
 
 def check_is_admin(func):
     @wraps(func)
     def wrapper(request, *args, **kwargs):
-        if not request.user.is_superuser or request.user.groups.filter(name='Kierownik').exists():
+        if not is_admin(request):
             return custom_404(request, "Nie masz odpowiednich uprawnień")
         return func(request, *args, **kwargs)
     return wrapper
