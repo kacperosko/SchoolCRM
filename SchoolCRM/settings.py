@@ -12,7 +12,7 @@ CORE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'django-insecure-uta=i!_i25%tc1y*h!!w1r$o+s7tj354vg30hlf8!w42d0mz+%'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 SITE_URL = 'warsztat-muzyczny.kacperosko.hmcloud.pl'
@@ -21,8 +21,8 @@ SESSION_COOKIE_AGE = 60 * 60  # (60 * 60 seconds = 60 minutes)
 SESSION_SAVE_EVERY_REQUEST = True
 
 # SESSION_COOKIE_HTTPONLY = False
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
 
 
 INSTALLED_APPS = [
